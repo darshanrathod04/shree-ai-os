@@ -151,6 +151,15 @@ public class AgentBrain {
         context.setLastIntent(intent);
         System.out.println("[AgentBrain] DETECTED INTENT: " + intent);
 
+        // 5b. ROADMAP-AWARE REDIRECTION
+        // If user says "next"/"continue" and an active roadmap exists,
+        // redirect to NEXT_STEP instead of lesson follow-up
+        if (("CONTINUE".equals(intent) || "FOLLOW_UP".equals(intent))
+                && planningEngine.getActivePlan().isPresent()) {
+            System.out.println("[AgentBrain] Redirecting " + intent + " -> NEXT_STEP (active roadmap found)");
+            intent = "NEXT_STEP";
+        }
+
         // 6. HANDLE INTENTS
         switch (intent) {
             case "ROADMAP_REQUEST": {
