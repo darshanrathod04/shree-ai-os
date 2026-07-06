@@ -1,72 +1,27 @@
 {
   "relationships" : [ {
-    "id" : "d238e7d9-dcfa-49bf-8883-b2b9c42787f4",
-    "sourceId" : "9b4066a3-648d-4999-84ed-a640f79fd5d2",
-    "targetId" : "f6448e1f-86a6-4b26-b5ab-041187c6284b",
+    "id" : "17ddb0f2-7afa-43c9-80b2-a909a97090dd",
+    "sourceId" : "11328353-0a66-4d13-8bd4-32c5cb07182c",
+    "targetId" : "7c712c36-6bda-4a0b-be02-949037b88834",
     "type" : "LEARNING",
     "properties" : { },
-    "createdAt" : 1781633257.888350000
-  }, {
-    "id" : "9781c083-282f-43e0-95f1-41f44737073c",
-    "sourceId" : "9b4066a3-648d-4999-84ed-a640f79fd5d2",
-    "targetId" : "bc9d1fee-af31-4fe4-b50e-c9d1e505c1ce",
-    "type" : "LEARNING",
-    "properties" : { },
-    "createdAt" : 1781633948.376265300
-  }, {
-    "id" : "f3094884-6b56-439d-8334-f9b945f71726",
-    "sourceId" : "9b4066a3-648d-4999-84ed-a640f79fd5d2",
-    "targetId" : "84820147-5f54-4a33-8a30-612cbe6eda49",
-    "type" : "INTERESTED_IN",
-    "properties" : { },
-    "createdAt" : 1781713814.773399600
-  }, {
-    "id" : "36405c92-052f-4b8d-a418-3805a259f4c6",
-    "sourceId" : "9b4066a3-648d-4999-84ed-a640f79fd5d2",
-    "targetId" : "2355714d-4b05-49cc-9a0f-9d8eb4600203",
-    "type" : "INTERESTED_IN",
-    "properties" : { },
-    "createdAt" : 1781757515.913303000
+    "createdAt" : 1783324031.063135800
   } ],
   "entities" : [ {
-    "id" : "2355714d-4b05-49cc-9a0f-9d8eb4600203",
-    "type" : "GOAL",
-    "name" : "Become a Java Developer",
-    "description" : null,
-    "properties" : { },
-    "createdAt" : 1781757515.881295400,
-    "updatedAt" : 1781856505.484693900
-  }, {
-    "id" : "bc9d1fee-af31-4fe4-b50e-c9d1e505c1ce",
-    "type" : "LEARNING_TOPIC",
-    "name" : "Journey",
-    "description" : null,
-    "properties" : { },
-    "createdAt" : 1781633948.338830700,
-    "updatedAt" : 1781633948.338830700
-  }, {
-    "id" : "f6448e1f-86a6-4b26-b5ab-041187c6284b",
-    "type" : "LEARNING_TOPIC",
-    "name" : "Java",
-    "description" : null,
-    "properties" : { },
-    "createdAt" : 1781633257.887343200,
-    "updatedAt" : 1781633257.887343200
-  }, {
-    "id" : "9b4066a3-648d-4999-84ed-a640f79fd5d2",
+    "id" : "11328353-0a66-4d13-8bd4-32c5cb07182c",
     "type" : "USER",
     "name" : "Darshan",
     "description" : "Primary user",
     "properties" : { },
-    "createdAt" : 1781633257.886337000,
-    "updatedAt" : 1781633257.886337000
+    "createdAt" : 1783324031.060569500,
+    "updatedAt" : 1783324031.060569500
   }, {
-    "id" : "84820147-5f54-4a33-8a30-612cbe6eda49",
-    "type" : "GOAL",
-    "name" : "Became a java developer",
+    "id" : "7c712c36-6bda-4a0b-be02-949037b88834",
+    "type" : "LEARNING_TOPIC",
+    "name" : "Java",
     "description" : null,
     "properties" : { },
-    "createdAt" : 1781713814.658243000,
-    "updatedAt" : 1781777018.413795700
+    "createdAt" : 1783324031.061646800,
+    "updatedAt" : 1783324031.061646800
   } ]
 }

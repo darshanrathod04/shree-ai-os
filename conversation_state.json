@@ -1,10 +1,10 @@
 {
-  "activeTopic" : null,
+  "activeTopic" : "Java",
   "pendingFollowups" : [ ],
   "lessonTopicsCovered" : [ ],
   "completedChapters" : [ ],
-  "currentObjective" : "Teach chapter 3: Control Flow",
-  "lastActivityAt" : "2026-06-16T18:07:37.676429500Z",
-  "chapterNumber" : 0,
-  "lessonName" : null
+  "currentObjective" : null,
+  "lastActivityAt" : "2026-07-06T07:49:34.769683400Z",
+  "chapterNumber" : 1,
+  "lessonName" : "Java"
 }
