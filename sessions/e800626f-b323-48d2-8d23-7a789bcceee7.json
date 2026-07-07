@@ -1,0 +1,55 @@
+{
+  "sessionId" : "e800626f-b323-48d2-8d23-7a789bcceee7",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "START_COURSE",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "Knowledge:\nJava is an OOP language",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : "java",
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : 1783332681.424762400,
+    "lastAccess" : 1783332681.424762400,
+    "learningStatus" : "IN_PROGRESS",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783332681.420428700,
+  "lastAccessedAt" : 1783332749.729489800,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I want to learn Java",
+    "timestamp" : 1783332681.421597700,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDCD8 **Lesson 1**\n\nHello class! Today we're going to introduce ourselves to a programming language called Java, which many people use for creating different kinds of software. By the end of this session, you should be able to understand what exactly is Java and how to set up your development environment so that when you code in it later on, everything will work smoothly without any hiccups!\n\nTo begin with, let'selook at setting up our environment:\n1. Download the latest JDK (Java Development Kit) from Oracle’s website - this package includes tools like a compiler and debugger to help you create Java programs easily. Remember that as of now it is only compatible for personal/non-commercial use, which means free applications not used in an enterprise setting!\n2. Once downloaded & installed successfully on your computer (Windows or macOS), open up any text editor such as Notepad++ and save a new file with the .java extension like myFirstProgram.java to practice writing Java code later today / tomorrow :) \n3. Finally, let's install an Integrated Development Environment - commonly known as IDE for short! Some popular ones include Eclipse or IntelliJ Idea which make coding in any language a breeze through providing syntax highlighting & auto-completion features among others :). To get started with these powerful tools head over to their respective websites (Eclipse.org/ | JetBrains) and follow installation instructions for your OS \n4. And voila! You are all set up now, congratulations :) Feel free to test out creating a simple Hello World program using any of the editors we just installed today or tomorrow - it will be our first real Java coding experience once this session is over ;) Enjoy setting things up? \n\nMoving on towards understanding what exactly JAVA IS: Firstly, let's talk about why you might want to learn how-to code using the language itself rather than just consuming its results...Java has an incredibly vast array of applications ranging from web browsers & game engines alike - so learning this core skill will always come handy irrespective! Plus being a \"Write Once, Run Anywhere\" platform means that your Java program can run on any machine without worrying about compatibility issues like when using other languages such as Python or Ruby.. This makes life much easier for developers who want their code to work across different environments and devices seamlessly.\n\nSo what is JAVA exactly? Simply put - it's a high-level language designed primarily by Sun Microsystems back in 1995 (which later merged with Oracle) intended as an extension of C++ programming for developing applications & eventually turning into one huge ecosystem called OpenJDK where multiple developers come together to contribute towards improving this very powerful toolset each day! It's a language that prioritizes simplicity while ensuring robustness - perfect blend if you ask me...\n\nToday we will start exploring Java basics like setting up environment variables, writing simple programs using classes & methods etc.. I assure y'all this might seem overwhelming initially but trust yourself as it gets easier with practice! So let’s begin coding our journey today :) Happy Coding \uD83D\uDE0A\n\n-To summarize: - Learn what Java is + why one should learn to code using the language itself instead of just consuming results. Understand its wide range & \"Write Once, Run Anywhere\" capability. Set up your JDK installation along with IDE for writing java programs easily on any platform (Windows/macOS). Finally start coding our first Java program soon! Cheers \uD83D\uDE04\n\n-End of Lesson Introduction - Let's begin today by diving deeper into learning how to code in the language itself instead of just consuming results or using pre-built libraries...\n\n---\nSay **'complete'** to mark this lesson done and continue.\nSay **'exit course'** to leave the course.\nSay **'progress'** to see your course progress.",
+    "timestamp" : 1783332749.729489800,
+    "intent" : null
+  } ],
+  "summary" : "USER: I want to learn Java\nAI: \uD83D\uDCD8 **Lesson 1**\n\nHello class! Today we're going to...\n",
+  "messageCount" : 2,
+  "expired" : false,
+  "firstMessage" : "I want to learn Java"
+}

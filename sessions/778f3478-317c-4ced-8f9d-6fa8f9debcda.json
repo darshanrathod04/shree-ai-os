@@ -1,0 +1,55 @@
+{
+  "sessionId" : "778f3478-317c-4ced-8f9d-6fa8f9debcda",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : null,
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : null,
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783331631.511575000,
+  "lastAccessedAt" : 1783331631.515584000,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "goal: Learn Python",
+    "timestamp" : 1783331631.513583300,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "Goal accepted. Shree is now working autonomously.",
+    "timestamp" : 1783331631.515584000,
+    "intent" : null
+  } ],
+  "summary" : "USER: goal: Learn Python\nAI: Goal accepted. Shree is now working autonomously.\n",
+  "messageCount" : 2,
+  "firstMessage" : "goal: Learn Python",
+  "expired" : false
+}

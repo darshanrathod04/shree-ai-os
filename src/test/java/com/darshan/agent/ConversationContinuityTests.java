@@ -60,21 +60,21 @@ class ConversationContinuityTests {
     // =========================================================
 
     @Test
-    @DisplayName("learn spring boot → LEARN intent")
+    @DisplayName("learn spring boot → START_COURSE (known course)")
     void testLearnIntent() {
-        assertEquals("LEARN", intentEngine.detectIntent("learn spring boot"));
+        assertEquals("START_COURSE", intentEngine.detectIntent("learn spring boot"));
     }
 
     @Test
-    @DisplayName("learn java → LEARN intent")
+    @DisplayName("learn java → START_COURSE (known course)")
     void testLearnJavaIntent() {
-        assertEquals("LEARN", intentEngine.detectIntent("learn java"));
+        assertEquals("START_COURSE", intentEngine.detectIntent("learn java"));
     }
 
     @Test
-    @DisplayName("teach me python → LEARN intent")
+    @DisplayName("teach me python → START_COURSE (known course)")
     void testTeachMeIntent() {
-        assertEquals("LEARN", intentEngine.detectIntent("teach me python"));
+        assertEquals("START_COURSE", intentEngine.detectIntent("teach me python"));
     }
 
     // =========================================================
@@ -89,10 +89,9 @@ class ConversationContinuityTests {
     }
 
     @Test
-    @DisplayName("continue → CONTINUE when active lesson")
+    @DisplayName("continue → CONTINUE_LESSON (routes through TeachingEngine)")
     void testContinueIntent() {
-        lessonEngine.startLesson("Java");
-        assertEquals("CONTINUE", intentEngine.detectIntent("continue"));
+        assertEquals("CONTINUE_LESSON", intentEngine.detectIntent("continue"));
     }
 
     @Test

@@ -1,0 +1,65 @@
+{
+  "sessionId" : "f5c9b8ec-1b6f-4bb5-b8fd-1bfa47868fa3",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "WHO_AM_I",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : "Darshan",
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783335848.298438600,
+  "lastAccessedAt" : 1783335867.366600000,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "My name is Darshan",
+    "timestamp" : 1783335848.300579200,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Sorry, my brain is warming up... Take your time.",
+    "timestamp" : 1783335867.360598300,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "Who am I?",
+    "timestamp" : 1783335867.363598700,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "Your name is Darshan.",
+    "timestamp" : 1783335867.366600000,
+    "intent" : null
+  } ],
+  "summary" : "USER: My name is Darshan\nAI: \uD83D\uDE0A Sorry, my brain is warming up... Take your time...\nUSER: Who am I?\nAI: Your name is Darshan.\n",
+  "messageCount" : 4,
+  "expired" : false,
+  "firstMessage" : "My name is Darshan"
+}

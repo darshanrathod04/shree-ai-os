@@ -1,22 +1,49 @@
 {
   "insights" : [ {
-    "id" : "b0ba5f6f-f23e-4a2d-a516-0d9d8ebcddf9",
+    "id" : "ab40c769-5a89-4eda-b7b9-84b5271c55b8",
+    "type" : "POSITIVE_PROGRESS",
+    "severity" : "LOW",
+    "priorityScore" : 10,
+    "message" : "Project 'Good Progress' is progressing (75%)",
+    "recommendation" : "Keep the momentum on Good Progress",
+    "resolved" : false,
+    "createdAt" : 1783335928.430196400
+  }, {
+    "id" : "c3eb7efe-9952-4506-b50f-4ae44eca847d",
+    "type" : "PROJECT_RISK",
+    "severity" : "MEDIUM",
+    "priorityScore" : 85,
+    "message" : "Project 'Risk Test Project' has 1 unresolved risks: Test risk",
+    "recommendation" : "Resolve Test risk to unblock progress on Risk Test Project",
+    "resolved" : false,
+    "createdAt" : 1783335928.430196400
+  }, {
+    "id" : "48497ff3-9354-424c-b28e-87230a6512f2",
+    "type" : "PROJECT_RISK",
+    "severity" : "MEDIUM",
+    "priorityScore" : 85,
+    "message" : "Project 'Risky Project' has 1 unresolved risks: Critical bug",
+    "recommendation" : "Resolve Critical bug to unblock progress on Risky Project",
+    "resolved" : false,
+    "createdAt" : 1783335928.430196400
+  }, {
+    "id" : "73652a1f-1792-4d39-8d77-7b3819d08a5e",
     "type" : "LEARNING_GAP",
     "severity" : "MEDIUM",
     "priorityScore" : 70,
-    "message" : "1 learning topics tracked: Java",
+    "message" : "2 learning topics tracked: Spring Boot, Java",
     "recommendation" : "Review your learning progress and continue with the next topic",
     "resolved" : false,
-    "createdAt" : 1783324171.158099700
+    "createdAt" : 1783335928.431197500
   } ],
   "currentRecommendation" : {
-    "id" : "b0ba5f6f-f23e-4a2d-a516-0d9d8ebcddf9",
-    "type" : "LEARNING_GAP",
+    "id" : "c3eb7efe-9952-4506-b50f-4ae44eca847d",
+    "type" : "PROJECT_RISK",
     "severity" : "MEDIUM",
-    "priorityScore" : 70,
-    "message" : "1 learning topics tracked: Java",
-    "recommendation" : "Review your learning progress and continue with the next topic",
+    "priorityScore" : 85,
+    "message" : "Project 'Risk Test Project' has 1 unresolved risks: Test risk",
+    "recommendation" : "Resolve Test risk to unblock progress on Risk Test Project",
     "resolved" : false,
-    "createdAt" : 1783324171.158099700
+    "createdAt" : 1783335928.430196400
   }
 }

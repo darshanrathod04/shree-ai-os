@@ -61,9 +61,9 @@ public class AgentService {
                 );
             }
 
-            // Process through brain with session-specific lesson state
+            // Process through brain with session-specific lesson state and course state
             long brainStart = System.currentTimeMillis();
-            AgentResponse response = brain.process(input, context, session.getLessonState());
+            AgentResponse response = brain.process(input, context, session.getLessonState(), session.getCourseState());
             long brainElapsed = System.currentTimeMillis() - brainStart;
             log.info("[AgentService] Brain processing completed in {}ms", brainElapsed);
 

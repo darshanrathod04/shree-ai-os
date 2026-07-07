@@ -1,0 +1,55 @@
+{
+  "sessionId" : "2ba82c64-41da-4bb7-94b6-e6fc032aec0a",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "Past experiences:\nRelevant past experiences:\n- User: My name is Darshan\n  Outcome: Stored identity: Darshan\n- User: My name is Darshan\n  Outcome: Stored identity: Darshan",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : "Darshan",
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783332293.066371500,
+  "lastAccessedAt" : 1783332311.470806100,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "My name is Darshan",
+    "timestamp" : 1783332293.067873800,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello! It's great to meet you, **Darshan**. Based on your past experience with me being an AI tutor named Shree created by myself, I look forward to assisting you in the best possible way during our interactions here. If there are any specific questions or learning objectives that come up for you as we begin this journey together, feel free to ask! Take your time.",
+    "timestamp" : 1783332311.470806100,
+    "intent" : null
+  } ],
+  "messageCount" : 2,
+  "summary" : "USER: My name is Darshan\nAI: \uD83D\uDE0A Hello! It's great to meet you, **Darshan**. Bas...\n",
+  "firstMessage" : "My name is Darshan",
+  "expired" : false
+}

@@ -1,0 +1,20 @@
+{
+  "name": "java",
+  "title": "Java Programming",
+  "description": "A comprehensive course covering Java from fundamentals to advanced concepts.",
+  "difficulty": "BEGINNER",
+  "estimatedHours": 40,
+  "prerequisites": ["Basic computer literacy"],
+  "chapters": [
+    {
+      "title": "Java Fundamentals",
+      "description": "Learn the basics of Java programming including syntax, data types, and control flow.",
+      "order": 1
+    },
+    {
+      "title": "Object-Oriented Programming",
+      "description": "Master the core OOP concepts that make Java powerful.",
+      "order": 2
+    }
+  ]
+}

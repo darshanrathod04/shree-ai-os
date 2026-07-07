@@ -1,0 +1,65 @@
+{
+  "name": "java",
+  "title": "Java Programming",
+  "description": "A comprehensive course covering Java from fundamentals to advanced concepts. Learn object-oriented programming, collections, multithreading, and more.",
+  "difficulty": "BEGINNER",
+  "estimatedHours": 40,
+  "prerequisites": ["Basic computer literacy"],
+  "chapters": [
+    {
+      "title": "Java Fundamentals",
+      "description": "Learn the basics of Java programming including syntax, data types, and control flow.",
+      "order": 1,
+      "lessons": [
+        { "title": "Introduction to Java", "objective": "Understand what Java is and set up your development environment", "estimatedMinutes": 30, "contentKey": "java-intro" },
+        { "title": "Variables and Data Types", "objective": "Learn about primitive types, variables, and type conversion", "estimatedMinutes": 45, "contentKey": "java-variables" },
+        { "title": "Operators and Expressions", "objective": "Master arithmetic, logical, and comparison operators", "estimatedMinutes": 40, "contentKey": "java-operators" },
+        { "title": "Control Flow Statements", "objective": "Understand if-else, switch, loops, and branching", "estimatedMinutes": 50, "contentKey": "java-control-flow" }
+      ]
+    },
+    {
+      "title": "Object-Oriented Programming",
+      "description": "Master the core OOP concepts that make Java powerful.",
+      "order": 2,
+      "lessons": [
+        { "title": "Classes and Objects", "objective": "Learn to define classes and create objects", "estimatedMinutes": 45, "contentKey": "java-classes" },
+        { "title": "Inheritance and Polymorphism", "objective": "Understand inheritance hierarchies and polymorphic behavior", "estimatedMinutes": 50, "contentKey": "java-inheritance" },
+        { "title": "Interfaces and Abstract Classes", "objective": "Learn to design with interfaces and abstract classes", "estimatedMinutes": 40, "contentKey": "java-interfaces" },
+        { "title": "Encapsulation and Access Modifiers", "objective": "Master access control and data hiding", "estimatedMinutes": 35, "contentKey": "java-encapsulation" }
+      ]
+    },
+    {
+      "title": "Java Collections Framework",
+      "description": "Explore the rich set of collection classes and interfaces.",
+      "order": 3,
+      "lessons": [
+        { "title": "List and Set Interfaces", "objective": "Understand ArrayList, LinkedList, HashSet, and TreeSet", "estimatedMinutes": 45, "contentKey": "java-list-set" },
+        { "title": "Map and Queue Interfaces", "objective": "Learn HashMap, TreeMap, PriorityQueue, and Deque", "estimatedMinutes": 40, "contentKey": "java-map-queue" },
+        { "title": "Streams and Lambda Expressions", "objective": "Master functional programming with streams", "estimatedMinutes": 50, "contentKey": "java-streams" },
+        { "title": "Collections Utility Methods", "objective": "Learn sorting, searching, and utility operations", "estimatedMinutes": 30, "contentKey": "java-collections-util" }
+      ]
+    },
+    {
+      "title": "Exception Handling and I/O",
+      "description": "Learn to handle errors gracefully and work with files.",
+      "order": 4,
+      "lessons": [
+        { "title": "Exception Types and Hierarchy", "objective": "Understand checked and unchecked exceptions", "estimatedMinutes": 35, "contentKey": "java-exceptions" },
+        { "title": "Try-Catch and Custom Exceptions", "objective": "Learn exception handling patterns", "estimatedMinutes": 40, "contentKey": "java-try-catch" },
+        { "title": "File I/O and Serialization", "objective": "Read and write files, object serialization", "estimatedMinutes": 45, "contentKey": "java-file-io" },
+        { "title": "NIO and Modern I/O", "objective": "Explore the NIO.2 API for modern file operations", "estimatedMinutes": 40, "contentKey": "java-nio" }
+      ]
+    },
+    {
+      "title": "Multithreading and Concurrency",
+      "description": "Master concurrent programming in Java.",
+      "order": 5,
+      "lessons": [
+        { "title": "Threads and Runnable", "objective": "Create and manage threads", "estimatedMinutes": 40, "contentKey": "java-threads" },
+        { "title": "Synchronization and Locks", "objective": "Learn thread safety and synchronization", "estimatedMinutes": 50, "contentKey": "java-synchronization" },
+        { "title": "Executor Framework", "objective": "Use thread pools and executors", "estimatedMinutes": 45, "contentKey": "java-executors" },
+        { "title": "Concurrent Collections", "objective": "Explore thread-safe collections", "estimatedMinutes": 35, "contentKey": "java-concurrent-collections" }
+      ]
+    }
+  ]
+}

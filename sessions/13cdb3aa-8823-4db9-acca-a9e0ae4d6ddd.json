@@ -1,0 +1,55 @@
+{
+  "sessionId" : "13cdb3aa-8823-4db9-acca-a9e0ae4d6ddd",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "Past experiences:\nRelevant past experiences:\n- User: My name is Darshan\n  Outcome: Stored identity: Darshan\n- User: My name is Darshan\n  Outcome: Stored identity: Darshan",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : "Darshan",
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783331631.725962600,
+  "lastAccessedAt" : 1783331653.403949600,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "My name is Darshan",
+    "timestamp" : 1783331631.730963900,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A **Hello, I'm Shree! It's great to meet you, **Darshan**. If there are any questions or academic topics you need assistance with or if you want some structured learning plans for your studies, feel free to ask. Remember that every student learns at their own pace and in a style unique to them—I'm here to help facilitate an environment where everyone can thrive academically! Take your time.",
+    "timestamp" : 1783331653.403949600,
+    "intent" : null
+  } ],
+  "summary" : "USER: My name is Darshan\nAI: \uD83D\uDE0A **Hello, I'm Shree! It's great to meet you, **D...\n",
+  "messageCount" : 2,
+  "firstMessage" : "My name is Darshan",
+  "expired" : false
+}

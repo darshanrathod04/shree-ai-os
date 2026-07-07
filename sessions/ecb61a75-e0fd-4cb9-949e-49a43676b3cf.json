@@ -1,0 +1,42 @@
+{
+  "sessionId" : "ecb61a75-e0fd-4cb9-949e-49a43676b3cf",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783323695.110668400,
+  "lastAccessedAt" : 1783323752.461244000,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "test message",
+    "timestamp" : 1783323695.113334600,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A It seems like you're looking for a way to understand how **testing** can be beneficial in software development or personal projects. Testing is essential as it helps ensure that your code works correctly by identifying defects early on, which enhances the quality of the final product and saves time and resources in long run.\n\nIf you're interested in learning about writing tests for a project, I recommend starting with these key concepts: \n\n1. **Unit Testing** - Learn how to test individual components or functions using frameworks like Jest (for JavaScript) or PyTest (for Python). Check out the official documentation of your preferred language's testing framework and look into resources such as [Fundamentals of Test-Driven Development](https://www.amazon.com/Essential-Testing-Software-Development-ebook/) by Jonas Skepplund for a solid understanding.\n\n2. **Integration Testing** - After unit testing, it's important to see how different components work together when integrated into the application. Use tools like Postman (for API testing) or Cucumber with Capybara-Webkit (for web applications). There are numerous tutorials and guides available online for these methodologies.\n\n3. **End-to-end Testing** - Learn how to simulate real user scenarios using frameworks such as Selenium WebDriver, which is particularly useful if you're testing a full stack application that includes the front end (HTML/CSS) interacted with through JavaScript and back end services like databases or REST APIs.\n\n4. **Continuous Integration** - Understand how automating tests in your development pipeline can streamline collaboration among team members by using platforms such as Jenkins, Travis CI, or CircleCI which integrate well with testing tools mentioned above.\n\nRemember to always write test cases before coding (Test-Driven Development) and keep them maintainable for easy updates along the project lifecycle! Happy Coding! \uD83D\uDE0A Take your time.",
+    "timestamp" : 1783323752.461244000,
+    "intent" : null
+  } ],
+  "summary" : "USER: test message\nAI: \uD83D\uDE0A It seems like you're looking for a way to under...\n",
+  "messageCount" : 2,
+  "expired" : false,
+  "firstMessage" : "test message"
+}

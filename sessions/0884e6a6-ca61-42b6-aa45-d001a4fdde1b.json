@@ -1,0 +1,55 @@
+{
+  "sessionId" : "0884e6a6-ca61-42b6-aa45-d001a4fdde1b",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "START_COURSE",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "Knowledge:\nJava is an OOP language",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : "java",
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : 1783335883.805434700,
+    "lastAccess" : 1783335883.805434700,
+    "learningStatus" : "IN_PROGRESS",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783335883.798398700,
+  "lastAccessedAt" : 1783335898.205042000,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I want to learn Java",
+    "timestamp" : 1783335883.799426600,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDCD8 **Lesson 1**\n\nSorry, my brain is warming up...\n\n---\nSay **'complete'** to mark this lesson done and continue.\nSay **'exit course'** to leave the course.\nSay **'progress'** to see your course progress.",
+    "timestamp" : 1783335898.205042000,
+    "intent" : null
+  } ],
+  "summary" : "USER: I want to learn Java\nAI: \uD83D\uDCD8 **Lesson 1**\n\nSorry, my brain is warming up...\n...\n",
+  "messageCount" : 2,
+  "expired" : false,
+  "firstMessage" : "I want to learn Java"
+}

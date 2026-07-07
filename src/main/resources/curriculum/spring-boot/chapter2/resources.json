@@ -1,0 +1,18 @@
+{
+  "title": "Chapter 2 Additional Resources",
+  "recommendedReadings": [
+    "Spring in Action - Chapter 2: Developing Web Applications",
+    "RESTful Web Services by Leonard Richardson",
+    "Baeldung: Spring MVC Tutorial"
+  ],
+  "onlineResources": [
+    "https://spring.io/guides/tutorials/rest/",
+    "https://www.baeldung.com/rest-with-spring-series",
+    "https://restfulapi.net/"
+  ],
+  "practiceProjects": [
+    "Note-Taking API",
+    "Task Management API",
+    "Recipe Sharing API"
+  ]
+}

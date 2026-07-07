@@ -1,0 +1,55 @@
+{
+  "sessionId" : "7491a5bc-9974-4498-ac7f-30edef21278c",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "START_COURSE",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "Knowledge:\nJava is an OOP language",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : "java",
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : 1783332319.991615000,
+    "lastAccess" : 1783332319.991615000,
+    "learningStatus" : "IN_PROGRESS",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783332319.986073500,
+  "lastAccessedAt" : 1783332351.577563500,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I want to learn Java",
+    "timestamp" : 1783332319.987084600,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDCD8 **Lesson 1**\n\nWelcome to our Beginner' start on learning Java Programming! Let’s begin with an introduction.\n\n**What is Java?**\nJava is a high-level, class-based, object-oriented programming language that is designed to have as few implementation dependencies as possible. It allows application developers and computer applets written in the Java™ technology to run on any Java supported device (operating system), without needing to recompile or significantly alter code.\n\n**Setting up Your Development Environment:**\n1. Install a good IDE like Eclipse, IntelliJ Idea, or NetBeans - These provide an all-inclusive environment with syntax highlights and autocomplete which makes coding much easier on the eyes! \n2. Download JDK (Java Development Kit) from Oracle's website – this is required for running Java programs as it includes tools like a compiler (javac), debugger etc.\n3. Set up your project in IDE - Look for 'New Project', select 'Java Application', and follow the prompted steps to create one. \n4. Write Hello World program: In our new JAVA file, let’s write something simple – print \"Hello, world\" on screen! Here is how you do it using System out in Eclipse or your IDE of choice -  \n```java\npublic class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hello World\");  // Print hello world to console\n    }\n}\n```\n5. Compile and Run: Save the file, build your project (usually by pressing Ctrl+F10 or clicking on 'Build' menu), then run it – you should see \"Hello, world\" printed in Console! Congratulations - You have just written and executed a Java program!! \n\nRemember to keep practicing as that’s the key for mastering any programming language. Happy coding!\n\n---\nSay **'complete'** to mark this lesson done and continue.\nSay **'exit course'** to leave the course.\nSay **'progress'** to see your course progress.",
+    "timestamp" : 1783332351.577563500,
+    "intent" : null
+  } ],
+  "messageCount" : 2,
+  "summary" : "USER: I want to learn Java\nAI: \uD83D\uDCD8 **Lesson 1**\n\nWelcome to our Beginner' start on...\n",
+  "firstMessage" : "I want to learn Java",
+  "expired" : false
+}
