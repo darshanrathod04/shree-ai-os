@@ -22,6 +22,8 @@ import com.darshan.agent.skills.Skill;
 import com.darshan.agent.learning.CourseState;
 import com.darshan.agent.learning.LearningSessionEngine;
 import com.darshan.agent.learning.TeachingEngine;
+import com.darshan.agent.capability.CapabilityMatch;
+import com.darshan.agent.capability.CapabilityRegistry;
 import com.darshan.agent.cognition.uqc.ClassificationResult;
 import com.darshan.agent.cognition.uqc.UniversalQueryClassifier;
 import com.darshan.agent.learning.adaptive.AdaptiveLearningEngine;
@@ -62,6 +64,7 @@ public class AgentBrain {
     private final ContextResolutionEngine contextResolver;
     private final FallbackEngine fallbackEngine;
     private final UniversalQueryClassifier universalQueryClassifier;
+    private final CapabilityRegistry capabilityRegistry;
 
     public AgentBrain(
             CognitiveGovernorEngine governor,
@@ -87,7 +90,8 @@ public class AgentBrain {
             ConversationOptimizer conversationOptimizer,
             ContextResolutionEngine contextResolver,
             FallbackEngine fallbackEngine,
-            UniversalQueryClassifier universalQueryClassifier
+            UniversalQueryClassifier universalQueryClassifier,
+            CapabilityRegistry capabilityRegistry
     ) {
         this.governor = governor;
         this.stateMachine = stateMachine;
@@ -113,6 +117,7 @@ public class AgentBrain {
         this.contextResolver = contextResolver;
         this.fallbackEngine = fallbackEngine;
         this.universalQueryClassifier = universalQueryClassifier;
+        this.capabilityRegistry = capabilityRegistry;
     }
 
     // =====================================================
@@ -189,6 +194,10 @@ public class AgentBrain {
         logUqcComparison(input, intent, uqcResult);
         context.setLastIntent(intent);
         System.out.println("[AgentBrain] DETECTED INTENT: " + intent);
+
+        // 5b. SHADOW CAPABILITY REGISTRY LOOKUP (observer only, never changes routing)
+        CapabilityMatch capabilityMatch = capabilityRegistry.findBestCapability(intent);
+        logCapabilityComparison(intent, capabilityMatch);
 
         // 5b. ROADMAP-AWARE REDIRECTION
         // If user says "next"/"continue" and an active roadmap exists,
@@ -618,6 +627,35 @@ public class AgentBrain {
         System.out.println("[UQC] RESULT: " + status);
         System.out.println("[UQC] PROCESSING: " + uqcResult.getProcessingTimeNanos() / 1_000_000 + "ms");
         System.out.println("[UQC] ========================================================");
+    }
+
+    private void logCapabilityComparison(String intent, CapabilityMatch capabilityMatch) {
+        String currentHandler = mapIntentToHandler(intent);
+
+        System.out.println("[CAPABILITY] ========================================================");
+        System.out.println("[CAPABILITY] INTENT: " + intent);
+        System.out.println("[CAPABILITY] REGISTRY: " + (capabilityMatch != null ? capabilityMatch.getCapability().getName() : "null"));
+        System.out.println("[CAPABILITY] CURRENT: " + currentHandler);
+        System.out.println("[CAPABILITY] CONFIDENCE: " + (capabilityMatch != null ? String.format("%.0f%%", capabilityMatch.getConfidence() * 100) : "N/A"));
+        System.out.println("[CAPABILITY] RESULT: " + (capabilityMatch != null && capabilityMatch.getCapability().getName().equalsIgnoreCase(currentHandler) ? "SAME" : "DIFFERENT"));
+        System.out.println("[CAPABILITY] PROCESSING: " + (capabilityMatch != null ? capabilityMatch.getProcessingTimeNanos() / 1_000_000 + "ms" : "N/A"));
+        System.out.println("[CAPABILITY] ========================================================");
+    }
+
+    private String mapIntentToHandler(String intent) {
+        return switch (intent) {
+            case "START_COURSE", "CONTINUE_LESSON", "COMPLETE_LESSON", "CURRENT_LESSON",
+                 "TEACH_TOPIC", "REPEAT_LESSON", "EXIT_COURSE", "LESSON_PROGRESS", "LEARN" ->
+                    "LearningSessionEngine";
+            case "START_QUIZ", "CONTINUE_QUIZ", "SUBMIT_ANSWER", "FINISH_QUIZ", "QUIZ_RESULT" ->
+                    "QuizEngine";
+            case "PLAN", "ROADMAP_REQUEST", "NEXT_STEP", "COMPLETE_TASK", "PROGRESS", "CURRENT_TASK" ->
+                    "PlanningEngine";
+            case "GREETING" -> "GreetingSkill";
+            case "WHO_AM_I" -> "AgentBrain";
+            case "QUIZ" -> "LessonEngine";
+            default -> "ChatSkill";
+        };
     }
 
     private String stripPlaceholders(String reply) {

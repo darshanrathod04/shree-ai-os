@@ -1,0 +1,165 @@
+{
+  "sessionId" : "e6beac45-3933-47b5-9a63-76a4a1c38183",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "TEACH_TOPIC",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : "Darshan",
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1783445175.550124200,
+    "lastUpdated" : 1783445175.550124200,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "currentQuestion" : null,
+    "remainingQuestions" : 0,
+    "totalQuestions" : 0,
+    "inProgress" : false
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783445175.550124200,
+  "lastAccessedAt" : 1783445466.877884600,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "helo",
+    "timestamp" : 1783445175.591877000,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello! It's great to see you here, seeking guidance for your professional journey as an intern. If there’s anything specific about securing an internship that I can assist with today, like researching companies or crafting a cover letter, just let me know how I may help steer you in the right direction! Take your time.",
+    "timestamp" : 1783445200.549737600,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "who i am",
+    "timestamp" : 1783445226.866474800,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A It's great to see you taking proactive steps towards achieving your goals! To provide personalized guidance, I need a bit more information about yourself such as interests, educational background, or any specific skills that stand out to you. Are there particular fields you are passionate about? Any hobbies or extracurricular activities that highlight some of these strengths?\n\nOnce we identify your key attributes and goals, especially related to securing an internship position in a field like ****—whether it's tech, business, arts, sciences, etc.—I can offer tailored advice. This might include:\n\n- Researching companies that align with your interests using resources such as [Company Website 1], [Company Website 2], and professional networking sites like LinkedIn for insights into company culture and current opportunities.  \n- Developing a strong **[Resume/CV]** highlighting relevant skills, projects, or experiences in the desired field with help from templates available on websites such as Canva's CV Builder or Monster Resumes.\n- Crafting personalized cover letters for each application using guidelines found at sites like Princeton Review’s Guide to Writing a Cover Letter and Best Practices: How To Write A Perfect Job Application Email That Gets Read [URL].\n- Preparing for interviews with practice questions from resources such as Career Fog's Common Interview Questions, Art of Communication Skills at Udemy by Dr. Amy Cudy’s course on improving communication skills and body language during job interviews, or the Harvard Business Review's interview tips page [URL].\n- Networking within your desired field through platforms like alumni groups from universities known for strong programs in areas such as ****. LinkedIn’s Alumni section can be a good place to start networking and finding industry connections who may offer insights or leads on internship opportunities [URL].\n\nWould you like me to help create an outline of steps tailored specifically for your situation? Remember, every application process is unique, so I'm here to provide guidance that suits the individual pathway to success. Let’s make a plan together! Take your time.",
+    "timestamp" : 1783445278.688938600,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "hey shree i am darshan",
+    "timestamp" : 1783445329.312515300,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.",
+    "timestamp" : 1783445329.383940400,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "who is a president of india",
+    "timestamp" : 1783445350.684323400,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A **Darshan, as your personal AI tutor and assistant developed by me, Shree, I'm here to assist you with any academic or professional goals! Now, regarding the current President of India, **Ram Nath Kovind** is serving in that role. For more information on his background and achievements, feel free to ask, as understanding these aspects can be quite beneficial for your internship preparation by showcasing knowledge about national leaders and governance! Take your time.",
+    "timestamp" : 1783445362.012904900,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "what is today's date and time",
+    "timestamp" : 1783445411.696761700,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "No active course. Say 'start course <name>' to begin.",
+    "timestamp" : 1783445411.716504700,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "what is time",
+    "timestamp" : 1783445425.437759900,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "No active course. Say 'start course <name>' to begin.",
+    "timestamp" : 1783445425.452394600,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "what is java",
+    "timestamp" : 1783445432.173058300,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "No active course. Say 'start course <name>' to begin.",
+    "timestamp" : 1783445432.214956000,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "what is OS",
+    "timestamp" : 1783445443.569681600,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "No active course. Say 'start course <name>' to begin.",
+    "timestamp" : 1783445443.577596500,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "what is a meaning of chief",
+    "timestamp" : 1783445466.848379300,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "No active course. Say 'start course <name>' to begin.",
+    "timestamp" : 1783445466.877884600,
+    "intent" : null
+  } ],
+  "messageCount" : 18,
+  "firstMessage" : "helo",
+  "summary" : "USER: helo\nAI: \uD83D\uDE0A Hello! It's great to see you here, seeking guid...\nUSER: who i am\nAI: \uD83D\uDE0A It's great to see you taking proactive steps to...\nUSER: hey shree i am darshan\nAI: \uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.\nUSER: who is a president of india\nAI: \uD83D\uDE0A **Darshan, as your personal AI tutor and assist...\nUSER: what is today's date and time\nAI: No active course. Say 'start course <name>' to beg...\n... (8 more messages)\n",
+  "expired" : false
+}
