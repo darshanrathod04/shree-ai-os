@@ -1,17 +1,33 @@
 package com.darshan.agent.brain;
 
-import com.darshan.agent.context.ConversationManager;
+import com.darshan.agent.production.ConversationOptimizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class IntentEngine {
 
-    private final com.darshan.agent.context.ConversationManager conversationManager;
+    private static final Logger log = LoggerFactory.getLogger(IntentEngine.class);
 
-    public IntentEngine(@org.springframework.beans.factory.annotation.Qualifier("lessonConversationManager") com.darshan.agent.context.ConversationManager conversationManager) {
-        this.conversationManager = conversationManager;
+    private final ConversationOptimizer conversationOptimizer;
+
+    public IntentEngine(ConversationOptimizer conversationOptimizer) {
+        this.conversationOptimizer = conversationOptimizer;
     }
 
+    /**
+     * Context-aware intent detection with priority ordering.
+     *
+     * Priority (highest to lowest):
+     * 1. Identity questions
+     * 2. Goal queries
+     * 3. Quiz commands
+     * 4. Learning commands
+     * 5. Roadmap/planning commands
+     * 6. Greetings
+     * 7. DEFAULT (chat)
+     */
     public String detectIntent(String input) {
         String rawInput = input;
         String text = input.toLowerCase().trim();
@@ -122,9 +138,6 @@ public class IntentEngine {
 
         // Follow-up detection (after learning intents, before generic)
         if (isFollowUp(text)) {
-            if (conversationManager.hasActiveLesson()) {
-                return "CONTINUE";
-            }
             return "FOLLOW_UP";
         }
 

@@ -1,6 +1,8 @@
 package com.darshan.agent.context;
 
 import com.darshan.agent.learning.CourseState;
+import com.darshan.agent.learning.adaptive.StudentLearningProfile;
+import com.darshan.agent.learning.quiz.QuizSession;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.Instant;
 import java.time.Duration;
@@ -20,6 +22,8 @@ public class ConversationSession {
     private ConversationContext context;
     private LessonState lessonState;
     private CourseState courseState;
+    private StudentLearningProfile learningProfile;
+    private QuizSession quizSession;
     private String sessionUserName;
     private Instant createdAt;
     private Instant lastAccessedAt;
@@ -36,6 +40,8 @@ public class ConversationSession {
         this.context = new ConversationContext();
         this.lessonState = new LessonState();
         this.courseState = new CourseState();
+        this.learningProfile = new StudentLearningProfile();
+        this.quizSession = new QuizSession();
         this.messageHistory = new ArrayList<>();
     }
     
@@ -150,6 +156,36 @@ public class ConversationSession {
 
     public void setCourseState(CourseState courseState) {
         this.courseState = courseState;
+    }
+
+    /**
+     * Get the per-session student learning profile.
+     * Each session maintains its own adaptive learning profile independently.
+     */
+    public StudentLearningProfile getLearningProfile() {
+        if (learningProfile == null) {
+            learningProfile = new StudentLearningProfile();
+        }
+        return learningProfile;
+    }
+
+    public void setLearningProfile(StudentLearningProfile learningProfile) {
+        this.learningProfile = learningProfile;
+    }
+
+    /**
+     * Get the per-session quiz session state.
+     * Each session maintains its own quiz progress independently.
+     */
+    public QuizSession getQuizSession() {
+        if (quizSession == null) {
+            quizSession = new QuizSession();
+        }
+        return quizSession;
+    }
+
+    public void setQuizSession(QuizSession quizSession) {
+        this.quizSession = quizSession;
     }
 
     public String getSessionUserName() {

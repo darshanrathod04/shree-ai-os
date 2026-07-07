@@ -1,0 +1,70 @@
+{
+  "sessionId" : "9987fe60-072a-47fb-869a-a6a0ec9c44cc",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1783420092.388046700,
+    "lastUpdated" : 1783420092.388046700,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783420092.388046700,
+  "lastAccessedAt" : 1783420144.802518100,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I am building Smart Campus Connect",
+    "timestamp" : 1783420092.391048900,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hey there! It's great to hear that you are working on the **Smart Campus Connect** project—it sounds like an innovative initiative aimed at enhancing campus life through technology, right? As your AI tutor and assistant Shree, I am here to support you in this exciting endeavor. Since we're talking about a technical product involving smart systems on college campuses, it would be beneficial for us to first establish some key features that such a system might need. \n\nFor starters, **connectivity** is essential—perhaps through Wi-Fi and Bluetooth technologies? Then there are considerations around **data collection and analytics** to understand campus behavior patterns better; this could involve sensors or IoT devices deployed throughout the campus area. Additionally, ensuring user privacy while collecting data should be of paramount importance in your design philosophy.\n\nTo get a head start on securing an internship that fits with building Smart Campus Connect, I recommend looking into opportunities at universities known for their tech innovation and campus development programs—like Stanford or MIT's **Broadcom Engineering Leadership Award** program. You could also consider reaching out to companies specializing in IoT solutions that have a focus on educational environments; they may offer internships aligned with your skills and the project scope you are working towards.\n\nTo stay informed, keep an eye out for conferences like **CES (Consumer Electronics Show)** or events such as **IoT World Asia** where cutting-edge campus technology is showcased. Connecting directly to industry professionals through these platforms can open doors and give you insights into potential internship roles that could help propel your project forward while gaining real-world experience in the process!\n\nRemember, every step of learning something new counts towards building an impressive resume for when it's time to apply. Don't hesitate to ask if there are specific areas you need guidance on or resources that can aid with Smart Campus Connect development—I am here to help guide and educate in your journey! Keep up the great work, I believe in you and your initiative for creating a smarter campus experience! \n\nSincerely, Shree Take your time.",
+    "timestamp" : 1783420144.802518100,
+    "intent" : null
+  } ],
+  "messageCount" : 2,
+  "summary" : "USER: I am building Smart Campus Connect\nAI: \uD83D\uDE0A Hey there! It's great to hear that you are work...\n",
+  "expired" : false,
+  "firstMessage" : "I am building Smart Campus Con..."
+}
