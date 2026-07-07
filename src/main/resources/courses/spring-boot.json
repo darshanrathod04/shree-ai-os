@@ -1,0 +1,65 @@
+{
+  "name": "spring-boot",
+  "title": "Spring Boot Development",
+  "description": "Build production-grade microservices and REST APIs with Spring Boot. Covers dependency injection, data access, security, and deployment.",
+  "difficulty": "INTERMEDIATE",
+  "estimatedHours": 35,
+  "prerequisites": ["Java Programming", "Basic SQL knowledge"],
+  "chapters": [
+    {
+      "title": "Spring Fundamentals",
+      "description": "Understand the Spring ecosystem and core concepts.",
+      "order": 1,
+      "lessons": [
+        { "title": "Introduction to Spring Framework", "objective": "Understand Spring architecture and modules", "estimatedMinutes": 30, "contentKey": "spring-intro" },
+        { "title": "Inversion of Control and DI", "objective": "Master dependency injection patterns", "estimatedMinutes": 45, "contentKey": "spring-ioc" },
+        { "title": "Spring Boot Auto-Configuration", "objective": "Learn how Spring Boot simplifies configuration", "estimatedMinutes": 40, "contentKey": "spring-boot-auto" },
+        { "title": "Application Properties and YAML", "objective": "Configure Spring Boot applications", "estimatedMinutes": 35, "contentKey": "spring-config" }
+      ]
+    },
+    {
+      "title": "Building REST APIs",
+      "description": "Create robust RESTful web services.",
+      "order": 2,
+      "lessons": [
+        { "title": "REST Controllers", "objective": "Create REST endpoints with @RestController", "estimatedMinutes": 45, "contentKey": "spring-rest-controllers" },
+        { "title": "Request Handling", "objective": "Handle path variables, query params, and request bodies", "estimatedMinutes": 40, "contentKey": "spring-request-handling" },
+        { "title": "Response Entities and Status Codes", "objective": "Return proper HTTP responses", "estimatedMinutes": 35, "contentKey": "spring-response-entity" },
+        { "title": "Exception Handling in REST", "objective": "Implement global exception handling", "estimatedMinutes": 40, "contentKey": "spring-rest-exceptions" }
+      ]
+    },
+    {
+      "title": "Data Access with JPA",
+      "description": "Integrate databases using Spring Data JPA.",
+      "order": 3,
+      "lessons": [
+        { "title": "JPA Entities and Relationships", "objective": "Define entities and map relationships", "estimatedMinutes": 50, "contentKey": "spring-jpa-entities" },
+        { "title": "Spring Data Repositories", "objective": "Use JpaRepository and custom queries", "estimatedMinutes": 45, "contentKey": "spring-repositories" },
+        { "title": "JPQL and Native Queries", "objective": "Write custom database queries", "estimatedMinutes": 40, "contentKey": "spring-jpql" },
+        { "title": "Transaction Management", "objective": "Manage database transactions", "estimatedMinutes": 35, "contentKey": "spring-transactions" }
+      ]
+    },
+    {
+      "title": "Security and Testing",
+      "description": "Secure your application and ensure quality.",
+      "order": 4,
+      "lessons": [
+        { "title": "Spring Security Basics", "objective": "Implement authentication and authorization", "estimatedMinutes": 50, "contentKey": "spring-security" },
+        { "title": "JWT Authentication", "objective": "Implement token-based authentication", "estimatedMinutes": 45, "contentKey": "spring-jwt" },
+        { "title": "Unit Testing with JUnit", "objective": "Write unit tests for Spring components", "estimatedMinutes": 40, "contentKey": "spring-unit-testing" },
+        { "title": "Integration Testing", "objective": "Test REST endpoints with MockMvc", "estimatedMinutes": 45, "contentKey": "spring-integration-testing" }
+      ]
+    },
+    {
+      "title": "Production Deployment",
+      "description": "Deploy and monitor Spring Boot applications.",
+      "order": 5,
+      "lessons": [
+        { "title": "Docker Containerization", "objective": "Containerize Spring Boot applications", "estimatedMinutes": 40, "contentKey": "spring-docker" },
+        { "title": "Actuator and Monitoring", "objective": "Monitor application health and metrics", "estimatedMinutes": 35, "contentKey": "spring-actuator" },
+        { "title": "Deployment Strategies", "objective": "Deploy to cloud platforms", "estimatedMinutes": 40, "contentKey": "spring-deployment" },
+        { "title": "Performance Optimization", "objective": "Optimize Spring Boot applications", "estimatedMinutes": 45, "contentKey": "spring-performance" }
+      ]
+    }
+  ]
+}

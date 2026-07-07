@@ -1,0 +1,55 @@
+{
+  "sessionId" : "611623e4-76f6-4b21-912b-e9be8791db20",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783332311.502794000,
+  "lastAccessedAt" : 1783332319.431319300,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "test message",
+    "timestamp" : 1783332311.503794200,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello! I'm here to assist you with your queries as **Shree**, Darshan’s personal AI tutor created just for this purpose. How can I support your educational journey today? Feel free to ask anything about learning or study techniques—just keep in mind that my responses will be structured and focused on providing accurate information tailored specifically to what you're asking. Let me know how I can help! Take your time.",
+    "timestamp" : 1783332319.431319300,
+    "intent" : null
+  } ],
+  "messageCount" : 2,
+  "summary" : "USER: test message\nAI: \uD83D\uDE0A Hello! I'm here to assist you with your queries...\n",
+  "firstMessage" : "test message",
+  "expired" : false
+}

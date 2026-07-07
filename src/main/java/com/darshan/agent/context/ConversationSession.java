@@ -1,5 +1,6 @@
- package com.darshan.agent.context;
+package com.darshan.agent.context;
 
+import com.darshan.agent.learning.CourseState;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.Instant;
 import java.time.Duration;
@@ -18,6 +19,7 @@ public class ConversationSession {
     private String userId;
     private ConversationContext context;
     private LessonState lessonState;
+    private CourseState courseState;
     private String sessionUserName;
     private Instant createdAt;
     private Instant lastAccessedAt;
@@ -33,6 +35,7 @@ public class ConversationSession {
         this.lastAccessedAt = Instant.now();
         this.context = new ConversationContext();
         this.lessonState = new LessonState();
+        this.courseState = new CourseState();
         this.messageHistory = new ArrayList<>();
     }
     
@@ -57,15 +60,11 @@ public class ConversationSession {
     public void addMessage(String role, String content) {
         messageHistory.add(new SessionMessage(role, content));
         touch();
-        // Session owns messageHistory as the single source of truth for conversation history.
-        // context.history is deprecated in favor of session messageHistory.
     }
     
     public void addMessage(String role, String content, String intent) {
         messageHistory.add(new SessionMessage(role, content, intent));
         touch();
-        // Session owns messageHistory as the single source of truth for conversation history.
-        // context.history is deprecated in favor of session messageHistory.
     }
     
     public String getSummary() {
@@ -136,6 +135,21 @@ public class ConversationSession {
     
     public void setLessonState(LessonState lessonState) {
         this.lessonState = lessonState;
+    }
+
+    /**
+     * Get the per-session course learning state.
+     * Each session maintains its own course progress independently.
+     */
+    public CourseState getCourseState() {
+        if (courseState == null) {
+            courseState = new CourseState();
+        }
+        return courseState;
+    }
+
+    public void setCourseState(CourseState courseState) {
+        this.courseState = courseState;
     }
 
     public String getSessionUserName() {

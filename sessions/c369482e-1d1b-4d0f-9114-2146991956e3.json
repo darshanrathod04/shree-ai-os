@@ -1,0 +1,55 @@
+{
+  "sessionId" : "c369482e-1d1b-4d0f-9114-2146991956e3",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "GREETING",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783332418.631108300,
+  "lastAccessedAt" : 1783332418.636003900,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "Hello",
+    "timestamp" : 1783332418.633164400,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.",
+    "timestamp" : 1783332418.636003900,
+    "intent" : null
+  } ],
+  "messageCount" : 2,
+  "summary" : "USER: Hello\nAI: \uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.\n",
+  "firstMessage" : "Hello",
+  "expired" : false
+}

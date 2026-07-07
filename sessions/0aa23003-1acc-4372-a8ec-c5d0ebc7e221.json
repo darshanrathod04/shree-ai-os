@@ -1,0 +1,55 @@
+{
+  "sessionId" : "0aa23003-1acc-4372-a8ec-c5d0ebc7e221",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "WHO_AM_I",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783332674.846499600,
+  "lastAccessedAt" : 1783332674.850501100,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "Who am I?",
+    "timestamp" : 1783332674.848501000,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "I don't know your name yet. Please tell me your name.",
+    "timestamp" : 1783332674.850501100,
+    "intent" : null
+  } ],
+  "summary" : "USER: Who am I?\nAI: I don't know your name yet. Please tell me your na...\n",
+  "messageCount" : 2,
+  "expired" : false,
+  "firstMessage" : "Who am I?"
+}

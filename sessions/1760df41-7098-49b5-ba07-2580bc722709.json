@@ -1,0 +1,55 @@
+{
+  "sessionId" : "1760df41-7098-49b5-ba07-2580bc722709",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "WHO_AM_I",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : "Darshan",
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783335883.194359600,
+  "lastAccessedAt" : 1783335883.201361200,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "Who am I?",
+    "timestamp" : 1783335883.198361300,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "Your name is Darshan.",
+    "timestamp" : 1783335883.201361200,
+    "intent" : null
+  } ],
+  "summary" : "USER: Who am I?\nAI: Your name is Darshan.\n",
+  "messageCount" : 2,
+  "expired" : false,
+  "firstMessage" : "Who am I?"
+}

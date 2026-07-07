@@ -1,0 +1,55 @@
+{
+  "sessionId" : "17e915ff-d605-4995-955b-25ec82cb5cac",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : null,
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : null,
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783332634.348993600,
+  "lastAccessedAt" : 1783332634.354158500,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "goal: Learn Java",
+    "timestamp" : 1783332634.351113500,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "Goal accepted. Shree is now working autonomously.",
+    "timestamp" : 1783332634.354158500,
+    "intent" : null
+  } ],
+  "messageCount" : 2,
+  "summary" : "USER: goal: Learn Java\nAI: Goal accepted. Shree is now working autonomously.\n",
+  "firstMessage" : "goal: Learn Java",
+  "expired" : false
+}

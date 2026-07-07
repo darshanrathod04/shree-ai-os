@@ -1,0 +1,18 @@
+{
+  "title": "Chapter 1 Additional Resources",
+  "recommendedReadings": [
+    "Spring Boot Reference Documentation",
+    "Spring in Action - Chapter 1: Getting Started",
+    "Baeldung: Spring Boot Tutorial"
+  ],
+  "onlineResources": [
+    "https://spring.io/guides/gs/spring-boot/",
+    "https://start.spring.io/",
+    "https://docs.spring.io/spring-boot/docs/current/reference/"
+  ],
+  "practiceProjects": [
+    "Employee Management API",
+    "Product Catalog Service",
+    "Weather Data Service"
+  ]
+}

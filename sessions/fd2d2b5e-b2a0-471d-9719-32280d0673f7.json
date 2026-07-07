@@ -1,0 +1,42 @@
+{
+  "sessionId" : "fd2d2b5e-b2a0-471d-9719-32280d0673f7",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : null,
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : null,
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783323601.613017500,
+  "lastAccessedAt" : 1783323601.616177100,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "goal: Learn Python",
+    "timestamp" : 1783323601.615171900,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "Goal accepted. Shree is now working autonomously.",
+    "timestamp" : 1783323601.616177100,
+    "intent" : null
+  } ],
+  "summary" : "USER: goal: Learn Python\nAI: Goal accepted. Shree is now working autonomously.\n",
+  "messageCount" : 2,
+  "expired" : false,
+  "firstMessage" : "goal: Learn Python"
+}

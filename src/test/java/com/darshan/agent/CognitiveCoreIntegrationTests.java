@@ -54,21 +54,19 @@ class CognitiveCoreIntegrationTests {
 
     @Test @DisplayName("Identity: Remember user name and recall it")
     void testUserIdentityMemory() throws Exception {
-        identityEngine.perceive("My name is Darshan");
-        assertEquals("Darshan", userProfile.getName());
-        var response = agentService.process("Who am I?", null);
+        // Identity is now session-scoped, not global
+        var session = sessionManager.createSession();
+        var ctx = session.getContext();
+        identityEngine.perceive("My name is Darshan", ctx);
+        assertEquals("Darshan", ctx.getUserName());
+        var response = agentService.process("Who am I?", session.getSessionId());
         assertTrue(response.getSuggestion().contains("Darshan"));
     }
 
     @Test @DisplayName("Identity: 'Who am I?' before any name is set returns unknown")
     void testIdentityBeforeSet() throws Exception {
-        String currentName = userProfile.getName();
         var response = agentService.process("Who am I?", null);
-        if (currentName == null) {
-            assertTrue(response.getSuggestion().contains("don't know"));
-        } else {
-            assertTrue(response.getSuggestion().contains(currentName));
-        }
+        assertTrue(response.getSuggestion().contains("don't know"));
     }
 
     @Test @DisplayName("Continuity: Session switching restores context")
@@ -82,14 +80,17 @@ class CognitiveCoreIntegrationTests {
         assertEquals(2, loadedA.get().getMessageCount());
     }
 
-    @Test @DisplayName("Continuity: Identity remembered across sessions")
+    @Test @DisplayName("Continuity: Identity is session-isolated (not shared across sessions)")
     void testIdentityAcrossSessions() throws Exception {
         var session1 = sessionManager.createSession();
         agentService.process("My name is Darshan", session1.getSessionId());
-        assertEquals("Darshan", userProfile.getName());
+        // Session 1 knows Darshan
+        var response1 = agentService.process("Who am I?", session1.getSessionId());
+        assertTrue(response1.getSuggestion().contains("Darshan"));
+        // Session 2 (fresh) does NOT know Darshan — identity is session-isolated
         var session2 = sessionManager.createSession();
-        var response = agentService.process("Who am I?", session2.getSessionId());
-        assertTrue(response.getSuggestion().contains("Darshan"));
+        var response2 = agentService.process("Who am I?", session2.getSessionId());
+        assertTrue(response2.getSuggestion().contains("don't know"));
     }
 
     @Test @DisplayName("Goal: Create and track a goal")
@@ -178,14 +179,14 @@ class CognitiveCoreIntegrationTests {
         assertEquals("FOLLOW_UP", intentEngine.detectIntent("next"));
     }
 
-    @Test @DisplayName("Intent: 'Continue' detected as FOLLOW_UP intent (no active lesson)")
+    @Test @DisplayName("Intent: 'Continue' detected as CONTINUE_LESSON (routes through TeachingEngine)")
     void testContinueIntentDetected() {
-        assertEquals("FOLLOW_UP", intentEngine.detectIntent("continue"));
+        assertEquals("CONTINUE_LESSON", intentEngine.detectIntent("continue"));
     }
 
-    @Test @DisplayName("Intent: 'Learn X' detected as LEARN intent")
+    @Test @DisplayName("Intent: 'Learn X' detected as START_COURSE (known course)")
     void testLearnIntentDetected() {
-        assertEquals("LEARN", intentEngine.detectIntent("Learn Spring Boot"));
+        assertEquals("START_COURSE", intentEngine.detectIntent("Learn Spring Boot"));
     }
 
     @Test @DisplayName("Intent: 'Who am I' detected as WHO_AM_I intent")

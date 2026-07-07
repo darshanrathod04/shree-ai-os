@@ -1,0 +1,75 @@
+{
+  "sessionId" : "57a5ea85-333f-4bbc-a8ab-67d1a50e8234",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "COMPLETE_LESSON",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : "java",
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 1,
+    "completed" : false,
+    "completedLessons" : [ 0 ],
+    "completedChapters" : [ ],
+    "startedAt" : 1783333724.336069500,
+    "lastAccess" : 1783333897.529968500,
+    "learningStatus" : "IN_PROGRESS",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 1
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783333695.398697300,
+  "lastAccessedAt" : 1783333976.218982500,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "hii",
+    "timestamp" : 1783333695.410185500,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.",
+    "timestamp" : 1783333695.421877000,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "learn java",
+    "timestamp" : 1783333724.332997600,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDCD8 **Lesson 1**\n\nHello everyone! Welcome to our beginner's course in Java Programming, specifically focusing on this introductin session. Today we will learn about Java itself—what it is and how you can begin your journey by setting up a development environment for coding with Java. I hope that sounds exciting; let me guide you through the basics!\n\nTo start off: Java isn't just one language, but rather an ecosystem of languages built on top of each other in what we call JVM (Java Virtual Machine). Essentially it allows us to run code written using its syntax. The beauty is that a piece of software created with Java can be used across different operating systems and devices!\n\nLet's move onto setting up your development environment: \n1) First, you need an Integrated Development Environment (IDE), which will help simplify the coding process by organizing code in real-time. I recommend using Eclipse or IntelliJ IDEA for Java programming as they have excellent support and lots of helpful features especially tailored to our needs today! So go ahead & download them if haven't already; then, install it on your computer following its installation guide – that’s all there is to it in terms setting up the environment.\n2) Next step involves installing JDK (Java Development Kit). This kit provides everything you need as a Java programmer including compilers and debuggers along with runtime libraries so they can be used without any trouble! Just visit Oracle's website where these are available for free download – follow their instructions carefully to ensure successful installation.\n3) Finally, set up your workspace by creating projects within IDE itself which makes things easier when coding later on - just right-click anywhere inside the project explorer tab and select 'New Java Project'. Give it a name like \"HelloWorld\" or something equally simple yet memorable! You're all done with setting up an environment to start learning Java programming now.\n\nRemember, understanding what you are using is half of being able successfully code in any language - this includes familiarizing yourself not just about syntax but also on how your chosen tools (IDE & JDK) work together seamlessly alongside each other! That's all for today folks – hope it was helpful and that now with these essentials under control, we can move forward into learning more exciting things like writing our first Java Program in the upcoming sessions. Happy coding ahead everyone! \n\nLet me know if you have any questions or doubts about setting everything up properly before moving onto actual programming - just ask away and I'll be happy to assist further with details as needed too, cheers for now till next time when we learn something new together on this amazing journey towards becoming proficient Java developers!\n\n---\nSay **'complete'** to mark this lesson done and continue.\nSay **'exit course'** to leave the course.\nSay **'progress'** to see your course progress.",
+    "timestamp" : 1783333783.297781600,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "complete",
+    "timestamp" : 1783333897.514059800,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDCD8 **Lesson 2**\n\nWelcome to our beginner Java programming course! Today we'll be diving into Lesson Two of Chapter One which focuses on Variables and Data Types. In this session, you will learn about primitive types in Java such as `int`, `char`, `double`, etc., how they differ from each other and the role variables play when storing these data types.\n\nWe'll also touch upon type conversion or casting - converting one data type into another that is appropriate for a given context, which can sometimes be tricky but essential to understand. \n\nHere are our key learning points:\n1. Understanding primitive types and their uses in Java programming. These include `int`, `char`, `float` (or `double`), `boolean`, etc. Each has different ranges of values they represent - integers for whole numbers, characters representing symbols or letters, floating-point numbers that can contain decimal places among others.\n2. Learning how to declare and use variables in Java; here's a simple code snippet: \n```java\nint age = 18; //declaring an integer variable 'age' with initial value of 18\nchar gradeLevel = 'A'; //a character type declaration for letter grades A-F.\ndouble gpa = 3.5; // a double to represent decimal numbers like GPA, which has fractional parts too!\nboolean isJavaProgrammer = true; //Boolean variables can only be True or False\n```\nIn this code snippet we've declared four different types of variables: integer (`age`), character(`gradeLevel`) and floating-point data type (`gpa`). We also have a boolean variable - `isJavaProgrammer`. \n3. Understanding how to convert one primitive data type into another, which is called casting or Type Conversion in Java world (for example converting an int to a double). Here's an illustration:\n```javaalaue = Math.round(f); //converting float result of some mathematical operation into integer using 'Math.round()'.\ndouble newValue= 5; //an instance where we only have the desired value in Double format and doesn’t need conversion to int, just assignment can be done without any explicit cast!\n```\nIn this segment you've seen how a floating-point number `f` is converted into an integer using casting with 'Math.round()'. In cases like when we already have the desired value in double format as shown above where no conversion was needed, just assigning it to another variable works fine without any explicit casts!\n4. Finally understanding and practicing some control flow concepts by integrating variables within them (for loop or if-else statements). Here's a small example: \n```java\nint age = 18; //initial value of 'age' as an integer variable here, assigned to start our for loop from this point.\nif(age>=20){   \n   System.out.println(\"You are old enough.\");    \n}else{     \n   System.out.println(\"Keep growing!\"); \n} //A simple if-else statement using the integer variable 'age' to decide which message should be printed out, based on its value compared against a set condition (20 in this case).   \n```\nWith these points and code snippets as references, I hope you can follow along with our lesson. Keep practicing your coding skills!\n\n---\nSay **'complete'** to mark this lesson done and continue.\nSay **'exit course'** to leave the course.\nSay **'progress'** to see your course progress.",
+    "timestamp" : 1783333976.217973000,
+    "intent" : null
+  } ],
+  "summary" : "USER: hii\nAI: \uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.\nUSER: learn java\nAI: \uD83D\uDCD8 **Lesson 1**\n\nHello everyone! Welcome to our be...\nUSER: complete\nAI: \uD83D\uDCD8 **Lesson 2**\n\nWelcome to our beginner Java prog...\n",
+  "expired" : false,
+  "messageCount" : 6,
+  "firstMessage" : "hii"
+}

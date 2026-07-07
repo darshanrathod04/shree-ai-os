@@ -1,0 +1,19 @@
+{
+  "title": "Bank Account Management System",
+  "problemStatement": "Design and implement a simple bank account management system using OOP concepts.",
+  "requirements": [
+    "Create a base Account class with accountNumber, balance, and ownerName",
+    "Implement SavingsAccount with interest rate and minimum balance",
+    "Implement CheckingAccount with overdraft limit",
+    "Support deposit, withdraw, and displayBalance operations",
+    "Demonstrate polymorphism by processing different account types"
+  ],
+  "expectedTopics": ["Classes and Objects", "Inheritance", "Polymorphism", "Encapsulation"],
+  "hints": [
+    "Start with the base Account class and common operations",
+    "Use method overriding for withdraw logic",
+    "Use a List<Account> to demonstrate polymorphic processing",
+    "Add validation for withdrawal limits"
+  ],
+  "difficulty": "BEGINNER"
+}

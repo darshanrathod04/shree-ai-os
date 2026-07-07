@@ -1,0 +1,42 @@
+{
+  "sessionId" : "bec46d52-b737-464a-8725-d0fdac327f7d",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "Past experiences:\nRelevant past experiences:\n- User: My name is Darshan\n  Outcome: Stored identity: Darshan\n- User: My name is Darshan\n  Outcome: Stored identity: Darshan",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : "Darshan",
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783323601.675429900,
+  "lastAccessedAt" : 1783323694.671218000,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "My name is Darshan",
+    "timestamp" : 1783323601.677431900,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello! It's great to connect with you, **Darshan**. How can I assist you today in your quest for knowledge? Remember, no matter the question or learning goal you have, feel free to ask and we will embark on this educational journey together. What would you like to focus on next? Take your time.",
+    "timestamp" : 1783323694.671218000,
+    "intent" : null
+  } ],
+  "summary" : "USER: My name is Darshan\nAI: \uD83D\uDE0A Hello! It's great to connect with you, **Darsha...\n",
+  "messageCount" : 2,
+  "expired" : false,
+  "firstMessage" : "My name is Darshan"
+}

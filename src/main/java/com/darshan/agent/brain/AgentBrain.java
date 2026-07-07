@@ -19,6 +19,9 @@ import com.darshan.agent.project.ProjectIntelligenceEngine;
 import com.darshan.agent.personality.PersonalityEngine;
 import com.darshan.agent.router.SkillRouter;
 import com.darshan.agent.skills.Skill;
+import com.darshan.agent.learning.CourseState;
+import com.darshan.agent.learning.LearningSessionEngine;
+import com.darshan.agent.learning.TeachingEngine;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -43,6 +46,8 @@ public class AgentBrain {
     private final ProjectIntelligenceEngine projectIntelligence;
     private final ChiefOfStaffEngine chiefOfStaff;
     private final AutonomousPlanningEngine planningEngine;
+    private final LearningSessionEngine learningSessionEngine;
+    private final TeachingEngine teachingEngine;
 
     public AgentBrain(
             CognitiveGovernorEngine governor,
@@ -60,7 +65,9 @@ public class AgentBrain {
             KnowledgeGraphEngine knowledgeGraph,
             ProjectIntelligenceEngine projectIntelligence,
             ChiefOfStaffEngine chiefOfStaff,
-            AutonomousPlanningEngine planningEngine
+            AutonomousPlanningEngine planningEngine,
+            LearningSessionEngine learningSessionEngine,
+            TeachingEngine teachingEngine
     ) {
         this.governor = governor;
         this.stateMachine = stateMachine;
@@ -78,6 +85,8 @@ public class AgentBrain {
         this.projectIntelligence = projectIntelligence;
         this.chiefOfStaff = chiefOfStaff;
         this.planningEngine = planningEngine;
+        this.learningSessionEngine = learningSessionEngine;
+        this.teachingEngine = teachingEngine;
     }
 
     // =====================================================
@@ -86,7 +95,8 @@ public class AgentBrain {
     public AgentResponse process(
             String input,
             ConversationContext context,
-            LessonState lessonState
+            LessonState lessonState,
+            CourseState courseState
     ) throws Exception {
 
         if (context == null) {
@@ -385,9 +395,84 @@ public class AgentBrain {
                 return new AgentResponse(response.toString(), false);
             }
 
+            // === COURSE LEARNING INTENTS ===
+            // These MUST bypass ChatSkill and go directly through TeachingEngine
+
+            case "START_COURSE": {
+                System.out.println("[AgentBrain] EXECUTING START_COURSE BRANCH (via TeachingEngine)");
+                String courseName = input.replaceFirst("(?i)(start course|begin course|start learning|enroll in course|today we learn|today we will learn|i want to learn|teach me|teach me about|start|begin|learn|teach)\\s+", "").trim();
+                if (courseName.isEmpty() || isGenericCoursePhrase(courseName)) {
+                    return new AgentResponse("Which course would you like to start? Available: java, spring-boot", false);
+                }
+                String result = learningSessionEngine.startCourse(courseName, courseState);
+                return new AgentResponse(result, false);
+            }
+
+            case "CONTINUE_LESSON": {
+                System.out.println("[AgentBrain] EXECUTING CONTINUE_LESSON BRANCH (via TeachingEngine)");
+                if (!courseState.hasActiveCourse()) {
+                    return new AgentResponse("No active course. Say 'start course <name>' to begin.", false);
+                }
+                String result = learningSessionEngine.continueLesson(courseState);
+                return new AgentResponse(result, false);
+            }
+
+            case "COMPLETE_LESSON": {
+                System.out.println("[AgentBrain] EXECUTING COMPLETE_LESSON BRANCH");
+                if (!courseState.hasActiveCourse()) {
+                    return new AgentResponse("No active course. Say 'start course <name>' to begin.", false);
+                }
+                String result = learningSessionEngine.completeLesson(courseState);
+                return new AgentResponse(result, false);
+            }
+
+            case "CURRENT_LESSON": {
+                System.out.println("[AgentBrain] EXECUTING CURRENT_LESSON BRANCH (via TeachingEngine)");
+                if (!courseState.hasActiveCourse()) {
+                    return new AgentResponse("No active course. Say 'start course <name>' to begin.", false);
+                }
+                String result = learningSessionEngine.currentLesson(courseState);
+                return new AgentResponse(result, false);
+            }
+
+            case "TEACH_TOPIC": {
+                System.out.println("[AgentBrain] EXECUTING TEACH_TOPIC BRANCH (via TeachingEngine)");
+                if (!courseState.hasActiveCourse()) {
+                    return new AgentResponse("No active course. Say 'start course <name>' to begin.", false);
+                }
+                // Extract the actual topic question from the input
+                String topic = input.replaceFirst("(?i)(explain|what is|what's|what are|tell me about|describe|how does|how do|what does)\\s+", "").trim();
+                if (topic.isEmpty()) {
+                    topic = input;
+                }
+                String result = learningSessionEngine.teachTopic(topic, courseState);
+                return new AgentResponse(result, false);
+            }
+
+            case "REPEAT_LESSON": {
+                System.out.println("[AgentBrain] EXECUTING REPEAT_LESSON BRANCH (via TeachingEngine)");
+                if (!courseState.hasActiveCourse()) {
+                    return new AgentResponse("No active course. Say 'start course <name>' to begin.", false);
+                }
+                String result = learningSessionEngine.repeatLesson(courseState);
+                return new AgentResponse(result, false);
+            }
+
+            case "LESSON_PROGRESS": {
+                System.out.println("[AgentBrain] EXECUTING LESSON_PROGRESS BRANCH");
+                String result = learningSessionEngine.progress(courseState);
+                return new AgentResponse(result, false);
+            }
+
+            case "EXIT_COURSE": {
+                System.out.println("[AgentBrain] EXECUTING EXIT_COURSE BRANCH");
+                String result = learningSessionEngine.exitCourse(courseState);
+                return new AgentResponse(result, false);
+            }
+
         }
 
-        // 7. SKILL ROUTING
+        // 7. SKILL ROUTING — learning intents should NOT reach this point
         Skill skill = router.route(intent);
         System.out.println("[AgentBrain] SKILL ROUTING | intent=" + intent + " | skill=" + (skill != null ? skill.getClass().getSimpleName() : "null"));
         String rawReply;
@@ -431,15 +516,38 @@ public class AgentBrain {
 
     public AgentResponse process(
             String input,
+            ConversationContext context,
+            LessonState lessonState
+    ) throws Exception {
+        return process(input, context, lessonState, new CourseState());
+    }
+
+    public AgentResponse process(
+            String input,
             ConversationContext context
     ) throws Exception {
-        return process(input, context, new LessonState());
+        return process(input, context, new LessonState(), new CourseState());
+    }
+
+    /**
+     * Check if the input is just a leftover generic phrase after course name extraction.
+     */
+    private boolean isGenericCoursePhrase(String text) {
+        if (text == null || text.isBlank()) return true;
+        String t = text.toLowerCase().trim();
+        return t.contains("course") || t.contains("lesson") || t.contains("start")
+                || t.contains("begin") || t.contains("learn") || t.contains("teach")
+                || t.contains("today") || t.contains("we will") || t.equals("me");
     }
 
     private boolean isLearningIntent(String intent) {
         return "LEARN".equals(intent) || "CONTINUE".equals(intent)
                 || "PREVIOUS".equals(intent) || "SUMMARY".equals(intent)
-                || "QUIZ".equals(intent);
+                || "QUIZ".equals(intent)
+                || "START_COURSE".equals(intent) || "CONTINUE_LESSON".equals(intent)
+                || "COMPLETE_LESSON".equals(intent) || "CURRENT_LESSON".equals(intent)
+                || "LESSON_PROGRESS".equals(intent) || "EXIT_COURSE".equals(intent)
+                || "TEACH_TOPIC".equals(intent) || "REPEAT_LESSON".equals(intent);
     }
 
     private String buildInstruction(String intent, boolean isLearningIntent, LessonState lessonState) {

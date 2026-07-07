@@ -1,0 +1,65 @@
+{
+  "sessionId" : "371e0ea2-788b-4f6c-bf51-cbff83df3b97",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "WHO_AM_I",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : "Darshan",
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783332601.930800500,
+  "lastAccessedAt" : 1783332613.651472900,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "My name is Darshan",
+    "timestamp" : 1783332601.934239900,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello! It's great to meet you, **Darshan**. As your personal AI tutor and assistant created by Shree, I am here to support your educational journey with warmth and encouragement. If there are specific subjects or areas of interest that pique your curiosity, please let me know so we can tailor a learning plan just for you! Take your time.",
+    "timestamp" : 1783332613.637466200,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "Who am I?",
+    "timestamp" : 1783332613.645471000,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "Your name is Darshan.",
+    "timestamp" : 1783332613.651472900,
+    "intent" : null
+  } ],
+  "messageCount" : 4,
+  "summary" : "USER: My name is Darshan\nAI: \uD83D\uDE0A Hello! It's great to meet you, **Darshan**. As ...\nUSER: Who am I?\nAI: Your name is Darshan.\n",
+  "firstMessage" : "My name is Darshan",
+  "expired" : false
+}
