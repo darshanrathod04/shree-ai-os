@@ -1,5 +1,10 @@
 package com.darshan.agent.learning;
 
+import com.darshan.agent.learning.adaptive.AdaptiveLearningEngine;
+import com.darshan.agent.learning.adaptive.StudentLearningProfile;
+import com.darshan.agent.learning.quiz.QuizEngine;
+import com.darshan.agent.learning.quiz.QuizResult;
+import com.darshan.agent.learning.quiz.QuizSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -13,14 +18,17 @@ import java.util.Optional;
  * per-session CourseState transitions. For lesson content generation,
  * it delegates to TeachingEngine → LessonPromptBuilder → Ollama.
  *
+ * Adaptive learning is delegated to AdaptiveLearningEngine, and decisions
+ * are passed through to RecommendationEngine (never directly to LLM).
+ *
  * This ensures teaching requests go through:
  *   Intent → START_COURSE / CONTINUE_LESSON / TEACH_TOPIC
  *   → LearningSessionEngine → TeachingEngine → LessonPromptBuilder → Ollama
  *
  * NOT through ChatSkill or PromptBuilder.
  *
- * All state is session-isolated via CourseState (owned by ConversationSession).
- * No static mutable state.
+ * All state is session-isolated via CourseState + StudentLearningProfile
+ * (both owned by ConversationSession). No static mutable state.
  */
 @Component
 public class LearningSessionEngine {
@@ -29,11 +37,17 @@ public class LearningSessionEngine {
 
     private final CourseEngine courseEngine;
     private final TeachingEngine teachingEngine;
+    private final AdaptiveLearningEngine adaptiveEngine;
+    private final QuizEngine quizEngine;
 
     public LearningSessionEngine(CourseEngine courseEngine,
-                                  TeachingEngine teachingEngine) {
+                                  TeachingEngine teachingEngine,
+                                  AdaptiveLearningEngine adaptiveEngine,
+                                  QuizEngine quizEngine) {
         this.courseEngine = courseEngine;
         this.teachingEngine = teachingEngine;
+        this.adaptiveEngine = adaptiveEngine;
+        this.quizEngine = quizEngine;
     }
 
     /**
@@ -250,5 +264,94 @@ public class LearningSessionEngine {
      */
     public boolean hasActiveCourse(CourseState courseState) {
         return courseState != null && courseState.hasActiveCourse();
+    }
+
+    // ================================================================
+    // Adaptive Learning Integration
+    // ================================================================
+
+    /**
+     * Get the underlying AdaptiveLearningEngine for direct adaptive operations.
+     */
+    public AdaptiveLearningEngine getAdaptiveEngine() {
+        return adaptiveEngine;
+    }
+
+    /**
+     * Record lesson completion with adaptive tracking.
+     * Updates both CourseState and StudentLearningProfile.
+     */
+    public void recordLessonAdaptive(CourseState courseState,
+                                      StudentLearningProfile profile) {
+        int chapterIdx = courseState.getCurrentChapterIndex();
+        int lessonIdx = courseState.getCurrentLessonIndex();
+        adaptiveEngine.recordLessonCompleted(profile, chapterIdx, lessonIdx);
+        log.info("[ADAPTIVE] Lesson recorded adaptively: chapter={} lesson={}",
+                chapterIdx + 1, lessonIdx + 1);
+    }
+
+    /**
+     * Get the adaptive profile summary for display.
+     */
+    public String adaptiveProfileSummary(StudentLearningProfile profile) {
+        return adaptiveEngine.getProfileSummary(profile);
+    }
+
+    // ================================================================
+    // Quiz Integration
+    // ================================================================
+
+    /**
+     * Start a quiz for the current course chapter.
+     */
+    public String startQuiz(CourseState courseState, QuizSession quizSession) {
+        if (courseState == null || !courseState.hasActiveCourse()) {
+            return "No active course. Say 'start course <name>' to begin.";
+        }
+        String courseName = courseState.getCourseName();
+        int chapterNumber = courseState.getCurrentChapterIndex() + 1;
+        log.info("[QUIZ] Starting quiz: course='{}' chapter={}", courseName, chapterNumber);
+        return quizEngine.startQuiz(quizSession, courseName, chapterNumber);
+    }
+
+    /**
+     * Submit an answer for the current quiz question.
+     */
+    public String submitQuizAnswer(QuizSession quizSession, Object answer) {
+        if (quizSession == null || !quizSession.hasActiveQuiz()) {
+            return "No active quiz. Say 'start quiz' to begin one.";
+        }
+        log.info("[QUIZ] Submitting answer: questionIndex={}", quizSession.getCurrentQuestionIndex() + 1);
+        return quizEngine.submitAnswer(quizSession, answer);
+    }
+
+    /**
+     * Finish the current quiz early and compute result.
+     */
+    public String finishQuiz(QuizSession quizSession, StudentLearningProfile profile) {
+        if (quizSession == null || !quizSession.hasActiveQuiz()) {
+            return "No active quiz to finish.";
+        }
+        String result = quizEngine.finishQuiz(quizSession);
+        // Compute full result with adaptive integration
+        quizEngine.getResult(quizSession, profile);
+        return result;
+    }
+
+    /**
+     * Get the current quiz question without submitting.
+     */
+    public String getCurrentQuizQuestion(QuizSession quizSession) {
+        if (quizSession == null || !quizSession.hasActiveQuiz()) {
+            return null;
+        }
+        return quizEngine.getCurrentQuestion(quizSession);
+    }
+
+    /**
+     * Check if there is an active quiz.
+     */
+    public boolean hasActiveQuiz(QuizSession quizSession) {
+        return quizEngine.hasActiveQuiz(quizSession);
     }
 }

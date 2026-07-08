@@ -1,0 +1,155 @@
+{
+  "sessionId" : "9ae9c2c6-44de-4576-af8f-92ba9aad9ffd",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : "Darshan",
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : "java",
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : 1783423353.449833100,
+    "lastAccess" : 1783423353.449833100,
+    "learningStatus" : "IN_PROGRESS",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1783423197.042496300,
+    "lastUpdated" : 1783423197.042496300,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "totalQuestions" : 0,
+    "currentQuestion" : null,
+    "remainingQuestions" : 0,
+    "inProgress" : false
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783423197.042496300,
+  "lastAccessedAt" : 1783424173.440192000,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "hello shree , i am darshan",
+    "timestamp" : 1783423197.078102100,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.",
+    "timestamp" : 1783423197.096662400,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "who is prime minister of india",
+    "timestamp" : 1783423215.428701300,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A As Shree, I'm here to assist you! The current **Prime Minister** of India is Narendra Modi. He has been serving in this role since May 26th, 2014. Remember that political leaders can change over time due to elections and other factors. To stay informed about the latest developments regarding Indian politics or leadership updates, I recommend regularly checking reputable news sources like The Times of India or BBC World News for accurate information. Keep pursuing your goals with determination! Take your time.",
+    "timestamp" : 1783423239.594999900,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "what is java",
+    "timestamp" : 1783423277.145499100,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "No active course. Say 'start course <name>' to begin.",
+    "timestamp" : 1783423277.152764600,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "what is spring",
+    "timestamp" : 1783423294.381937700,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "No active course. Say 'start course <name>' to begin.",
+    "timestamp" : 1783423294.385973300,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "what is AI",
+    "timestamp" : 1783423330.930610700,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "No active course. Say 'start course <name>' to begin.",
+    "timestamp" : 1783423330.936362600,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "learn java",
+    "timestamp" : 1783423353.439748600,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDCD8 **Lesson 1**\n\n# Introduction to Java Lesson\n\nThis introductory course on Java is designed for beginners who want to learn about one of the most popular programming languages in use today, especially within enterprise and mobile app development sectors like Android apps. Below you will find a comprehensive lesson plan covering everything from understanding what Java is, setting up your development environment, writing basic programs using `Hello World`, exploring real-world applications powered by Java, to summarizing the key points of this course.\n\n## Lesson Objective: Understand What Java Is and Set Up Your Development Environment \nIn this lesson, we aim for you to grasp a foundational understanding of what Java is as well as how to set up your development environment so that you can start writing simple programs in no time. We will cover the key characteristics of Java, its real-world applications, and provide examples along with practice tasks throughout our journey together!\n\n## Explanation: What Is Java? \nJava was created by Sun Microsystems (now Oracle) in 1995 as a \"network computer language\" capable of being executed on any device regardless of its underlying hardware or operating system. This ability is achieved through the use of bytecode, which can be run inside an interpreter known as Java Virtual Machine (JVM).\n\nSome key characteristics include:\n- Platform independence via JVM Bytecode \n- Object-oriented with classes and inheritance  \n- Strongly typed and statically compiled    \n- Automatic memory management through garbage collection   \n- Rich standard library (Java API) for various functionalities.\n\n## Example Program Code Snippet: Hello World in Java\nBelow is an example of a simple \"Hello, World\" program written using the `System.out` class to display text on the console screen when executed by JVM through your terminal/command prompt or IDE such as Eclipse etc.: \n```java\npublic class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, Java!\");\n   0-5: Write a program that prints your name and age in the console screen when executed by JVM through terminal/command prompt or IDE such as Eclipse etc.: \n```java\npublic class MyInfoPrinter {\n   public static void main(String[] args) {\n       System.out.println(\"My Name is John Doe\");\n       System.out.println(\"I am \" + new java.time.LocalDate().minusYears(25).getYear() + \" years old.\"); \n   0-6: Summary and Real World Example of Java Applications in Action  \nIn summary, we have covered the basics about what is it that makes Java a versatile language for enterprise as well as mobile applications development. In addition to understanding its core characteristics like platform independence via JVM bytecode among others; you also learned how easy setting up your own environment can be using JDK (Java Development Kit) and IDEs such as Eclipse, NetBeans etc., allowing us move on towards writing our first Java programs including simple \"Hello World\" program.\nAs a real-world example of the impact that programming language like Java has had so far; you learned about its use cases which span across different sectors namely Android apps (over 3 billion devices) and enterprise banking systems among others with examples such as JPMorgan Chase using it for trading platforms etc.\nTo recap, in this lesson we explored what Java is all about along with setting up your own development environment which allowed us write our first programs including \"Hello World\" program! We also discussed its real-world applications powered by millions of developers worldwide making use out of it every day for various industries ranging from Android app to enterprise banking systems. So what are you waiting for? Let's start learning Java today and become a part of this exciting journey together as we move forward through upcoming lessons!\n## Practice Exercises \n1) Install JDK (Java Development Kit), which is required environment setup to write, compile & execute java programs. You can download it from Oracle or OpenJDK source repository online for free usage: https://www.oracle.com/java/javase/jdk-downloads.html#t=us&lang=en\n2) Write a program that prints your name and age using `System.out` class to display text on the console screen when executed by JVM through terminal or command prompt etc.: \n```java\npublic class MyInfoPrinter {\n   public static void main(String[] args) {\n       System.out.println(\"My Name is John Doe\");\n       System.out.println(\"I am \" + new java.time.LocalDate().minusYears(25).getYear() + \" years\n\n---\nSay **'complete'** to mark this lesson done and continue.\nSay **'exit course'** to leave the course.\nSay **'progress'** to see your course progress.",
+    "timestamp" : 1783423468.387029000,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "next",
+    "timestamp" : 1783424086.365013300,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDCCB **Next Task**\n\n**Research topic**\nGather information\n\n⏱️ Estimated: 4 hours\n\uD83D\uDCCA Priority: HIGH\n\uD83D\uDCC8 Progress: 0%",
+    "timestamp" : 1783424086.513705000,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "okay",
+    "timestamp" : 1783424104.728164700,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A **Darshan** is on a mission to secure an **internship**, which suggests he's eager about gaining professional experience in his field of study or interest. As Shree, my role as your AI assistant will be crucial here! Let’s create a clear and actionable plan:\n\n1. Identify the industry that interests you most—whether it's tech, finance, media, etc.—and research companies within this sector known for offering internships. Use resources like *InternshipRoom* or LinkedIn to find potential opportunities. \n\n2. Once a list of appealing positions is compiled, carefully read the job descriptions and requirements again. Make sure you understand what they're looking for in candidates regarding skills, experience, and educational backgrounds. This will help tailor your application accordingly.\n\n3. Start building or updating **resumes** that highlight relevant coursework, projects, volunteer work, leadership roles (if any), extracurricular activities, and transferable skills like communication, teamwork, problem-solving, etc., which are valuable in almost every professional setting. Aim for a concise yet impactful presentation of your qualifications to stand out from other applicants.\n\n4. For cover letters or application essays (if required), focus on expressing genuine interest and understanding the company's mission align with yours, as well as how you can contribute positively during your internship period while continuing academic responsibilities—show balance! Referencing a recent personal project where similar skills were applied could be beneficial.\n\n5. Network strategically by connecting with alumni from universities who have secured an internship or been hired at the companies of interest, through platforms like *AlumniMatch* and LinkedIn. They can offer insights into company culture and provide recommendations based on shared experiences—a great way to get noticed!\n\n6. Prepare for interviews by researching common interview questions within your chosen field or specific position roles (like behavioral, technical, situational judgement test). Practice with a friend or join mock interviews via platforms like *Pramp* and make use of resources such as the book “Getting Unstuck” to improve problem-solving skills if needed.\n\n7. Lastly, stay organized by setting clear deadlines for each application step: drafting your resume/cover letter, completing interviews (if invited), follow-up emails post-interview etc., and use tools like **Trello** or a simple Google Calendar to track these milestones effectively.\n\nRemember, persistence is key! Good luck on this exciting journey towards your internship—I’m here for guidance every step of the way. Don't hesitate if you need more specific advice based on individual career paths; let me know how I can assist further! Take your time.",
+    "timestamp" : 1783424173.439192100,
+    "intent" : null
+  } ],
+  "summary" : "USER: hello shree , i am darshan\nAI: \uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.\nUSER: who is prime minister of india\nAI: \uD83D\uDE0A As Shree, I'm here to assist you! The current *...\nUSER: what is java\nAI: No active course. Say 'start course <name>' to beg...\nUSER: what is spring\nAI: No active course. Say 'start course <name>' to beg...\nUSER: what is AI\nAI: No active course. Say 'start course <name>' to beg...\n... (6 more messages)\n",
+  "firstMessage" : "hello shree , i am darshan",
+  "messageCount" : 16,
+  "expired" : false
+}

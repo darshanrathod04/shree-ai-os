@@ -30,7 +30,7 @@ import java.util.Optional;
 public class LessonPromptBuilder {
 
     private static final Logger log = LoggerFactory.getLogger(LessonPromptBuilder.class);
-    private static final int MAX_PROMPT_LENGTH = 2500;
+    private static final int MAX_PROMPT_LENGTH = 1200;
 
     private final CourseEngine courseEngine;
     private final CurriculumService curriculumService;
@@ -92,36 +92,33 @@ public class LessonPromptBuilder {
     private String buildCurriculumPrompt(LessonResource lesson, CourseState courseState, String userQuestion) {
         StringBuilder prompt = new StringBuilder();
 
-        prompt.append("You are a professional instructor. Teach the following lesson from the curriculum.\n");
-        prompt.append("Do NOT invent new topics. Do NOT skip sections. Explain the content thoroughly.\n\n");
+        prompt.append("Teach concisely. Course: ").append(courseState.getCourseName());
+        prompt.append(" | Ch: ").append(courseState.getCurrentChapterIndex() + 1);
+        prompt.append(" | Lesson: ").append(lesson.getTitle()).append("\n\n");
 
-        // Course context
-        prompt.append("Course: ").append(courseState.getCourseName()).append("\n");
-        prompt.append("Chapter: ").append(courseState.getCurrentChapterIndex() + 1).append("\n\n");
-
-        // Lesson content from curriculum
-        prompt.append("## Lesson Content\n\n");
-        prompt.append(lesson.toMarkdown()).append("\n");
+        // Lesson content from curriculum (compact)
+        String content = lesson.toMarkdown();
+        if (content.length() > 600) {
+            content = content.substring(0, 600) + "\n[...]";
+        }
+        prompt.append(content).append("\n");
 
         // User question (for TEACH_TOPIC)
         if (userQuestion != null && !userQuestion.isBlank()) {
-            prompt.append("## Student Question\n").append(userQuestion).append("\n\n");
+            prompt.append("Q: ").append(userQuestion).append("\n");
         }
 
-        prompt.append("## Instruction\n");
-        prompt.append("Explain this lesson only. Return markdown. Be thorough but concise.\n");
+        prompt.append("Explain this lesson only. Be concise.");
 
         // Enforce max length
         if (prompt.length() > MAX_PROMPT_LENGTH) {
             String truncated = prompt.substring(0, MAX_PROMPT_LENGTH - 50) +
-                    "\n[Content truncated — stay focused on key concepts]";
-            log.info("[LessonPromptBuilder] Prompt truncated from {} to {} chars",
-                    prompt.length(), truncated.length());
+                    "\n[truncated]";
+            log.info("[PROMPT] Truncated from {} to {} chars", prompt.length(), truncated.length());
             return truncated;
         }
 
-        log.info("[LessonPromptBuilder] Curriculum prompt built: {} chars for lesson '{}'",
-                prompt.length(), lesson.getTitle());
+        log.info("[PROMPT] Curriculum prompt: {} chars for '{}'", prompt.length(), lesson.getTitle());
         return prompt.toString();
     }
 
@@ -144,38 +141,26 @@ public class LessonPromptBuilder {
         int lessonIdx = courseState.getCurrentLessonIndex();
 
         StringBuilder prompt = new StringBuilder();
-        prompt.append("You are a tutor. Teach concisely.\n\n");
-
-        prompt.append("Course: ").append(course.getTitle()).append("\n");
-        prompt.append("Difficulty: ").append(course.getDifficulty()).append("\n\n");
-        prompt.append("Chapter: ").append(chapter.getTitle()).append("\n");
-        String chapterDesc = chapter.getDescription();
-        if (chapterDesc != null && !chapterDesc.isBlank()) {
-            prompt.append(chapterDesc).append("\n\n");
-        }
+        prompt.append("Teach concisely. ").append(course.getTitle());
+        prompt.append(" | ").append(chapter.getTitle());
 
         if (lessonIdx >= 0 && lessonIdx < chapter.getLessons().size()) {
             Lesson lesson = chapter.getLessons().get(lessonIdx);
-            prompt.append("Lesson: ").append(lesson.getTitle()).append("\n");
-            prompt.append("Objective: ").append(lesson.getObjective()).append("\n");
-            if (lesson.getEstimatedMinutes() > 0) {
-                prompt.append("Time: ").append(lesson.getEstimatedMinutes()).append(" min\n");
-            }
-            prompt.append("\n");
+            prompt.append(" | ").append(lesson.getTitle());
+            prompt.append(" | ").append(lesson.getObjective());
         }
 
+        prompt.append("\n");
         if (userQuestion != null && !userQuestion.isBlank()) {
-            prompt.append("Student asks: ").append(userQuestion).append("\n\n");
+            prompt.append("Q: ").append(userQuestion).append("\n");
         }
-
-        prompt.append("Teach the lesson now:");
+        prompt.append("Teach now:");
 
         if (prompt.length() > MAX_PROMPT_LENGTH) {
-            prompt = new StringBuilder(prompt.substring(0, MAX_PROMPT_LENGTH - 50) +
-                    "\n[Content truncated]");
+            prompt = new StringBuilder(prompt.substring(0, MAX_PROMPT_LENGTH - 50) + "\n[truncated]");
         }
 
-        log.info("[LessonPromptBuilder] Metadata prompt built: {} chars", prompt.length());
+        log.info("[PROMPT] Metadata prompt: {} chars", prompt.length());
         return prompt.toString();
     }
 }

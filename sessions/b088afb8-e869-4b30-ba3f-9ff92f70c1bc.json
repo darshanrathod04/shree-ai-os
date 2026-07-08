@@ -1,0 +1,65 @@
+{
+  "sessionId" : "b088afb8-e869-4b30-ba3f-9ff92f70c1bc",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : null,
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : null,
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1783420145.029656100,
+    "lastUpdated" : 1783420145.029656100,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783420145.029656100,
+  "lastAccessedAt" : 1783420145.032101300,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I am learning Spring Boot",
+    "timestamp" : 1783420145.032101300,
+    "intent" : null
+  } ],
+  "messageCount" : 1,
+  "summary" : "USER: I am learning Spring Boot\n",
+  "expired" : false,
+  "firstMessage" : "I am learning Spring Boot"
+}

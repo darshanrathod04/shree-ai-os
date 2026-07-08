@@ -22,6 +22,18 @@ import com.darshan.agent.skills.Skill;
 import com.darshan.agent.learning.CourseState;
 import com.darshan.agent.learning.LearningSessionEngine;
 import com.darshan.agent.learning.TeachingEngine;
+import com.darshan.agent.capability.CapabilityMatch;
+import com.darshan.agent.capability.CapabilityRegistry;
+import com.darshan.agent.resolver.CapabilityResolution;
+import com.darshan.agent.resolver.CapabilityResolver;
+import com.darshan.agent.cognition.uqc.ClassificationResult;
+import com.darshan.agent.cognition.uqc.UniversalQueryClassifier;
+import com.darshan.agent.learning.adaptive.AdaptiveLearningEngine;
+import com.darshan.agent.learning.adaptive.StudentLearningProfile;
+import com.darshan.agent.production.ConversationOptimizer;
+import com.darshan.agent.production.ContextResolutionEngine;
+import com.darshan.agent.production.FallbackEngine;
+import com.darshan.agent.production.ResponseRouter;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -48,6 +60,14 @@ public class AgentBrain {
     private final AutonomousPlanningEngine planningEngine;
     private final LearningSessionEngine learningSessionEngine;
     private final TeachingEngine teachingEngine;
+    private final AdaptiveLearningEngine adaptiveEngine;
+    private final ResponseRouter responseRouter;
+    private final ConversationOptimizer conversationOptimizer;
+    private final ContextResolutionEngine contextResolver;
+    private final FallbackEngine fallbackEngine;
+    private final UniversalQueryClassifier universalQueryClassifier;
+    private final CapabilityRegistry capabilityRegistry;
+    private final CapabilityResolver capabilityResolver;
 
     public AgentBrain(
             CognitiveGovernorEngine governor,
@@ -67,7 +87,15 @@ public class AgentBrain {
             ChiefOfStaffEngine chiefOfStaff,
             AutonomousPlanningEngine planningEngine,
             LearningSessionEngine learningSessionEngine,
-            TeachingEngine teachingEngine
+            TeachingEngine teachingEngine,
+            AdaptiveLearningEngine adaptiveEngine,
+            ResponseRouter responseRouter,
+            ConversationOptimizer conversationOptimizer,
+            ContextResolutionEngine contextResolver,
+            FallbackEngine fallbackEngine,
+            UniversalQueryClassifier universalQueryClassifier,
+            CapabilityRegistry capabilityRegistry,
+            CapabilityResolver capabilityResolver
     ) {
         this.governor = governor;
         this.stateMachine = stateMachine;
@@ -87,6 +115,14 @@ public class AgentBrain {
         this.planningEngine = planningEngine;
         this.learningSessionEngine = learningSessionEngine;
         this.teachingEngine = teachingEngine;
+        this.adaptiveEngine = adaptiveEngine;
+        this.responseRouter = responseRouter;
+        this.conversationOptimizer = conversationOptimizer;
+        this.contextResolver = contextResolver;
+        this.fallbackEngine = fallbackEngine;
+        this.universalQueryClassifier = universalQueryClassifier;
+        this.capabilityRegistry = capabilityRegistry;
+        this.capabilityResolver = capabilityResolver;
     }
 
     // =====================================================
@@ -96,7 +132,8 @@ public class AgentBrain {
             String input,
             ConversationContext context,
             LessonState lessonState,
-            CourseState courseState
+            CourseState courseState,
+            StudentLearningProfile learningProfile
     ) throws Exception {
 
         if (context == null) {
@@ -156,12 +193,24 @@ public class AgentBrain {
             );
         }
 
-        // 5. INTENT DETECTION
+        // 5. INTENT DETECTION — Shadow UQC (observer only, never changes routing)
+        ClassificationResult uqcResult = universalQueryClassifier.classify(input);
         String intent = intentEngine.detectIntent(input);
+        logUqcComparison(input, intent, uqcResult);
         context.setLastIntent(intent);
         System.out.println("[AgentBrain] DETECTED INTENT: " + intent);
 
-        // 5b. ROADMAP-AWARE REDIRECTION
+        // 5b. SHADOW CAPABILITY REGISTRY LOOKUP (observer only, never changes routing)
+        CapabilityMatch capabilityMatch = capabilityRegistry.findBestCapability(intent);
+        logCapabilityComparison(intent, capabilityMatch);
+
+        // 5c. SHADOW CAPABILITY RESOLVER (observer only, never changes routing)
+        // Uses deterministic scoring (intent 40%, priority 20%, context 20%, health 10%, availability 10%)
+        CapabilityResolution resolverResult = capabilityResolver.resolve(intent);
+        // Compare resolver prediction with actual handler (logs mismatches for analysis)
+        capabilityResolver.compareWithProduction(intent, null, mapIntentToHandler(intent));
+
+        // 5d. ROADMAP-AWARE REDIRECTION
         // If user says "next"/"continue" and an active roadmap exists,
         // redirect to NEXT_STEP instead of lesson follow-up
         if (("CONTINUE".equals(intent) || "FOLLOW_UP".equals(intent))
@@ -470,6 +519,20 @@ public class AgentBrain {
                 return new AgentResponse(result, false);
             }
 
+            // === QUIZ INTENTS ===
+
+            case "START_QUIZ": {
+                System.out.println("[AgentBrain] EXECUTING START_QUIZ BRANCH");
+                if (!courseState.hasActiveCourse()) {
+                    return new AgentResponse("No active course. Say 'start course <name>' to begin.", false);
+                }
+                // QuizSession is accessed from the session — we pass it through
+                // The caller (AgentService) will need to provide it. For now, we use
+                // a placeholder that will be resolved at the service layer.
+                String result = "Quiz functionality requires session integration. Use the session-aware API.";
+                return new AgentResponse(result, false);
+            }
+
         }
 
         // 7. SKILL ROUTING — learning intents should NOT reach this point
@@ -519,14 +582,14 @@ public class AgentBrain {
             ConversationContext context,
             LessonState lessonState
     ) throws Exception {
-        return process(input, context, lessonState, new CourseState());
+        return process(input, context, lessonState, new CourseState(), new StudentLearningProfile());
     }
 
     public AgentResponse process(
             String input,
             ConversationContext context
     ) throws Exception {
-        return process(input, context, new LessonState(), new CourseState());
+        return process(input, context, new LessonState(), new CourseState(), new StudentLearningProfile());
     }
 
     /**
@@ -547,7 +610,8 @@ public class AgentBrain {
                 || "START_COURSE".equals(intent) || "CONTINUE_LESSON".equals(intent)
                 || "COMPLETE_LESSON".equals(intent) || "CURRENT_LESSON".equals(intent)
                 || "LESSON_PROGRESS".equals(intent) || "EXIT_COURSE".equals(intent)
-                || "TEACH_TOPIC".equals(intent) || "REPEAT_LESSON".equals(intent);
+                || "TEACH_TOPIC".equals(intent) || "REPEAT_LESSON".equals(intent)
+                || "START_QUIZ".equals(intent);
     }
 
     private String buildInstruction(String intent, boolean isLearningIntent, LessonState lessonState) {
@@ -557,6 +621,52 @@ public class AgentBrain {
                     + ". Use a teaching tone.";
         }
         return "Respond naturally and helpfully.";
+    }
+
+    private void logUqcComparison(String input, String existingIntent, ClassificationResult uqcResult) {
+        boolean same = existingIntent.equals(uqcResult.getPredictedIntent());
+        String status = same ? "SAME" : "DIFFERENT";
+
+        System.out.println("[UQC] ========================================================");
+        System.out.println("[UQC] INPUT: " + input);
+        System.out.println("[UQC] OLD INTENT: " + existingIntent);
+        System.out.println("[UQC] PREDICTED: " + uqcResult.getPredictedIntent());
+        System.out.println("[UQC] CATEGORY: " + uqcResult.getQueryCategory());
+        System.out.println("[UQC] CONFIDENCE: " + String.format("%.0f%%", uqcResult.getConfidence() * 100));
+        System.out.println("[UQC] ENTITIES: " + uqcResult.getEntities());
+        System.out.println("[UQC] RULES: " + uqcResult.getMatchedRules());
+        System.out.println("[UQC] RESULT: " + status);
+        System.out.println("[UQC] PROCESSING: " + uqcResult.getProcessingTimeNanos() / 1_000_000 + "ms");
+        System.out.println("[UQC] ========================================================");
+    }
+
+    private void logCapabilityComparison(String intent, CapabilityMatch capabilityMatch) {
+        String currentHandler = mapIntentToHandler(intent);
+
+        System.out.println("[CAPABILITY] ========================================================");
+        System.out.println("[CAPABILITY] INTENT: " + intent);
+        System.out.println("[CAPABILITY] REGISTRY: " + (capabilityMatch != null ? capabilityMatch.getCapability().getName() : "null"));
+        System.out.println("[CAPABILITY] CURRENT: " + currentHandler);
+        System.out.println("[CAPABILITY] CONFIDENCE: " + (capabilityMatch != null ? String.format("%.0f%%", capabilityMatch.getConfidence() * 100) : "N/A"));
+        System.out.println("[CAPABILITY] RESULT: " + (capabilityMatch != null && capabilityMatch.getCapability().getName().equalsIgnoreCase(currentHandler) ? "SAME" : "DIFFERENT"));
+        System.out.println("[CAPABILITY] PROCESSING: " + (capabilityMatch != null ? capabilityMatch.getProcessingTimeNanos() / 1_000_000 + "ms" : "N/A"));
+        System.out.println("[CAPABILITY] ========================================================");
+    }
+
+    private String mapIntentToHandler(String intent) {
+        return switch (intent) {
+            case "START_COURSE", "CONTINUE_LESSON", "COMPLETE_LESSON", "CURRENT_LESSON",
+                 "TEACH_TOPIC", "REPEAT_LESSON", "EXIT_COURSE", "LESSON_PROGRESS", "LEARN" ->
+                    "LearningSessionEngine";
+            case "START_QUIZ", "CONTINUE_QUIZ", "SUBMIT_ANSWER", "FINISH_QUIZ", "QUIZ_RESULT" ->
+                    "QuizEngine";
+            case "PLAN", "ROADMAP_REQUEST", "NEXT_STEP", "COMPLETE_TASK", "PROGRESS", "CURRENT_TASK" ->
+                    "PlanningEngine";
+            case "GREETING" -> "GreetingSkill";
+            case "WHO_AM_I" -> "AgentBrain";
+            case "QUIZ" -> "LessonEngine";
+            default -> "ChatSkill";
+        };
     }
 
     private String stripPlaceholders(String reply) {
