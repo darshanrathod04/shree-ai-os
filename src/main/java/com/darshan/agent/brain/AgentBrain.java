@@ -24,6 +24,8 @@ import com.darshan.agent.learning.LearningSessionEngine;
 import com.darshan.agent.learning.TeachingEngine;
 import com.darshan.agent.capability.CapabilityMatch;
 import com.darshan.agent.capability.CapabilityRegistry;
+import com.darshan.agent.resolver.CapabilityResolution;
+import com.darshan.agent.resolver.CapabilityResolver;
 import com.darshan.agent.cognition.uqc.ClassificationResult;
 import com.darshan.agent.cognition.uqc.UniversalQueryClassifier;
 import com.darshan.agent.learning.adaptive.AdaptiveLearningEngine;
@@ -65,6 +67,7 @@ public class AgentBrain {
     private final FallbackEngine fallbackEngine;
     private final UniversalQueryClassifier universalQueryClassifier;
     private final CapabilityRegistry capabilityRegistry;
+    private final CapabilityResolver capabilityResolver;
 
     public AgentBrain(
             CognitiveGovernorEngine governor,
@@ -91,7 +94,8 @@ public class AgentBrain {
             ContextResolutionEngine contextResolver,
             FallbackEngine fallbackEngine,
             UniversalQueryClassifier universalQueryClassifier,
-            CapabilityRegistry capabilityRegistry
+            CapabilityRegistry capabilityRegistry,
+            CapabilityResolver capabilityResolver
     ) {
         this.governor = governor;
         this.stateMachine = stateMachine;
@@ -118,6 +122,7 @@ public class AgentBrain {
         this.fallbackEngine = fallbackEngine;
         this.universalQueryClassifier = universalQueryClassifier;
         this.capabilityRegistry = capabilityRegistry;
+        this.capabilityResolver = capabilityResolver;
     }
 
     // =====================================================
@@ -199,7 +204,13 @@ public class AgentBrain {
         CapabilityMatch capabilityMatch = capabilityRegistry.findBestCapability(intent);
         logCapabilityComparison(intent, capabilityMatch);
 
-        // 5b. ROADMAP-AWARE REDIRECTION
+        // 5c. SHADOW CAPABILITY RESOLVER (observer only, never changes routing)
+        // Uses deterministic scoring (intent 40%, priority 20%, context 20%, health 10%, availability 10%)
+        CapabilityResolution resolverResult = capabilityResolver.resolve(intent);
+        // Compare resolver prediction with actual handler (logs mismatches for analysis)
+        capabilityResolver.compareWithProduction(intent, null, mapIntentToHandler(intent));
+
+        // 5d. ROADMAP-AWARE REDIRECTION
         // If user says "next"/"continue" and an active roadmap exists,
         // redirect to NEXT_STEP instead of lesson follow-up
         if (("CONTINUE".equals(intent) || "FOLLOW_UP".equals(intent))
