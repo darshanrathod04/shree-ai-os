@@ -1,0 +1,105 @@
+{
+  "sessionId" : "5df199d6-74a8-4bc6-b20d-46e7cf5f9d2e",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1783608950.354154800,
+    "lastUpdated" : 1783608950.354154800,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "remainingQuestions" : 0,
+    "currentQuestion" : null,
+    "totalQuestions" : 0,
+    "inProgress" : false
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783608950.354154800,
+  "lastAccessedAt" : 1783609039.100377900,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "hello shree",
+    "timestamp" : 1783608950.384524400,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.",
+    "timestamp" : 1783608950.425381200,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "who is pm of india",
+    "timestamp" : 1783608965.300159000,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A **Rajnath Singh** currently holds the position as **Prime Minister of India**, having assumed office on September 9, 2019. It's essential to stay updated with political news for accurate information since leadership can change due to elections and other events. If you want a brief history or details about his policies, I recommend checking reputable sources like the official government website or respected global newswires such as BBC News or Al Jazeera English. Take your time.",
+    "timestamp" : 1783608989.938306200,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "who is current prime minister of india",
+    "timestamp" : 1783609031.429675600,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello there! I'm glad you reached out for information about the Prime Minister of India, as it shows your interest in staying informed on global matters. As per my last update, **Narendra Modi** was serving as the Prime Minister of India. Please remember that political positions can change due to elections and other events; I recommend checking a reliable news source for current information. How may this knowledge assist you today? Take your time.",
+    "timestamp" : 1783609039.100377900,
+    "intent" : null
+  } ],
+  "summary" : "USER: hello shree\nAI: \uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.\nUSER: who is pm of india\nAI: \uD83D\uDE0A **Rajnath Singh** currently holds the position ...\nUSER: who is current prime minister of india\nAI: \uD83D\uDE0A Hello there! I'm glad you reached out for infor...\n",
+  "messageCount" : 6,
+  "firstMessage" : "hello shree",
+  "expired" : false
+}
