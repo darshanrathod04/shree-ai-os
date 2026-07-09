@@ -1,0 +1,12 @@
+{
+  "relationships" : [ ],
+  "entities" : [ {
+    "id" : "03c30636-14bf-46d0-a6ab-39ba1d087328",
+    "type" : "USER",
+    "name" : "Darshan",
+    "description" : "Primary user",
+    "properties" : { },
+    "createdAt" : 1783595898.547167600,
+    "updatedAt" : 1783595898.547167600
+  } ]
+}
