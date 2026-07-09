@@ -33,7 +33,10 @@ import com.darshan.agent.learning.adaptive.StudentLearningProfile;
 import com.darshan.agent.production.ConversationOptimizer;
 import com.darshan.agent.production.ContextResolutionEngine;
 import com.darshan.agent.production.FallbackEngine;
+import com.darshan.agent.production.ResolvedContext;
 import com.darshan.agent.production.ResponseRouter;
+import com.darshan.agent.validation.DecisionValidator;
+import com.darshan.agent.validation.ValidationResult;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -68,6 +71,7 @@ public class AgentBrain {
     private final UniversalQueryClassifier universalQueryClassifier;
     private final CapabilityRegistry capabilityRegistry;
     private final CapabilityResolver capabilityResolver;
+    private final DecisionValidator decisionValidator;
 
     public AgentBrain(
             CognitiveGovernorEngine governor,
@@ -95,7 +99,8 @@ public class AgentBrain {
             FallbackEngine fallbackEngine,
             UniversalQueryClassifier universalQueryClassifier,
             CapabilityRegistry capabilityRegistry,
-            CapabilityResolver capabilityResolver
+            CapabilityResolver capabilityResolver,
+            DecisionValidator decisionValidator
     ) {
         this.governor = governor;
         this.stateMachine = stateMachine;
@@ -123,6 +128,7 @@ public class AgentBrain {
         this.universalQueryClassifier = universalQueryClassifier;
         this.capabilityRegistry = capabilityRegistry;
         this.capabilityResolver = capabilityResolver;
+        this.decisionValidator = decisionValidator;
     }
 
     // =====================================================
@@ -210,7 +216,15 @@ public class AgentBrain {
         // Compare resolver prediction with actual handler (logs mismatches for analysis)
         capabilityResolver.compareWithProduction(intent, null, mapIntentToHandler(intent));
 
-        // 5d. ROADMAP-AWARE REDIRECTION
+        // 5d. SHADOW DECISION VALIDATOR (observer only, never changes routing)
+        // Validates the decision before execution - purely for analysis and monitoring
+        Thought decisionThought = new Thought(input, intent, mapIntentToHandler(intent), "Decision from intent engine");
+        ResolvedContext resolvedContext = resolveContext(context);
+        ValidationResult validationResult = decisionValidator.validate(decisionThought, null, resolvedContext);
+        // NOTE: Validation results are logged but NEVER affect production execution
+        // The switch(intent) below continues unchanged
+
+        // 5e. ROADMAP-AWARE REDIRECTION
         // If user says "next"/"continue" and an active roadmap exists,
         // redirect to NEXT_STEP instead of lesson follow-up
         if (("CONTINUE".equals(intent) || "FOLLOW_UP".equals(intent))
@@ -651,6 +665,22 @@ public class AgentBrain {
         System.out.println("[CAPABILITY] RESULT: " + (capabilityMatch != null && capabilityMatch.getCapability().getName().equalsIgnoreCase(currentHandler) ? "SAME" : "DIFFERENT"));
         System.out.println("[CAPABILITY] PROCESSING: " + (capabilityMatch != null ? capabilityMatch.getProcessingTimeNanos() / 1_000_000 + "ms" : "N/A"));
         System.out.println("[CAPABILITY] ========================================================");
+    }
+
+    /**
+     * Resolve context from conversation context.
+     * Simplified version for shadow validation.
+     */
+    private ResolvedContext resolveContext(ConversationContext context) {
+        // Simplified context resolution for shadow mode
+        // In production, this would use ContextResolutionEngine
+        return new ResolvedContext(
+                ResolvedContext.Mode.CHAT,
+                null, 0, 0,
+                false, false,
+                null,
+                false
+        );
     }
 
     private String mapIntentToHandler(String intent) {
