@@ -148,7 +148,7 @@ public final class ExecutionRequest {
         result = 31 * result + userInput.hashCode();
         result = 31 * result + (session != null ? session.hashCode() : 0);
         result = 31 * result + (resolvedContext != null ? resolvedContext.hashCode() : 0);
-        result = 31 * result + metadata.hashCode();
+        result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
         result = 31 * result + timestamp.hashCode();
         return result;
     }
