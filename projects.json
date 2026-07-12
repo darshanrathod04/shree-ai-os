@@ -1,0 +1,36 @@
+{
+  "projects" : [ {
+    "id" : "3049182c-0295-401d-bb65-0922e549e809",
+    "name" : "Shree AI",
+    "description" : null,
+    "status" : "PLANNING",
+    "createdAt" : 1783793882.183241500,
+    "updatedAt" : 1783793882.187604600,
+    "tasks" : [ {
+      "id" : "b275a972-5d87-4339-817b-002e00de1147",
+      "title" : "Task 1",
+      "description" : null,
+      "status" : "DONE",
+      "priority" : "MEDIUM",
+      "createdAt" : 1783793882.185248300,
+      "completedAt" : 1783793882.187604600
+    }, {
+      "id" : "ab79daf6-30ef-4d9b-a1ed-f02b867fd3d4",
+      "title" : "Task 2",
+      "description" : null,
+      "status" : "TODO",
+      "priority" : "MEDIUM",
+      "createdAt" : 1783793882.186603000,
+      "completedAt" : null
+    } ],
+    "milestones" : [ ],
+    "decisions" : [ ],
+    "risks" : [ ],
+    "summary" : "Shree AI (50%) [PLANNING] | Tasks: 1/2 done",
+    "progressPercentage" : 50.0,
+    "unresolvedRiskCount" : 0,
+    "inProgressTaskCount" : 0,
+    "doneTaskCount" : 1,
+    "todoTaskCount" : 1
+  } ]
+}

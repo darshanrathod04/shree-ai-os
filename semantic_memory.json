@@ -1,0 +1,10 @@
+{
+  "concepts" : { },
+  "knowledge" : {
+    "java" : {
+      "meaning" : "Java is an OOP language",
+      "concept" : "java",
+      "frequency" : 1
+    }
+  }
+}

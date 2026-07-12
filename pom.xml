@@ -8,11 +8,11 @@
 		<version>4.0.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.darshan.agent</groupId>
-	<artifactId>ai-agent</artifactId>
+	<groupId>platform</groupId>
+	<artifactId>shreeAiOS</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ai-agent</name>
-	<description>Demo project for Spring Boot</description>
+	<description>ShreeAIOS</description>
 	<url/>
 	<licenses>
 		<license/>

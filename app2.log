@@ -36,8 +36,8 @@
 
  :: Spring Boot ::                (v4.0.2)
 
-2026-06-12T20:24:11.093+05:30  INFO 15180 --- [ai-agent] [           main] com.darshan.agent.AiAgentApplication     : Starting AiAgentApplication using Java 21.0.7 with PID 15180 (C:\ai-agent\target\classes started by darsh in C:\ai-agent)
-2026-06-12T20:24:11.098+05:30  INFO 15180 --- [ai-agent] [           main] com.darshan.agent.AiAgentApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-06-12T20:24:11.093+05:30  INFO 15180 --- [ai-agent] [           main] application.AiAgentApplication     : Starting AiAgentApplication using Java 21.0.7 with PID 15180 (C:\ai-agent\target\classes started by darsh in C:\ai-agent)
+2026-06-12T20:24:11.098+05:30  INFO 15180 --- [ai-agent] [           main] application.AiAgentApplication     : No active profile set, falling back to 1 default profile: "default"
 2026-06-12T20:24:12.849+05:30  INFO 15180 --- [ai-agent] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8086 (http)
 2026-06-12T20:24:12.875+05:30  INFO 15180 --- [ai-agent] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
 2026-06-12T20:24:12.876+05:30  INFO 15180 --- [ai-agent] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.15]

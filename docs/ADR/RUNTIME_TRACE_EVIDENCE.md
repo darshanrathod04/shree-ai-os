@@ -56,8 +56,8 @@ Content: "userName" : "Darshan"
 ### Backend Logs Show:
 
 ```
-2026-06-19T13:03:52.933+05:30  INFO 16608 --- [ai-agent] [   scheduling-1] com.darshan.agent.llm.OllamaClient       : [Ollama] generateDirect() START thread='scheduling-1', promptLength=98, activeRequests=1
-2026-06-19T13:04:16.358+05:30  INFO 16608 --- [ai-agent] [   scheduling-1] com.darshan.agent.llm.OllamaClient       : [Ollama] generateDirect() END in 23425ms, responseLength=1192, activeRequests=1
+2026-06-19T13:03:52.933+05:30  INFO 16608 --- [ai-agent] [   scheduling-1] platform.llm.OllamaClient       : [Ollama] generateDirect() START thread='scheduling-1', promptLength=98, activeRequests=1
+2026-06-19T13:04:16.358+05:30  INFO 16608 --- [ai-agent] [   scheduling-1] platform.llm.OllamaClient       : [Ollama] generateDirect() END in 23425ms, responseLength=1192, activeRequests=1
 ```
 
 **Finding:** LLM was called (generateDirect) with promptLength=98. This is likely from the scheduler, not from user requests.
