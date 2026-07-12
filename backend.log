@@ -35,8 +35,8 @@
 
  :: Spring Boot ::                (v4.0.2)
 
-2026-06-18T11:47:43.078+05:30  INFO 30688 --- [ai-agent] [           main] com.darshan.agent.AiAgentApplication     : Starting AiAgentApplication using Java 21.0.7 with PID 30688 (C:\ai-agent\target\classes started by darsh in C:\ai-agent)
-2026-06-18T11:47:43.086+05:30  INFO 30688 --- [ai-agent] [           main] com.darshan.agent.AiAgentApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-06-18T11:47:43.078+05:30  INFO 30688 --- [ai-agent] [           main] application.AiAgentApplication     : Starting AiAgentApplication using Java 21.0.7 with PID 30688 (C:\ai-agent\target\classes started by darsh in C:\ai-agent)
+2026-06-18T11:47:43.086+05:30  INFO 30688 --- [ai-agent] [           main] application.AiAgentApplication     : No active profile set, falling back to 1 default profile: "default"
 2026-06-18T11:47:45.195+05:30  INFO 30688 --- [ai-agent] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
 2026-06-18T11:47:45.226+05:30  INFO 30688 --- [ai-agent] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
 2026-06-18T11:47:45.227+05:30  INFO 30688 --- [ai-agent] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.15]
@@ -56,7 +56,7 @@ This generated password is for development use only. Your security configuration
 2026-06-18T11:47:46.921+05:30  INFO 30688 --- [ai-agent] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
 2026-06-18T11:47:47.208+05:30  INFO 30688 --- [ai-agent] [           main] o.s.b.w.a.WelcomePageHandlerMapping      : Adding welcome page: class path resource [static/index.html]
 2026-06-18T11:47:47.666+05:30  INFO 30688 --- [ai-agent] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
-2026-06-18T11:47:47.678+05:30  INFO 30688 --- [ai-agent] [           main] com.darshan.agent.AiAgentApplication     : Started AiAgentApplication in 5.544 seconds (process running for 6.509)
+2026-06-18T11:47:47.678+05:30  INFO 30688 --- [ai-agent] [           main] application.AiAgentApplication     : Started AiAgentApplication in 5.544 seconds (process running for 6.509)
 2026-06-18T11:47:47.680+05:30  INFO 30688 --- [ai-agent] [omous-scheduler] c.d.agent.autonomy.AutonomousScheduler   : [Autonomous] Tick #1 starting... Thought in progress: false, Paused: false, Active Ollama: 0
 2026-06-18T11:48:02.688+05:30  INFO 30688 --- [ai-agent] [omous-scheduler] c.d.agent.autonomy.AutonomousScheduler   : [Autonomous] Tick #2 starting... Thought in progress: false, Paused: false, Active Ollama: 0
 2026-06-18T11:48:17.695+05:30  INFO 30688 --- [ai-agent] [omous-scheduler] c.d.agent.autonomy.AutonomousScheduler   : [Autonomous] Tick #3 starting... Thought in progress: false, Paused: false, Active Ollama: 0
@@ -136,12 +136,12 @@ This generated password is for development use only. Your security configuration
 2026-06-18T12:06:47.228+05:30  INFO 30688 --- [ai-agent] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
 2026-06-18T12:06:47.232+05:30  INFO 30688 --- [ai-agent] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
 2026-06-18T12:06:47.359+05:30  INFO 30688 --- [ai-agent] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 125 ms
-2026-06-18T12:06:48.022+05:30  INFO 30688 --- [ai-agent] [nio-8080-exec-1] com.darshan.agent.service.AgentService   : [AgentService] Processing request, sessionId=null, inputLength=18
+2026-06-18T12:06:48.022+05:30  INFO 30688 --- [ai-agent] [nio-8080-exec-1] platform.service.AgentService   : [AgentService] Processing request, sessionId=null, inputLength=18
 2026-06-18T12:06:48.022+05:30  INFO 30688 --- [ai-agent] [nio-8080-exec-1] c.d.agent.autonomy.AutonomousScheduler   : [Autonomous] PAUSED by user request
 ? Session created: e63f8c40-3712-43fd-bc9a-1809f562d102
 ? Identity Learned ? Darshan (session: Darshan)
-2026-06-18T12:06:48.143+05:30  INFO 30688 --- [ai-agent] [nio-8080-exec-1] com.darshan.agent.service.AgentService   : [AgentService] Brain processing completed in 33ms
-2026-06-18T12:06:48.145+05:30  INFO 30688 --- [ai-agent] [nio-8080-exec-1] com.darshan.agent.service.AgentService   : [AgentService] Request completed in 124ms (total)
+2026-06-18T12:06:48.143+05:30  INFO 30688 --- [ai-agent] [nio-8080-exec-1] platform.service.AgentService   : [AgentService] Brain processing completed in 33ms
+2026-06-18T12:06:48.145+05:30  INFO 30688 --- [ai-agent] [nio-8080-exec-1] platform.service.AgentService   : [AgentService] Request completed in 124ms (total)
 2026-06-18T12:06:48.146+05:30  INFO 30688 --- [ai-agent] [nio-8080-exec-1] c.d.agent.autonomy.AutonomousScheduler   : [Autonomous] RESUMED after user request
 2026-06-18T12:06:48.758+05:30  INFO 30688 --- [ai-agent] [omous-scheduler] c.d.agent.autonomy.AutonomousScheduler   : [Autonomous] Tick #77 starting... Thought in progress: false, Paused: false, Active Ollama: 0
 2026-06-18T12:07:03.773+05:30  INFO 30688 --- [ai-agent] [omous-scheduler] c.d.agent.autonomy.AutonomousScheduler   : [Autonomous] Tick #78 starting... Thought in progress: false, Paused: false, Active Ollama: 0

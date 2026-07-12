@@ -1,6 +1,6 @@
 {
-  "teachingStyle" : "mentor",
+  "teachingStyle" : null,
   "preferences" : { },
-  "name" : null,
+  "name" : "TestUser",
   "preferredTone" : "friendly"
 }

@@ -72,9 +72,10 @@ assertNotNull(insights, "Should handle empty state gracefully");
 #### Issue 3.2: Missing Imports
 **Problem:** Missing import for `AgentResponse` and `AgentService`  
 **Fix:** Added imports:
+
 ```java
-import com.darshan.agent.dto.AgentResponse;
-import com.darshan.agent.service.AgentService;
+
+
 ```
 
 ---

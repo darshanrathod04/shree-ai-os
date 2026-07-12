@@ -1,0 +1,85 @@
+{
+  "sessionId" : "a9e421cd-f840-46e4-a078-088eb73704d2",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "START_COURSE",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "Knowledge:\nJava is an OOP language",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : "java",
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : 1783793865.201586600,
+    "lastAccess" : 1783793865.201586600,
+    "learningStatus" : "IN_PROGRESS",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1783793865.183823700,
+    "lastUpdated" : 1783793865.183823700,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "inProgress" : false,
+    "remainingQuestions" : 0,
+    "currentQuestion" : null,
+    "totalQuestions" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1783793865.183823700,
+  "lastAccessedAt" : 1783793870.651131400,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I want to learn Java",
+    "timestamp" : 1783793865.186327700,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDCD8 **Lesson 1**\n\nSorry, my brain is warming up...\n\n---\nSay **'complete'** to mark this lesson done and continue.\nSay **'exit course'** to leave the course.\nSay **'progress'** to see your course progress.",
+    "timestamp" : 1783793870.651131400,
+    "intent" : null
+  } ],
+  "summary" : "USER: I want to learn Java\nAI: \uD83D\uDCD8 **Lesson 1**\n\nSorry, my brain is warming up...\n...\n",
+  "firstMessage" : "I want to learn Java",
+  "messageCount" : 2,
+  "expired" : false
+}

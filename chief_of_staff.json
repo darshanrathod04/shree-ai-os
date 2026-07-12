@@ -1,13 +1,22 @@
 {
-  "insights" : [ ],
-  "currentRecommendation" : {
-    "id" : "1e2c2091-a219-4383-a5db-1fd86c0bb01a",
-    "type" : "POSITIVE_PROGRESS",
-    "severity" : "LOW",
-    "priorityScore" : 5,
-    "message" : "Everything looks on track. No significant issues detected.",
-    "recommendation" : "Keep up the good work!",
+  "insights" : [ {
+    "id" : "1908fe5a-d4a2-466a-847c-65fd75230099",
+    "type" : "LEARNING_GAP",
+    "severity" : "MEDIUM",
+    "priorityScore" : 70,
+    "message" : "1 learning topics tracked: Java",
+    "recommendation" : "Review your learning progress and continue with the next topic",
     "resolved" : false,
-    "createdAt" : 1783608881.375088700
+    "createdAt" : 1783797213.286168800
+  } ],
+  "currentRecommendation" : {
+    "id" : "1908fe5a-d4a2-466a-847c-65fd75230099",
+    "type" : "LEARNING_GAP",
+    "severity" : "MEDIUM",
+    "priorityScore" : 70,
+    "message" : "1 learning topics tracked: Java",
+    "recommendation" : "Review your learning progress and continue with the next topic",
+    "resolved" : false,
+    "createdAt" : 1783797213.286168800
   }
 }
