@@ -39,9 +39,7 @@ import java.util.Optional;
  */
 public class ConfigurationIntegrationTests {
 
-    private final ConfigurationValidator validator = new ConfigurationValidator();
-    private final ConfigurationResolutionEngine engine = new ConfigurationResolutionEngine();
-    private final DefaultConfigurationService service = new DefaultConfigurationService(validator, engine);
+    private final DefaultConfigurationService service = new DefaultConfigurationService();
 
     // Complete configuration lifecycle
 
@@ -296,7 +294,7 @@ public class ConfigurationIntegrationTests {
     // Error integration
 
     /**
-     * Test: Error architecture is used correctly.
+     * Test: Error architecture is used correctly during service operations.
      */
     @org.junit.jupiter.api.Test
     void testErrorArchitectureIsUsedCorrectly() {
@@ -312,15 +310,15 @@ public class ConfigurationIntegrationTests {
         );
         service.register(entry);
 
-        // Act & Assert - Duplicate registration
+        // Act & Assert - Duplicate registration throws DuplicateConfigurationException
         org.junit.jupiter.api.Assertions.assertThrows(
                 DuplicateConfigurationException.class,
                 () -> service.register(entry)
         );
 
-        // Act & Assert - Read-only removal
+        // Act & Assert - Read-only removal throws InvalidConfigurationException
         ConfigurationEntry readOnlyEntry = new ConfigurationEntry(
-                new ConfigurationKey("readonly.key"),
+                new ConfigurationKey("readonly-error.key"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value",
@@ -332,7 +330,7 @@ public class ConfigurationIntegrationTests {
 
         org.junit.jupiter.api.Assertions.assertThrows(
                 InvalidConfigurationException.class,
-                () -> service.remove(new ConfigurationKey("readonly.key"))
+                () -> service.remove(new ConfigurationKey("readonly-error.key"))
         );
     }
 
@@ -405,7 +403,7 @@ public class ConfigurationIntegrationTests {
     // Complex scenarios
 
     /**
-     * Test: Complex scenario with multiple operations.
+     * Test: Complex scenario with multiple types and operations.
      */
     @org.junit.jupiter.api.Test
     void testComplexScenario() {
@@ -526,5 +524,35 @@ public class ConfigurationIntegrationTests {
                 service.get(new ConfigurationKey("type.int")).get().type());
         org.junit.jupiter.api.Assertions.assertEquals(ConfigurationType.BOOLEAN,
                 service.get(new ConfigurationKey("type.bool")).get().type());
+    }
+
+    /**
+     * Test: Null key operations throw IllegalArgumentException.
+     */
+    @org.junit.jupiter.api.Test
+    void testNullKeyOperationsThrowException() {
+        // Act & Assert - get(null)
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.get(null)
+        );
+
+        // Act & Assert - exists(null)
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.exists(null)
+        );
+
+        // Act & Assert - remove(null)
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.remove(null)
+        );
+
+        // Act & Assert - register(null)
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.register(null)
+        );
     }
 }

@@ -1,5 +1,6 @@
 package platform.core.discovery;
 
+import platform.core.discovery.error.CapabilityNotFoundException;
 import platform.core.discovery.model.CapabilityId;
 import platform.core.discovery.model.DiscoveryResult;
 import platform.core.discovery.model.ResolutionStatus;

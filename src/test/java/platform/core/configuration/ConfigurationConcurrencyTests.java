@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -38,8 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ConfigurationConcurrencyTests {
 
-    private final ConfigurationValidator validator = new ConfigurationValidator();
-    private final DefaultConfigurationService service = new DefaultConfigurationService(validator);
+    private final DefaultConfigurationService service = new DefaultConfigurationService();
 
     // 100 concurrent registrations
 
@@ -102,15 +100,14 @@ public class ConfigurationConcurrencyTests {
 
         // Act
         for (int i = 0; i < threadCount; i++) {
-            final int index = i;
             executor.submit(() -> {
                 try {
                     ConfigurationEntry entry = new ConfigurationEntry(
                             new ConfigurationKey("duplicate.key"),
                             new ConfigurationNamespace("test.namespace"),
                             ConfigurationType.STRING,
-                            "value" + index,
-                            "Description " + index,
+                            "value",
+                            "Description",
                             false,
                             Instant.now()
                     );
@@ -257,7 +254,7 @@ public class ConfigurationConcurrencyTests {
                     // Ignore duplicates
                 } finally {
                     latch.countDown();
-            });
+                }
             });
 
             // Lookup thread

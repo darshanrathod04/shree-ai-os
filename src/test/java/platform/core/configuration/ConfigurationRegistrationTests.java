@@ -33,8 +33,7 @@ import java.util.Collection;
  */
 public class ConfigurationRegistrationTests {
 
-    private final ConfigurationValidator validator = new ConfigurationValidator();
-    private final DefaultConfigurationService service = new DefaultConfigurationService(validator);
+    private final DefaultConfigurationService service = new DefaultConfigurationService();
 
     // Register configuration
 
@@ -62,7 +61,19 @@ public class ConfigurationRegistrationTests {
     }
 
     /**
-     * Test: Register multiple configurations.
+     * Test: Register null configuration throws IllegalArgumentException.
+     */
+    @org.junit.jupiter.api.Test
+    void testRegisterNullConfiguration() {
+        // Act & Assert
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.register(null)
+        );
+    }
+
+    /**
+     * Test: Register multiple configurations with different keys.
      */
     @org.junit.jupiter.api.Test
     void testRegisterMultipleConfigurations() {
@@ -108,7 +119,7 @@ public class ConfigurationRegistrationTests {
     void testRejectDuplicateConfiguration() {
         // Arrange
         ConfigurationEntry entry = new ConfigurationEntry(
-                new ConfigurationKey("test.key"),
+                new ConfigurationKey("dup.key"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value",
@@ -133,7 +144,7 @@ public class ConfigurationRegistrationTests {
     void testRejectDuplicateKeyWithDifferentValue() {
         // Arrange
         ConfigurationEntry entry1 = new ConfigurationEntry(
-                new ConfigurationKey("test.key"),
+                new ConfigurationKey("dup.key"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value1",
@@ -143,7 +154,7 @@ public class ConfigurationRegistrationTests {
         );
 
         ConfigurationEntry entry2 = new ConfigurationEntry(
-                new ConfigurationKey("test.key"),
+                new ConfigurationKey("dup.key"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value2",
@@ -170,7 +181,7 @@ public class ConfigurationRegistrationTests {
     void testRegisterReadOnlyConfiguration() {
         // Arrange
         ConfigurationEntry entry = new ConfigurationEntry(
-                new ConfigurationKey("test.key"),
+                new ConfigurationKey("ro.key"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value",
@@ -187,13 +198,13 @@ public class ConfigurationRegistrationTests {
     }
 
     /**
-     * Test: Read-only configuration can be registered but not removed.
+     * Test: Read-only configuration can be registered but cannot be removed.
      */
     @org.junit.jupiter.api.Test
     void testReadOnlyConfigurationCannotBeRemoved() {
         // Arrange
         ConfigurationEntry entry = new ConfigurationEntry(
-                new ConfigurationKey("test.key"),
+                new ConfigurationKey("ro-protected.key"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value",
@@ -207,46 +218,20 @@ public class ConfigurationRegistrationTests {
         // Act & Assert
         org.junit.jupiter.api.Assertions.assertThrows(
                 InvalidConfigurationException.class,
-                () -> service.remove(new ConfigurationKey("test.key"))
+                () -> service.remove(new ConfigurationKey("ro-protected.key"))
         );
-    }
-
-    // Multiple registration
-
-    /**
-     * Test: Register configurations with different keys.
-     */
-    @org.junit.jupiter.api.Test
-    void testRegisterMultipleDifferentKeys() {
-        // Arrange & Act
-        for (int i = 0; i < 10; i++) {
-            ConfigurationEntry entry = new ConfigurationEntry(
-                    new ConfigurationKey("test.key" + i),
-                    new ConfigurationNamespace("test.namespace"),
-                    ConfigurationType.STRING,
-                    "value" + i,
-                    "Description " + i,
-                    false,
-                    Instant.now()
-            );
-            service.register(entry);
-        }
-
-        // Assert
-        Collection<ConfigurationEntry> all = service.list();
-        org.junit.jupiter.api.Assertions.assertEquals(10, all.size());
     }
 
     // Storage size
 
     /**
-     * Test: Verify storage size after registrations.
+     * Test: Storage size reflects number of registered configurations.
      */
     @org.junit.jupiter.api.Test
     void testStorageSizeAfterRegistrations() {
         // Arrange
         ConfigurationEntry entry1 = new ConfigurationEntry(
-                new ConfigurationKey("test.key1"),
+                new ConfigurationKey("size.key1"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value1",
@@ -256,7 +241,7 @@ public class ConfigurationRegistrationTests {
         );
 
         ConfigurationEntry entry2 = new ConfigurationEntry(
-                new ConfigurationKey("test.key2"),
+                new ConfigurationKey("size.key2"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value2",

@@ -39,8 +39,10 @@ import java.util.Objects;
  */
 public final class EventValidator {
 
-    private EventValidator() {
-        // Utility class — no instances
+    /**
+     * Constructs a new {@code EventValidator}.
+     */
+    public EventValidator() {
     }
 
     /**

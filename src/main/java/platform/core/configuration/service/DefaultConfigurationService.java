@@ -51,6 +51,15 @@ public final class DefaultConfigurationService implements ConfigurationService {
     private final Map<ConfigurationKey, ConfigurationEntry> storage;
 
     /**
+     * Constructs a new {@code DefaultConfigurationService} with default validator and engine.
+     */
+    public DefaultConfigurationService() {
+        this.validator = new ConfigurationValidator();
+        this.engine = new ConfigurationResolutionEngine();
+        this.storage = new ConcurrentHashMap<>();
+    }
+
+    /**
      * Constructs a new {@code DefaultConfigurationService} with the given validator and engine.
      *
      * @param validator the configuration validator (must not be null)

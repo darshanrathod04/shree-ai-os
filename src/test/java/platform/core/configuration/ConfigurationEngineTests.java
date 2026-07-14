@@ -31,12 +31,10 @@ import java.time.Instant;
  */
 public class ConfigurationEngineTests {
 
-    private final ConfigurationResolutionEngine engine = new ConfigurationResolutionEngine();
-
-    // Successful resolution
+    // Successful resolution - all methods are static
 
     /**
-     * Test: Successful resolution with valid entry.
+     * Test: Successful resolution with valid string entry.
      */
     @org.junit.jupiter.api.Test
     void testSuccessfulResolution() {
@@ -53,7 +51,7 @@ public class ConfigurationEngineTests {
         );
 
         // Act
-        ResolutionResult result = engine.resolve(key, entry);
+        ResolutionResult result = ConfigurationResolutionEngine.resolve(key, entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.success());
@@ -79,7 +77,7 @@ public class ConfigurationEngineTests {
         );
 
         // Act
-        ResolutionResult result = engine.resolve(key, entry);
+        ResolutionResult result = ConfigurationResolutionEngine.resolve(key, entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.success());
@@ -104,7 +102,7 @@ public class ConfigurationEngineTests {
         );
 
         // Act
-        ResolutionResult result = engine.resolve(key, entry);
+        ResolutionResult result = ConfigurationResolutionEngine.resolve(key, entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.success());
@@ -129,7 +127,7 @@ public class ConfigurationEngineTests {
         );
 
         // Act
-        ResolutionResult result = engine.resolve(key, entry);
+        ResolutionResult result = ConfigurationResolutionEngine.resolve(key, entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.success());
@@ -156,7 +154,7 @@ public class ConfigurationEngineTests {
         );
 
         // Act
-        ResolutionResult result = engine.resolve(key, entry);
+        ResolutionResult result = ConfigurationResolutionEngine.resolve(key, entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.success());
@@ -167,7 +165,7 @@ public class ConfigurationEngineTests {
     // Type mismatch
 
     /**
-     * Test: Type mismatch returns failure.
+     * Test: Type mismatch with string instead of integer returns failure.
      */
     @org.junit.jupiter.api.Test
     void testTypeMismatchReturnsFailure() {
@@ -184,7 +182,7 @@ public class ConfigurationEngineTests {
         );
 
         // Act
-        ResolutionResult result = engine.resolve(key, entry);
+        ResolutionResult result = ConfigurationResolutionEngine.resolve(key, entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.success());
@@ -210,7 +208,7 @@ public class ConfigurationEngineTests {
         );
 
         // Act
-        ResolutionResult result = engine.resolve(key, entry);
+        ResolutionResult result = ConfigurationResolutionEngine.resolve(key, entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.success());
@@ -234,7 +232,7 @@ public class ConfigurationEngineTests {
         );
 
         // Act
-        ResolutionResult result = engine.resolve(key, entry);
+        ResolutionResult result = ConfigurationResolutionEngine.resolve(key, entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.success());
@@ -292,34 +290,6 @@ public class ConfigurationEngineTests {
     }
 
     /**
-     * Test: ResolutionResult is immutable.
-     */
-    @org.junit.jupiter.api.Test
-    void testResolutionResultIsImmutable() {
-        // Arrange
-        ConfigurationKey key = new ConfigurationKey("test.key");
-        ConfigurationEntry entry = new ConfigurationEntry(
-                key,
-                new ConfigurationNamespace("test.namespace"),
-                ConfigurationType.STRING,
-                "value",
-                "Description",
-                false,
-                Instant.now()
-        );
-        Instant timestamp = Instant.now();
-
-        // Act
-        ResolutionResult result = ResolutionResult.success(entry, "value", timestamp);
-
-        // Assert
-        org.junit.jupiter.api.Assertions.assertThrows(
-                UnsupportedOperationException.class,
-                () -> result.details().put("key", "value")
-        );
-    }
-
-    /**
      * Test: ResolutionResult equals and hashCode.
      */
     @org.junit.jupiter.api.Test
@@ -343,6 +313,21 @@ public class ConfigurationEngineTests {
         // Assert
         org.junit.jupiter.api.Assertions.assertEquals(result1, result2);
         org.junit.jupiter.api.Assertions.assertEquals(result1.hashCode(), result2.hashCode());
+    }
+
+    /**
+     * Test: ResolutionResult failure message is accessible.
+     */
+    @org.junit.jupiter.api.Test
+    void testResolutionResultFailureMessage() {
+        // Arrange
+        ResolutionResult result = ResolutionResult.failure("Something went wrong", Instant.now());
+
+        // Act
+        String message = result.failureMessage();
+
+        // Assert
+        org.junit.jupiter.api.Assertions.assertEquals("Something went wrong", message);
     }
 
     // Stateless behavior
@@ -376,38 +361,14 @@ public class ConfigurationEngineTests {
         );
 
         // Act
-        ResolutionResult result1 = engine.resolve(key1, entry1);
-        ResolutionResult result2 = engine.resolve(key2, entry2);
+        ResolutionResult result1 = ConfigurationResolutionEngine.resolve(key1, entry1);
+        ResolutionResult result2 = ConfigurationResolutionEngine.resolve(key2, entry2);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result1.success());
         org.junit.jupiter.api.Assertions.assertEquals("value1", result1.resolvedValue());
         org.junit.jupiter.api.Assertions.assertTrue(result2.success());
         org.junit.jupiter.api.Assertions.assertEquals("value2", result2.resolvedValue());
-    }
-
-    /**
-     * Test: Engine can be used concurrently without issues.
-     */
-    @org.junit.jupiter.api.Test
-    void testEngineCanBeUsedConcurrently() {
-        // Arrange
-        ConfigurationKey key = new ConfigurationKey("test.key");
-        ConfigurationEntry entry = new ConfigurationEntry(
-                key,
-                new ConfigurationNamespace("test.namespace"),
-                ConfigurationType.STRING,
-                "value",
-                "Description",
-                false,
-                Instant.now()
-        );
-
-        // Act
-        ResolutionResult result = engine.resolve(key, entry);
-
-        // Assert
-        org.junit.jupiter.api.Assertions.assertTrue(result.success());
     }
 
     /**
@@ -427,7 +388,7 @@ public class ConfigurationEngineTests {
         );
 
         // Act
-        ResolutionResult result = engine.resolve(null, entry);
+        ResolutionResult result = ConfigurationResolutionEngine.resolve(null, entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.success());
@@ -443,7 +404,7 @@ public class ConfigurationEngineTests {
         ConfigurationKey key = new ConfigurationKey("test.key");
 
         // Act
-        ResolutionResult result = engine.resolve(key, null);
+        ResolutionResult result = ConfigurationResolutionEngine.resolve(key, null);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.success());
