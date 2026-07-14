@@ -7,6 +7,7 @@ import platform.core.health.error.HealthErrorCode;
 import platform.core.health.error.HealthError;
 import platform.core.health.error.HealthException;
 import platform.core.health.error.InvalidHealthComponentException;
+import platform.core.health.engine.EvaluationResult;
 import platform.core.health.engine.HealthEvaluationEngine;
 import platform.core.health.model.HealthCheck;
 import platform.core.health.model.HealthComponent;
@@ -159,10 +160,15 @@ public final class DefaultHealthService implements HealthService {
         }
 
         // Step 3: Delegate to HealthEvaluationEngine
-        HealthReport report = engine.evaluate(component, false);
+        HealthCheck check = new HealthCheck(component, false);
+        EvaluationResult result = engine.evaluate(component, check);
 
         // Step 4: Return HealthReport
-        return Optional.of(report);
+        if (result.success()) {
+            return Optional.of(result.report());
+        } else {
+            throw new HealthCheckFailedException(component, result.failureMessage());
+        }
     }
 
     /**
@@ -188,11 +194,14 @@ public final class DefaultHealthService implements HealthService {
         var reports = new java.util.ArrayList<HealthReport>();
         for (HealthComponent component : components.values()) {
             try {
-                HealthReport report = engine.evaluate(component, false);
-                reports.add(report);
+                HealthCheck check = new HealthCheck(component, false);
+                EvaluationResult result = engine.evaluate(component, check);
+                if (result.success()) {
+                    reports.add(result.report());
+                }
+                // Individual component failures should not prevent checking other components
             } catch (HealthCheckFailedException e) {
                 // Log and continue with other components
-                // Individual component failures should not prevent checking other components
             }
         }
 
