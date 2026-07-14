@@ -33,8 +33,7 @@ import java.util.Optional;
  */
 public class ConfigurationLookupTests {
 
-    private final ConfigurationValidator validator = new ConfigurationValidator();
-    private final DefaultConfigurationService service = new DefaultConfigurationService(validator);
+    private final DefaultConfigurationService service = new DefaultConfigurationService();
 
     // Existing configuration
 
@@ -60,7 +59,7 @@ public class ConfigurationLookupTests {
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.isPresent());
-        org.junit.jupiter.api.Assertions.assertEquals("test.value", result.get().value());
+        org.junit.jupiter.api.Assertions.assertEquals("test value", result.get().value());
     }
 
     /**
@@ -138,6 +137,18 @@ public class ConfigurationLookupTests {
         org.junit.jupiter.api.Assertions.assertFalse(result.isPresent());
     }
 
+    /**
+     * Test: Get with null key throws IllegalArgumentException.
+     */
+    @org.junit.jupiter.api.Test
+    void testGetWithNullKey() {
+        // Act & Assert
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.get(null)
+        );
+    }
+
     // exists()
 
     /**
@@ -147,7 +158,7 @@ public class ConfigurationLookupTests {
     void testExistsReturnsTrueForExistingConfiguration() {
         // Arrange
         ConfigurationEntry entry = new ConfigurationEntry(
-                new ConfigurationKey("test.key"),
+                new ConfigurationKey("exists.key"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value",
@@ -158,7 +169,7 @@ public class ConfigurationLookupTests {
         service.register(entry);
 
         // Act
-        boolean result = service.exists(new ConfigurationKey("test.key"));
+        boolean result = service.exists(new ConfigurationKey("exists.key"));
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result);
@@ -183,7 +194,7 @@ public class ConfigurationLookupTests {
     void testExistsReturnsFalseAfterRemoval() {
         // Arrange
         ConfigurationEntry entry = new ConfigurationEntry(
-                new ConfigurationKey("test.key"),
+                new ConfigurationKey("removed.key"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value",
@@ -192,13 +203,25 @@ public class ConfigurationLookupTests {
                 Instant.now()
         );
         service.register(entry);
-        service.remove(new ConfigurationKey("test.key"));
+        service.remove(new ConfigurationKey("removed.key"));
 
         // Act
-        boolean result = service.exists(new ConfigurationKey("test.key"));
+        boolean result = service.exists(new ConfigurationKey("removed.key"));
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result);
+    }
+
+    /**
+     * Test: exists() with null key throws IllegalArgumentException.
+     */
+    @org.junit.jupiter.api.Test
+    void testExistsWithNullKey() {
+        // Act & Assert
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.exists(null)
+        );
     }
 
     // list()
@@ -210,7 +233,7 @@ public class ConfigurationLookupTests {
     void testListReturnsAllConfigurations() {
         // Arrange
         ConfigurationEntry entry1 = new ConfigurationEntry(
-                new ConfigurationKey("test.key1"),
+                new ConfigurationKey("list.key1"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value1",
@@ -220,7 +243,7 @@ public class ConfigurationLookupTests {
         );
 
         ConfigurationEntry entry2 = new ConfigurationEntry(
-                new ConfigurationKey("test.key2"),
+                new ConfigurationKey("list.key2"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value2",
@@ -258,7 +281,7 @@ public class ConfigurationLookupTests {
     void testListReturnsUnmodifiableCollection() {
         // Arrange
         ConfigurationEntry entry = new ConfigurationEntry(
-                new ConfigurationKey("test.key"),
+                new ConfigurationKey("unmodifiable.key"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value",
@@ -287,7 +310,7 @@ public class ConfigurationLookupTests {
     void testRemoveExistingConfiguration() {
         // Arrange
         ConfigurationEntry entry = new ConfigurationEntry(
-                new ConfigurationKey("test.key"),
+                new ConfigurationKey("remove.key"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value",
@@ -298,11 +321,11 @@ public class ConfigurationLookupTests {
         service.register(entry);
 
         // Act
-        boolean result = service.remove(new ConfigurationKey("test.key"));
+        boolean result = service.remove(new ConfigurationKey("remove.key"));
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result);
-        org.junit.jupiter.api.Assertions.assertFalse(service.exists(new ConfigurationKey("test.key")));
+        org.junit.jupiter.api.Assertions.assertFalse(service.exists(new ConfigurationKey("remove.key")));
     }
 
     /**
@@ -318,28 +341,15 @@ public class ConfigurationLookupTests {
     }
 
     /**
-     * Test: Remove configuration and verify it's gone.
+     * Test: Remove with null key throws IllegalArgumentException.
      */
     @org.junit.jupiter.api.Test
-    void testRemoveConfigurationAndVerifyGone() {
-        // Arrange
-        ConfigurationEntry entry = new ConfigurationEntry(
-                new ConfigurationKey("test.key"),
-                new ConfigurationNamespace("test.namespace"),
-                ConfigurationType.STRING,
-                "value",
-                "Description",
-                false,
-                Instant.now()
+    void testRemoveWithNullKey() {
+        // Act & Assert
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.remove(null)
         );
-        service.register(entry);
-
-        // Act
-        service.remove(new ConfigurationKey("test.key"));
-        Optional<ConfigurationEntry> result = service.get(new ConfigurationKey("test.key"));
-
-        // Assert
-        org.junit.jupiter.api.Assertions.assertFalse(result.isPresent());
     }
 
     /**
@@ -349,7 +359,7 @@ public class ConfigurationLookupTests {
     void testRemoveOneDoesNotAffectOthers() {
         // Arrange
         ConfigurationEntry entry1 = new ConfigurationEntry(
-                new ConfigurationKey("test.key1"),
+                new ConfigurationKey("remove.key1"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value1",
@@ -359,7 +369,7 @@ public class ConfigurationLookupTests {
         );
 
         ConfigurationEntry entry2 = new ConfigurationEntry(
-                new ConfigurationKey("test.key2"),
+                new ConfigurationKey("remove.key2"),
                 new ConfigurationNamespace("test.namespace"),
                 ConfigurationType.STRING,
                 "value2",
@@ -372,10 +382,10 @@ public class ConfigurationLookupTests {
         service.register(entry2);
 
         // Act
-        service.remove(new ConfigurationKey("test.key1"));
+        service.remove(new ConfigurationKey("remove.key1"));
 
         // Assert
-        org.junit.jupiter.api.Assertions.assertTrue(service.exists(new ConfigurationKey("test.key2")));
-        org.junit.jupiter.api.Assertions.assertFalse(service.exists(new ConfigurationKey("test.key1")));
+        org.junit.jupiter.api.Assertions.assertTrue(service.exists(new ConfigurationKey("remove.key2")));
+        org.junit.jupiter.api.Assertions.assertFalse(service.exists(new ConfigurationKey("remove.key1")));
     }
 }

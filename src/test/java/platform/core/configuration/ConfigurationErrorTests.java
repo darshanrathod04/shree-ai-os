@@ -88,6 +88,24 @@ public class ConfigurationErrorTests {
         );
 
         // Act & Assert
+        ConfigurationException exception = new ConfigurationException(error);
+        org.junit.jupiter.api.Assertions.assertTrue(exception instanceof RuntimeException);
+    }
+
+    /**
+     * Test: ConfigurationException can be thrown and caught.
+     */
+    @org.junit.jupiter.api.Test
+    void testConfigurationExceptionCanBeThrown() {
+        // Arrange
+        ConfigurationError error = new ConfigurationError(
+                ConfigurationErrorCode.CONFIGURATION_INVALID,
+                "Thrown error",
+                Instant.now(),
+                java.util.Map.of()
+        );
+
+        // Act & Assert
         org.junit.jupiter.api.Assertions.assertThrows(
                 ConfigurationException.class,
                 () -> { throw new ConfigurationException(error); }
@@ -168,10 +186,27 @@ public class ConfigurationErrorTests {
         org.junit.jupiter.api.Assertions.assertEquals(error1.hashCode(), error2.hashCode());
     }
 
+    /**
+     * Test: ConfigurationError with blank message throws exception.
+     */
+    @org.junit.jupiter.api.Test
+    void testConfigurationErrorWithBlankMessage() {
+        // Act & Assert
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConfigurationError(
+                        ConfigurationErrorCode.CONFIGURATION_INVALID,
+                        "   ",
+                        Instant.now(),
+                        java.util.Map.of()
+                )
+        );
+    }
+
     // DuplicateConfigurationException
 
     /**
-     * Test: DuplicateConfigurationException is thrown for duplicate keys.
+     * Test: DuplicateConfigurationException carries the correct error code.
      */
     @org.junit.jupiter.api.Test
     void testDuplicateConfigurationException() {
@@ -194,7 +229,7 @@ public class ConfigurationErrorTests {
     // ConfigurationNotFoundException
 
     /**
-     * Test: ConfigurationNotFoundException is thrown for missing keys.
+     * Test: ConfigurationNotFoundException carries the correct error code.
      */
     @org.junit.jupiter.api.Test
     void testConfigurationNotFoundException() {
@@ -217,7 +252,7 @@ public class ConfigurationErrorTests {
     // InvalidConfigurationException
 
     /**
-     * Test: InvalidConfigurationException is thrown for invalid configurations.
+     * Test: InvalidConfigurationException with CONFIGURATION_INVALID code.
      */
     @org.junit.jupiter.api.Test
     void testInvalidConfigurationException() {
@@ -238,7 +273,7 @@ public class ConfigurationErrorTests {
     }
 
     /**
-     * Test: InvalidConfigurationException is thrown for validation failures.
+     * Test: InvalidConfigurationException with CONFIGURATION_VALIDATION_FAILED code.
      */
     @org.junit.jupiter.api.Test
     void testInvalidConfigurationExceptionForValidationFailure() {
@@ -302,5 +337,25 @@ public class ConfigurationErrorTests {
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(toString.contains("CONFIGURATION_INVALID"));
         org.junit.jupiter.api.Assertions.assertTrue(toString.contains("Test message"));
+    }
+
+    /**
+     * Test: ConfigurationException getMessage returns error message.
+     */
+    @org.junit.jupiter.api.Test
+    void testConfigurationExceptionGetMessage() {
+        // Arrange
+        ConfigurationError error = new ConfigurationError(
+                ConfigurationErrorCode.CONFIGURATION_INVALID,
+                "Error message text",
+                Instant.now(),
+                java.util.Map.of()
+        );
+
+        // Act
+        ConfigurationException exception = new ConfigurationException(error);
+
+        // Assert
+        org.junit.jupiter.api.Assertions.assertEquals("Error message text", exception.getMessage());
     }
 }

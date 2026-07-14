@@ -1,4 +1,4 @@
- package platform.core.configuration.validator;
+package platform.core.configuration.validator;
 
 import platform.core.configuration.model.ConfigurationEntry;
 import platform.core.configuration.model.ConfigurationKey;
@@ -37,9 +37,9 @@ public final class ConfigurationValidator {
     private static final int MAX_LENGTH = 128;
 
     /**
-     * Private constructor to prevent instantiation.
+     * Constructs a new {@code ConfigurationValidator}.
      */
-    private ConfigurationValidator() {
+    public ConfigurationValidator() {
     }
 
     /**

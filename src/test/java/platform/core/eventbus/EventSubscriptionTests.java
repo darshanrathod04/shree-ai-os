@@ -1,5 +1,7 @@
 package platform.core.eventbus;
 
+import platform.core.eventbus.engine.DispatchResult;
+import platform.core.eventbus.engine.EventDispatchEngine;
 import platform.core.eventbus.error.InvalidEventException;
 import platform.core.eventbus.model.Event;
 import platform.core.eventbus.model.EventId;

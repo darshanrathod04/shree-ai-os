@@ -181,7 +181,7 @@ public class EventDispatchEngineTests {
         DispatchResult result = engine.dispatch(event, List.of(subscriber));
 
         // Assert
-        assert result.success() != null : "Success should not be null";
+        assert result.success() : "Success should be true";
         assert result.event() != null : "Event should not be null";
         assert result.subscribersAttempted() >= 0 : "Subscribers attempted should be non-negative";
         assert result.subscribersSucceeded() >= 0 : "Subscribers succeeded should be non-negative";

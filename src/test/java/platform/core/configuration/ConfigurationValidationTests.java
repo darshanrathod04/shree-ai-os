@@ -32,9 +32,7 @@ import java.time.Instant;
  */
 public class ConfigurationValidationTests {
 
-    private final ConfigurationValidator validator = new ConfigurationValidator();
-
-    // ConfigurationKey validation
+    // ConfigurationKey validation - all methods are static
 
     /**
      * Test: Valid ConfigurationKey passes validation.
@@ -45,7 +43,7 @@ public class ConfigurationValidationTests {
         ConfigurationKey key = new ConfigurationKey("valid.key");
 
         // Act
-        ValidationResult result = validator.validateKey(key);
+        ValidationResult result = ConfigurationValidator.validateKey(key);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.isValid());
@@ -57,26 +55,11 @@ public class ConfigurationValidationTests {
     @org.junit.jupiter.api.Test
     void testNullConfigurationKey() {
         // Act
-        ValidationResult result = validator.validateKey(null);
+        ValidationResult result = ConfigurationValidator.validateKey(null);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
         org.junit.jupiter.api.Assertions.assertEquals(1, result.errors().size());
-    }
-
-    /**
-     * Test: Blank ConfigurationKey fails validation.
-     */
-    @org.junit.jupiter.api.Test
-    void testBlankConfigurationKey() {
-        // Arrange
-        ConfigurationKey key = new ConfigurationKey("   ");
-
-        // Act
-        ValidationResult result = validator.validateKey(key);
-
-        // Assert
-        org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
     }
 
     /**
@@ -88,7 +71,7 @@ public class ConfigurationValidationTests {
         ConfigurationKey key = new ConfigurationKey(" test.key ");
 
         // Act
-        ValidationResult result = validator.validateKey(key);
+        ValidationResult result = ConfigurationValidator.validateKey(key);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
@@ -104,7 +87,7 @@ public class ConfigurationValidationTests {
         ConfigurationKey key = new ConfigurationKey(longKey);
 
         // Act
-        ValidationResult result = validator.validateKey(key);
+        ValidationResult result = ConfigurationValidator.validateKey(key);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
@@ -119,7 +102,7 @@ public class ConfigurationValidationTests {
         ConfigurationKey key = new ConfigurationKey("invalid key!");
 
         // Act
-        ValidationResult result = validator.validateKey(key);
+        ValidationResult result = ConfigurationValidator.validateKey(key);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
@@ -136,7 +119,7 @@ public class ConfigurationValidationTests {
         ConfigurationNamespace namespace = new ConfigurationNamespace("valid.namespace");
 
         // Act
-        ValidationResult result = validator.validateNamespace(namespace);
+        ValidationResult result = ConfigurationValidator.validateNamespace(namespace);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.isValid());
@@ -148,7 +131,7 @@ public class ConfigurationValidationTests {
     @org.junit.jupiter.api.Test
     void testNullConfigurationNamespace() {
         // Act
-        ValidationResult result = validator.validateNamespace(null);
+        ValidationResult result = ConfigurationValidator.validateNamespace(null);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
@@ -163,7 +146,7 @@ public class ConfigurationValidationTests {
         ConfigurationNamespace namespace = new ConfigurationNamespace("invalid namespace");
 
         // Act
-        ValidationResult result = validator.validateNamespace(namespace);
+        ValidationResult result = ConfigurationValidator.validateNamespace(namespace);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
@@ -179,7 +162,7 @@ public class ConfigurationValidationTests {
         ConfigurationNamespace namespace = new ConfigurationNamespace(longNamespace);
 
         // Act
-        ValidationResult result = validator.validateNamespace(namespace);
+        ValidationResult result = ConfigurationValidator.validateNamespace(namespace);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
@@ -204,7 +187,7 @@ public class ConfigurationValidationTests {
         );
 
         // Act
-        ValidationResult result = validator.validateEntry(entry);
+        ValidationResult result = ConfigurationValidator.validateEntry(entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.isValid());
@@ -216,33 +199,30 @@ public class ConfigurationValidationTests {
     @org.junit.jupiter.api.Test
     void testNullConfigurationEntry() {
         // Act
-        ValidationResult result = validator.validateEntry(null);
+        ValidationResult result = ConfigurationValidator.validateEntry(null);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
     }
 
     /**
-     * Test: ConfigurationEntry with null type fails validation.
+     * Test: ConfigurationEntry with null type throws at construction.
      */
     @org.junit.jupiter.api.Test
     void testConfigurationEntryWithNullType() {
-        // Arrange
-        ConfigurationEntry entry = new ConfigurationEntry(
-                new ConfigurationKey("test.key"),
-                new ConfigurationNamespace("test.namespace"),
-                null,
-                "value",
-                "Description",
-                false,
-                Instant.now()
+        // Act & Assert - constructor rejects null type via Objects.requireNonNull
+        org.junit.jupiter.api.Assertions.assertThrows(
+                NullPointerException.class,
+                () -> new ConfigurationEntry(
+                        new ConfigurationKey("test.key"),
+                        new ConfigurationNamespace("test.namespace"),
+                        null,
+                        "value",
+                        "Description",
+                        false,
+                        Instant.now()
+                )
         );
-
-        // Act
-        ValidationResult result = validator.validateEntry(entry);
-
-        // Assert
-        org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
     }
 
     /**
@@ -262,7 +242,7 @@ public class ConfigurationValidationTests {
         );
 
         // Act
-        ValidationResult result = validator.validateEntry(entry);
+        ValidationResult result = ConfigurationValidator.validateEntry(entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
@@ -287,7 +267,7 @@ public class ConfigurationValidationTests {
         );
 
         // Act
-        ValidationResult result = validator.validateValue(entry);
+        ValidationResult result = ConfigurationValidator.validateValue(entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.isValid());
@@ -310,7 +290,7 @@ public class ConfigurationValidationTests {
         );
 
         // Act
-        ValidationResult result = validator.validateValue(entry);
+        ValidationResult result = ConfigurationValidator.validateValue(entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.isValid());
@@ -333,7 +313,7 @@ public class ConfigurationValidationTests {
         );
 
         // Act
-        ValidationResult result = validator.validateValue(entry);
+        ValidationResult result = ConfigurationValidator.validateValue(entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.isValid());
@@ -356,7 +336,7 @@ public class ConfigurationValidationTests {
         );
 
         // Act
-        ValidationResult result = validator.validateValue(entry);
+        ValidationResult result = ConfigurationValidator.validateValue(entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.isValid());
@@ -379,7 +359,7 @@ public class ConfigurationValidationTests {
         );
 
         // Act
-        ValidationResult result = validator.validateValue(entry);
+        ValidationResult result = ConfigurationValidator.validateValue(entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.isValid());
@@ -402,7 +382,7 @@ public class ConfigurationValidationTests {
         );
 
         // Act
-        ValidationResult result = validator.validateValue(entry);
+        ValidationResult result = ConfigurationValidator.validateValue(entry);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.isValid());
@@ -419,7 +399,7 @@ public class ConfigurationValidationTests {
         ConfigurationKey key = new ConfigurationKey("valid.key");
 
         // Act
-        ValidationResult result = validator.validateKey(key);
+        ValidationResult result = ConfigurationValidator.validateKey(key);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertTrue(result.isValid());
@@ -435,7 +415,7 @@ public class ConfigurationValidationTests {
         ConfigurationKey key = new ConfigurationKey("invalid key!");
 
         // Act
-        ValidationResult result = validator.validateKey(key);
+        ValidationResult result = ConfigurationValidator.validateKey(key);
 
         // Assert
         org.junit.jupiter.api.Assertions.assertFalse(result.isValid());

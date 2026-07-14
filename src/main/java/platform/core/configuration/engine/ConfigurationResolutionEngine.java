@@ -31,9 +31,9 @@ import java.time.Instant;
 public final class ConfigurationResolutionEngine {
 
     /**
-     * Private constructor to prevent instantiation.
+     * Constructs a new {@code ConfigurationResolutionEngine}.
      */
-    private ConfigurationResolutionEngine() {
+    public ConfigurationResolutionEngine() {
     }
 
     /**
