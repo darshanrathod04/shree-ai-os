@@ -1,5 +1,9 @@
 package platform.core.plugin.api;
 
+import platform.core.plugin.model.Plugin;
+import platform.core.plugin.model.PluginDescriptor;
+import platform.core.plugin.model.PluginRequest;
+
 import java.util.Collection;
 import java.util.Optional;
 

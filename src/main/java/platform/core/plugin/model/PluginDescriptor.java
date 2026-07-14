@@ -1,4 +1,6 @@
-package platform.core.plugin.api;
+package platform.core.plugin.model;
+
+import java.time.Instant;
 
 /**
  * <b>PluginDescriptor</b>
@@ -19,11 +21,12 @@ package platform.core.plugin.api;
  * <ul>
  *   <li>Immutable — final class, final fields.</li>
  *   <li>Constructor validation.</li>
+ *   <li>Value equality.</li>
  *   <li>No business logic.</li>
  *   <li>No persistence.</li>
  * </ul>
  *
- * <p><b>Constitutional Authority:</b> ADD-PLT-301</p>
+ * <p><b>Constitutional Authority:</b> ADD-PLT-301, STD-003</p>
  *
  * @see Plugin
  * @see PluginState
@@ -33,23 +36,35 @@ public final class PluginDescriptor {
 
     private final Plugin plugin;
     private final PluginState state;
+    private final Instant loadedAt;
+    private final String provider;
 
     /**
      * Constructs a new {@code PluginDescriptor}.
      *
      * @param plugin the plugin
      * @param state the current plugin state
-     * @throws IllegalArgumentException if plugin or state is null
+     * @param loadedAt the timestamp when plugin was loaded
+     * @param provider the plugin provider
+     * @throws IllegalArgumentException if any parameter is null
      */
-    public PluginDescriptor(Plugin plugin, PluginState state) {
+    public PluginDescriptor(Plugin plugin, PluginState state, Instant loadedAt, String provider) {
         if (plugin == null) {
             throw new IllegalArgumentException("Plugin must not be null");
         }
         if (state == null) {
             throw new IllegalArgumentException("PluginState must not be null");
         }
+        if (loadedAt == null) {
+            throw new IllegalArgumentException("loadedAt must not be null");
+        }
+        if (provider == null || provider.isBlank()) {
+            throw new IllegalArgumentException("Provider must not be null or blank");
+        }
         this.plugin = plugin;
         this.state = state;
+        this.loadedAt = loadedAt;
+        this.provider = provider;
     }
 
     /**
@@ -71,9 +86,27 @@ public final class PluginDescriptor {
     }
 
     /**
+     * Returns the timestamp when the plugin was loaded.
+     *
+     * @return the loadedAt timestamp
+     */
+    public Instant loadedAt() {
+        return loadedAt;
+    }
+
+    /**
+     * Returns the plugin provider.
+     *
+     * @return the provider
+     */
+    public String provider() {
+        return provider;
+    }
+
+    /**
      * Indicates whether some other object is "equal to" this one.
      *
-     * <p>Two descriptors are equal if their plugins and states are equal.</p>
+     * <p>Two descriptors are equal if their plugin, state, loadedAt, and provider are equal.</p>
      *
      * @param obj the reference object with which to compare
      * @return true if this object is the same as the obj argument
@@ -87,7 +120,10 @@ public final class PluginDescriptor {
             return false;
         }
         PluginDescriptor that = (PluginDescriptor) obj;
-        return plugin.equals(that.plugin) && state == that.state;
+        return plugin.equals(that.plugin) &&
+                state == that.state &&
+                loadedAt.equals(that.loadedAt) &&
+                provider.equals(that.provider);
     }
 
     /**
@@ -99,6 +135,8 @@ public final class PluginDescriptor {
     public int hashCode() {
         int result = plugin.hashCode();
         result = 31 * result + state.hashCode();
+        result = 31 * result + loadedAt.hashCode();
+        result = 31 * result + provider.hashCode();
         return result;
     }
 
@@ -112,6 +150,8 @@ public final class PluginDescriptor {
         return "PluginDescriptor{" +
                 "plugin=" + plugin +
                 ", state=" + state +
+                ", loadedAt=" + loadedAt +
+                ", provider='" + provider + '\'' +
                 '}';
     }
 }

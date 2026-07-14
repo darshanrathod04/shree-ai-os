@@ -1,4 +1,4 @@
-package platform.core.plugin.api;
+package platform.core.plugin.model;
 
 /**
  * <b>PluginRequest</b>
@@ -19,11 +19,12 @@ package platform.core.plugin.api;
  * <ul>
  *   <li>Immutable — final class, final fields.</li>
  *   <li>Constructor validation.</li>
+ *   <li>Value equality.</li>
  *   <li>No business logic.</li>
  *   <li>No persistence.</li>
  * </ul>
  *
- * <p><b>Constitutional Authority:</b> ADD-PLT-301</p>
+ * <p><b>Constitutional Authority:</b> ADD-PLT-301, STD-003</p>
  *
  * @see Plugin
  * @see PluginService
@@ -31,21 +32,21 @@ package platform.core.plugin.api;
 public final class PluginRequest {
 
     private final Plugin plugin;
-    private final boolean deep;
+    private final boolean force;
 
     /**
      * Constructs a new {@code PluginRequest}.
      *
      * @param plugin the plugin
-     * @param deep whether to perform deep operation
+     * @param force whether to force the operation
      * @throws IllegalArgumentException if plugin is null
      */
-    public PluginRequest(Plugin plugin, boolean deep) {
+    public PluginRequest(Plugin plugin, boolean force) {
         if (plugin == null) {
             throw new IllegalArgumentException("Plugin must not be null");
         }
         this.plugin = plugin;
-        this.deep = deep;
+        this.force = force;
     }
 
     /**
@@ -58,18 +59,18 @@ public final class PluginRequest {
     }
 
     /**
-     * Returns whether to perform deep operation.
+     * Returns whether to force the operation.
      *
-     * @return true if deep operation, false otherwise
+     * @return true if force operation, false otherwise
      */
-    public boolean deep() {
-        return deep;
+    public boolean force() {
+        return force;
     }
 
     /**
      * Indicates whether some other object is "equal to" this one.
      *
-     * <p>Two requests are equal if their plugins and deep flags are equal.</p>
+     * <p>Two requests are equal if their plugins and force flags are equal.</p>
      *
      * @param obj the reference object with which to compare
      * @return true if this object is the same as the obj argument
@@ -83,7 +84,7 @@ public final class PluginRequest {
             return false;
         }
         PluginRequest that = (PluginRequest) obj;
-        return deep == that.deep && plugin.equals(that.plugin);
+        return force == that.force && plugin.equals(that.plugin);
     }
 
     /**
@@ -94,7 +95,7 @@ public final class PluginRequest {
     @Override
     public int hashCode() {
         int result = plugin.hashCode();
-        result = 31 * result + (deep ? 1 : 0);
+        result = 31 * result + (force ? 1 : 0);
         return result;
     }
 
@@ -107,7 +108,7 @@ public final class PluginRequest {
     public String toString() {
         return "PluginRequest{" +
                 "plugin=" + plugin +
-                ", deep=" + deep +
+                ", force=" + force +
                 '}';
     }
 }

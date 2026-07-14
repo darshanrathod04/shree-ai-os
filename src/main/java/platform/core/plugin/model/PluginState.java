@@ -1,4 +1,4 @@
-package platform.core.plugin.api;
+package platform.core.plugin.model;
 
 /**
  * <b>PluginState</b>
@@ -15,7 +15,7 @@ package platform.core.plugin.api;
  * <p><b>Ownership:</b> Platform Core</p>
  * <p><b>Version:</b> 1.0</p>
  *
- * <p><b>Constitutional Authority:</b> ADD-PLT-301</p>
+ * <p><b>Constitutional Authority:</b> ADD-PLT-301, STD-003</p>
  *
  * @see PluginDescriptor
  * @see PluginService
