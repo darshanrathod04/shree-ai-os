@@ -7,7 +7,9 @@ import platform.core.plugin.error.PluginNotFoundException;
 import platform.core.plugin.model.Plugin;
 import platform.core.plugin.model.PluginDescriptor;
 import platform.core.plugin.model.PluginId;
+import platform.core.plugin.model.PluginState;
 import platform.core.plugin.engine.PluginLifecycleEngine;
+import platform.core.plugin.engine.PluginTransitionResult;
 import platform.core.plugin.validator.PluginValidator;
 
 import java.util.Collection;
@@ -218,5 +220,137 @@ public final class DefaultPluginService implements PluginService {
 
         // Step 1 & 2: Lookup and return boolean
         return plugins.containsKey(plugin.id());
+    }
+
+    // ========================================================================
+    // Lifecycle Operations
+    // ========================================================================
+    //
+    // The service coordinates; the engine executes transitions.
+    // These methods delegate to PluginLifecycleEngine and update the stored
+    // descriptor state on success.
+
+    /**
+     * Loads a plugin, transitioning it from UNLOADED to LOADED.
+     *
+     * <p>The service delegates the transition decision to the
+     * {@link PluginLifecycleEngine} and updates the stored descriptor
+     * state upon success.</p>
+     *
+     * @param descriptor the plugin descriptor
+     * @return a {@link PluginTransitionResult} indicating success or failure
+     * @throws NullPointerException if descriptor is null
+     */
+    public PluginTransitionResult load(PluginDescriptor descriptor) {
+        Objects.requireNonNull(descriptor, "descriptor must not be null");
+        return executeLifecycleTransition(descriptor, PluginState.UNLOADED, lifecycleEngine::load);
+    }
+
+    /**
+     * Starts a plugin, transitioning it from LOADED to STARTED
+     * (or STOPPED to STARTED for restart scenarios).
+     *
+     * <p>The service delegates the transition decision to the
+     * {@link PluginLifecycleEngine} and updates the stored descriptor
+     * state upon success.</p>
+     *
+     * @param descriptor the plugin descriptor
+     * @return a {@link PluginTransitionResult} indicating success or failure
+     * @throws NullPointerException if descriptor is null
+     */
+    public PluginTransitionResult start(PluginDescriptor descriptor) {
+        Objects.requireNonNull(descriptor, "descriptor must not be null");
+        PluginState current = descriptor.state();
+        return switch (current) {
+            case LOADED -> executeLifecycleTransition(descriptor, PluginState.LOADED, lifecycleEngine::start);
+            case STOPPED -> executeLifecycleTransition(descriptor, PluginState.STOPPED, lifecycleEngine::start);
+            default -> PluginTransitionResult.failure(
+                    descriptor,
+                    current,
+                    current,
+                    String.format(
+                            "Cannot start plugin '%s' from state %s",
+                            descriptor.plugin().id(), current
+                    )
+            );
+        };
+    }
+
+    /**
+     * Stops a plugin, transitioning it from STARTED to STOPPED.
+     *
+     * <p>The service delegates the transition decision to the
+     * {@link PluginLifecycleEngine} and updates the stored descriptor
+     * state upon success.</p>
+     *
+     * @param descriptor the plugin descriptor
+     * @return a {@link PluginTransitionResult} indicating success or failure
+     * @throws NullPointerException if descriptor is null
+     */
+    public PluginTransitionResult stop(PluginDescriptor descriptor) {
+        Objects.requireNonNull(descriptor, "descriptor must not be null");
+        return executeLifecycleTransition(descriptor, PluginState.STARTED, lifecycleEngine::stop);
+    }
+
+    /**
+     * Unloads a plugin, transitioning it from STOPPED to UNLOADED.
+     *
+     * <p>The service delegates the transition decision to the
+     * {@link PluginLifecycleEngine} and updates the stored descriptor
+     * state upon success.</p>
+     *
+     * @param descriptor the plugin descriptor
+     * @return a {@link PluginTransitionResult} indicating success or failure
+     * @throws NullPointerException if descriptor is null
+     */
+    public PluginTransitionResult unload(PluginDescriptor descriptor) {
+        Objects.requireNonNull(descriptor, "descriptor must not be null");
+        return executeLifecycleTransition(descriptor, PluginState.STOPPED, lifecycleEngine::unload);
+    }
+
+    /**
+     * Verifies the plugin's current state matches expectations, delegates to
+     * the engine for transition validation, and updates the stored descriptor
+     * on success.
+     */
+    private PluginTransitionResult executeLifecycleTransition(
+            PluginDescriptor descriptor,
+            PluginState expectedState,
+            LifecycleTransition transition
+    ) {
+        PluginState current = descriptor.state();
+        if (current != expectedState) {
+            return PluginTransitionResult.failure(
+                    descriptor,
+                    current,
+                    current,
+                    String.format(
+                            "Cannot transition plugin '%s' from %s; expected state is %s",
+                            descriptor.plugin().id(), current, expectedState
+                    )
+            );
+        }
+
+        PluginTransitionResult engineResult = transition.apply(descriptor);
+        if (engineResult.success()) {
+            PluginState targetState = engineResult.currentState();
+            PluginDescriptor updatedDescriptor = new PluginDescriptor(
+                    descriptor.plugin(),
+                    targetState,
+                    descriptor.loadedAt(),
+                    descriptor.provider()
+            );
+            plugins.put(descriptor.plugin().id(), updatedDescriptor);
+            return PluginTransitionResult.success(descriptor, current, targetState);
+        }
+        return engineResult;
+    }
+
+    /**
+     * Functional interface for engine transition methods.
+     */
+    @FunctionalInterface
+    private interface LifecycleTransition {
+        PluginTransitionResult apply(PluginDescriptor descriptor);
     }
 }
