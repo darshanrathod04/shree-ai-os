@@ -50,10 +50,10 @@ import platform.core.registry.validator.ValidationResult;
 public final class HealthValidator {
 
     /**
-     * Private constructor to prevent instantiation.
-     * This is a static utility class.
+     * Constructs a new {@code HealthValidator}.
+     * Public to allow test instantiation.
      */
-    private HealthValidator() {
+    public HealthValidator() {
     }
 
     /**
