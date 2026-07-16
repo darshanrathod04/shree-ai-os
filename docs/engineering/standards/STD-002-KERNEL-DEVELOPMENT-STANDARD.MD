@@ -1,17 +1,17 @@
-# STD-002 — Kernel Development Standard
+~~# STD-002 — Kernel Development Standard
 
 ## Document Information
 
-| Field | Value |
-|-------|-------|
-| Document ID | STD-002 |
-| Document Type | Engineering Standard |
-| Platform | Shree AI OS |
-| Version | 1.0 (Founding Edition) |
-| Status | Active |
-| Owner | Chief AI Architect |
-| Founder | Darshan Rathod |
-| Classification | Engineering Standards |
+| Field            | Value                   |
+|------------------|-------------------------|
+| Document ID      | STD-002                 |
+| Document Type    | Engineering Standard    |
+| Platform         | Shree AI OS             |
+| Version          | 1.0 (Founding Edition)  |
+| Status           | Active                  |
+| Owner            | Chief AI Architect      |
+| Founder          | Darshan Rathod          |
+| Classification   | Engineering Standards   |
 
 ---
 
@@ -390,4 +390,4 @@ Shree AI OS
 Maintained By:
 Chief AI Architect
 
-End of STD-002
+End of STD-002~~

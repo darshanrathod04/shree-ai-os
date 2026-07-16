@@ -2,18 +2,18 @@
 
 ## Document Information
 
-| Field | Value |
-|-------|-------|
-| **Document ID** | DOC-INDEX-001 |
-| **Document Type** | Document Catalog |
-| **Platform** | Shree AI OS |
-| **Version** | 1.0 |
-| **Status** | Active |
-| **Owner** | Chief AI Architect |
-| **Founder** | Darshan Rathod |
+| Field              | Value              |
+|--------------------|--------------------|
+| **Document ID**    | DOC-INDEX-001      |
+| **Document Type**  | Document Catalog   |
+| **Platform**       | Shree AI OS        |
+| **Version**        | 1.0                |
+| **Status**         | Active             |
+| **Owner**          | Chief AI Architect |
+| **Founder**        | Darshan Rathod     |
 | **Classification** | Platform Knowledge |
-| **Created** | 11 July 2026 |
-| **Last Updated** | 11 July 2026 |
+| **Created**        | 11 July 2026       |
+| **Last Updated**   | 11 July 2026       |
 
 ---
 

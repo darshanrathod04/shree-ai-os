@@ -1,0 +1,1722 @@
+===== configuration\api\README.md =====
+# Configuration Service Public API
+
+## Package
+`platform.core.configuration.api`
+
+## Purpose
+The Configuration Service Public API defines configuration contracts for the Platform within Shree AI OS. It enables type-safe configuration access across Platform components.
+
+## Architectural Responsibility
+- Defines the public contract for Platform configuration management.
+- Specifies WHAT the Configuration Service can do — implementations define HOW.
+- Enables type-safe configuration access across Platform components.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contract
+
+### `ConfigurationService`
+The public contract for Platform configuration management.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `register(ConfigurationEntry)` | `boolean` | Registers a configuration entry |
+| `get(ConfigurationKey)` | `Optional<ConfigurationEntry>` | Returns configuration by key |
+| `list()` | `Collection<ConfigurationEntry>` | Returns all registered configurations |
+| `exists(ConfigurationKey)` | `boolean` | Returns whether configuration exists |
+| `remove(ConfigurationKey)` | `boolean` | Removes configuration |
+
+## Domain Models (Forward References for EIO-502)
+
+### `ConfigurationEntry`
+Represents a configuration entry.
+
+| Field | Type | Description |
+|-------|------|-------------|
+===== configuration\engine\README.md =====
+# Configuration Resolution Engine
+
+## Package
+`platform.core.configuration.engine`
+
+## Purpose
+The Configuration Resolution Engine resolves effective configuration values within Shree AI OS. It provides pure resolution logic without storing configurations.
+
+## Architectural Responsibility
+- Resolves configuration values from entries.
+- Validates resolved values against types.
+- Provides resolution results with success/failure status.
+- Never stores configuration — pure resolution logic.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Engine
+
+### `ConfigurationResolutionEngine`
+Stateless engine for configuration resolution.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `resolve(ConfigurationKey, ConfigurationEntry)` | `ResolutionResult` | Resolves a configuration entry to its effective value |
+
+### Resolution Rules
+1. If entry exists, return success=true
+2. If value is null, return success=false with failure message
+3. If type mismatch, return success=false with failure message
+
+## Resolution Result
+
+### `ResolutionResult`
+Immutable result of configuration resolution.
+
+===== configuration\error\README.md =====
+# Configuration Error Architecture
+
+## Package
+`platform.core.configuration.error`
+
+## Purpose
+The Configuration Error Architecture defines all standard errors used by the Configuration subsystem within Shree AI OS. No service or validation logic is implemented.
+
+## Architectural Responsibility
+- Provides a complete error architecture for the Configuration subsystem.
+- Ensures consistent error reporting across all Configuration operations.
+- Follows the Platform-wide error pattern established by other subsystems.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Error Architecture
+
+### `ConfigurationErrorCode`
+Enumeration of all possible Configuration error conditions.
+
+| Code | Description |
+|------|-------------|
+| `CONFIGURATION_DUPLICATE` | A configuration with the same key already exists |
+| `CONFIGURATION_NOT_FOUND` | The requested configuration was not found |
+| `CONFIGURATION_INVALID` | The configuration is invalid |
+| `CONFIGURATION_VALIDATION_FAILED` | The configuration validation failed |
+| `CONFIGURATION_READ_ONLY` | The configuration is read-only and cannot be modified |
+| `CONFIGURATION_NAMESPACE_NOT_FOUND` | The configuration namespace was not found |
+| `CONFIGURATION_TYPE_MISMATCH` | The configuration value type does not match the expected type |
+
+### `ConfigurationError`
+Immutable error model containing error code, message, timestamp, and optional details.
+
+| Field | Type | Description |
+|-------|------|-------------|
+===== configuration\model\README.md =====
+# Configuration Domain Models
+
+## Package
+`platform.core.configuration.model`
+
+## Purpose
+The Configuration Domain Models define the immutable Platform Language for the Configuration Service within Shree AI OS. These models provide type-safe, immutable value objects for configuration representation.
+
+## Architectural Responsibility
+- Defines the domain models for configuration management.
+- Provides immutable value objects for type-safe configuration representation.
+- Enables consistent configuration handling across Platform components.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Models
+
+### `ConfigurationKey`
+Immutable configuration key.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `value()` | `String` | The key value |
+
+**Invariant:** Value is non-null and non-blank.
+
+**Equality:** Value-based equality with `equals()`, `hashCode()`, and `toString()`.
+
+### `ConfigurationNamespace`
+Immutable configuration namespace.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `value()` | `String` | The namespace value |
+
+===== configuration\service\README.md =====
+# Default Configuration Service
+
+## Package
+`platform.core.configuration.service`
+
+## Purpose
+The Default Configuration Service provides the default in-memory implementation of the ConfigurationService contract within Shree AI OS. It owns configuration storage and coordinates validation and error handling.
+
+## Architectural Responsibility
+- Implements the ConfigurationService contract.
+- Owns the configuration storage.
+- Coordinates validation and error handling.
+- Ensures thread-safe configuration management.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Implementation
+
+### `DefaultConfigurationService`
+The default in-memory implementation of the ConfigurationService contract.
+
+| Method | Description |
+|--------|-------------|
+| `register(ConfigurationEntry)` | Validates entry, rejects duplicates, stores entry |
+| `get(ConfigurationKey)` | Validates key, looks up entry, returns Optional |
+| `list()` | Returns unmodifiable collection of all entries |
+| `exists(ConfigurationKey)` | Lookup-only check for key existence |
+| `remove(ConfigurationKey)` | Validates key, rejects read-only, removes entry |
+
+### Constructor Dependencies
+
+| Dependency | Type | Description |
+|------------|------|-------------|
+| `ConfigurationValidator` | `platform.core.configuration.validator.ConfigurationValidator` | Validates configurations |
+
+===== configuration\validator\README.md =====
+# Configuration Validation
+
+## Package
+`platform.core.configuration.validator`
+
+## Purpose
+The Configuration Validation subsystem validates the Platform Language for the Configuration Service within Shree AI OS. It protects the Platform Language from invalid configurations without mutating models or storing data.
+
+## Architectural Responsibility
+- Validates configuration keys, namespaces, and entries.
+- Protects the Platform Language from invalid configurations.
+- Never mutates models — validation is pure and read-only.
+- Never stores configuration — validation is stateless.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Validator
+
+### `ConfigurationValidator`
+Stateless validator for configuration models.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `validateKey(ConfigurationKey)` | `ValidationResult` | Validates a configuration key |
+| `validateNamespace(ConfigurationNamespace)` | `ValidationResult` | Validates a configuration namespace |
+| `validateEntry(ConfigurationEntry)` | `ValidationResult` | Validates a configuration entry |
+| `validateValue(ConfigurationEntry)` | `ValidationResult` | Validates configuration value against type |
+
+## Validation Rules
+
+### ConfigurationKey
+- Must not be null
+- Must not be blank
+- Must not have leading/trailing spaces
+- Must not exceed 128 characters
+===== discovery\api\README.md =====
+# Discovery Service Public API
+
+## Package
+`platform.core.discovery.api`
+
+## Purpose
+The Discovery Service enables capability resolution within Shree AI OS without creating compile-time dependencies between kernels. This package defines the official Platform contract for discovery.
+
+## Architectural Responsibility
+- Defines the official Platform contract for capability resolution.
+- Enables kernels to discover other kernels by capability or contract.
+- Hides deployment details from requesting kernels.
+- Ensures discovery remains independent of registry implementation.
+- Supports version compatibility resolution (KD-004).
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-006 — Kernel Discovery
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contracts
+
+### `DiscoveryService`
+The official Platform contract for capability resolution.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `resolveByCapability(CapabilityId)` | `Optional<DiscoveryResult>` | Resolves a kernel by its capability |
+| `resolveByContract(ContractId)` | `Optional<DiscoveryResult>` | Resolves a kernel by its contract type |
+| `supports(CapabilityId)` | `boolean` | Determines whether a capability exists |
+| `availableCapabilities()` | `Collection<CapabilityId>` | Lists all available capabilities |
+
+## Discovery Principles
+
+### Kernels Discover Capabilities, Not Implementations
+Kernels should never know where another kernel lives. They should simply request the capability they need. The platform is responsible for locating the appropriate kernel.
+===== discovery\error\README.md =====
+ # Discovery Error Architecture
+
+## Package
+`platform.core.discovery.error`
+
+## Purpose
+Standardized error model for the Discovery Service that provides a consistent error architecture across Platform Core Services.
+
+The error architecture mirrors the approved Registry Error Architecture pattern.
+
+## Architectural Responsibility
+- Provides a standardized error model for the Discovery Service.
+- Defines error codes, structured error descriptions, and a base exception hierarchy.
+- Mirrors the Registry Error Architecture for consistency across Platform Core Services.
+- Ensures all discovery errors are consistent, typed, and documented.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-006 — Kernel Discovery
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Error Model
+
+### `DiscoveryErrorCode`
+Standardized error codes for discovery operations.
+
+| Code | Description |
+|------|-------------|
+| `DISCOVERY_CAPABILITY_NOT_FOUND` | The requested capability was not found in the platform |
+| `DISCOVERY_CONTRACT_NOT_FOUND` | The requested contract was not found in the platform |
+| `DISCOVERY_INVALID_REQUEST` | The discovery request is invalid or malformed |
+| `DISCOVERY_INCOMPATIBLE_VERSION` | The requested capability or contract version is incompatible |
+| `DISCOVERY_VALIDATION_FAILED` | Discovery validation failed — the request does not satisfy prerequisites |
+
+### `DiscoveryError`
+Immutable error description containing code, message, timestamp, and optional details.
+===== discovery\model\README.md =====
+# Discovery Domain Models
+
+## Package
+`platform.core.discovery.model`
+
+## Purpose
+Domain models defining the Platform language for capability discovery. These immutable value types represent capability identity, contract identity, resolution status, and discovery results.
+
+## Architectural Responsibility
+- Defines the immutable value types that represent capability identity, contract identity, resolution status, and discovery results.
+- Provides the type-safe language that the `platform.core.discovery.api` package uses for capability resolution.
+- Ensures all capability and contract information is validated at construction time.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-006 — Kernel Discovery
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Domain Models
+
+### `CapabilityId`
+Represents the unique identity of a platform capability.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `value()` | `String` | The underlying identifier string |
+
+- Immutable by design (final class, final field)
+- Validates non-null and non-blank at construction
+- Implements `equals()`, `hashCode()`, `toString()`
+
+### `ContractId`
+Represents a discoverable platform contract.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+===== discovery\service\README.md =====
+# Default Discovery Service
+
+## Package
+`platform.core.discovery.service`
+
+## Purpose
+Reference implementation of the Discovery Service that provides capability resolution by consulting the Kernel Registry.
+
+The Registry remains the single source of truth for kernel information. Discovery owns capability resolution. Ownership shall never overlap.
+
+## Architectural Responsibility
+- Provides the reference implementation of capability resolution.
+- Resolves capabilities by consulting the Kernel Registry — it does not maintain its own registry.
+- Ensures the Registry remains the single source of truth for kernel information.
+- Never duplicates Registry state or creates separate storage structures.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-006 — Kernel Discovery
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contracts
+
+### `DefaultDiscoveryService`
+Reference implementation of `DiscoveryService`.
+
+| Method | Description |
+|--------|-------------|
+| `resolveByCapability(CapabilityId)` | Resolves a kernel by its capability |
+| `resolveByContract(ContractId)` | Resolves a kernel by its contract type |
+| `supports(CapabilityId)` | Determines whether a capability exists |
+| `availableCapabilities()` | Lists all available capabilities |
+
+## Implementation Details
+
+### Constructor Injection
+===== discovery\validator\README.md =====
+# Discovery Validation
+
+## Package
+`platform.core.discovery.validator`
+
+## Purpose
+Validation layer for the Discovery Service that ensures discovery requests satisfy all architectural requirements before capability resolution.
+
+The validator answers the question: *"Can this discovery request be processed?"*
+It never answers: *"Resolve the capability."*
+
+## Architectural Responsibility
+- Ensures discovery requests satisfy all architectural requirements before capability resolution.
+- Returns structured validation results supporting multiple errors in a single execution.
+- Reuses the approved Registry validation architecture.
+- Remains independent of the discovery implementation and registry.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-006 — Kernel Discovery
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contracts
+
+### `DiscoveryValidator`
+Stateless validator for discovery request readiness.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `validateCapabilityId(CapabilityId)` | `ValidationResult` | Validates a capability identifier |
+| `validateContractId(ContractId)` | `ValidationResult` | Validates a contract identifier |
+| `validateDiscoveryResult(DiscoveryResult)` | `ValidationResult` | Validates a discovery result for consistency |
+| `validateCapabilityMetadata(CapabilityId, Object)` | `ValidationResult` | Validates capability metadata (method stub) |
+
+## Validation Rules
+
+===== eventbus\api\README.md =====
+# Event Bus Public API
+
+## Package
+`platform.core.eventbus.api`
+
+## Purpose
+The Event Bus API defines how Platform components publish and subscribe to events within Shree AI OS. It enables decoupled communication between Platform components through contracts, not direct dependencies.
+
+## Architectural Responsibility
+- Defines the public contract for Platform event communication.
+- Specifies WHAT the Event Bus can do — implementations define HOW.
+- Enables decoupled communication between Platform components.
+- Ensures components communicate through contracts, not direct dependencies.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contracts
+
+### `EventBus`
+The public contract for Platform event communication.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `publish(Event)` | `void` | Publishes an event to the Event Bus |
+| `subscribe(EventTopic, EventSubscriber)` | `void` | Subscribes a subscriber to a topic |
+| `unsubscribe(EventTopic, EventSubscriber)` | `void` | Unsubscribes a subscriber from a topic |
+| `hasSubscribers(EventTopic)` | `boolean` | Returns whether there are subscribers for a topic |
+| `registeredTopics()` | `Collection<EventTopic>` | Returns all currently registered topics |
+
+## Domain Models
+
+### `Event`
+Represents a platform event.
+
+| Field | Type | Description |
+===== eventbus\engine\README.md =====
+# Event Dispatch Engine
+
+## Package
+`platform.core.eventbus.engine`
+
+## Purpose
+The Event Dispatch Engine executes event delivery within Shree AI OS. It remains independent from validation, subscriber registry, and service coordination.
+
+## Architectural Responsibility
+- Executes event delivery to subscribers.
+- Records dispatch outcomes and collects failures.
+- Remains independent from validation, subscriber registry, and service coordination.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Contracts
+
+### `EventDispatchEngine`
+Executes event delivery to subscribers.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `dispatch(Event, Collection<EventSubscriber>)` | `DispatchResult` | Dispatches an event to the given subscribers |
+
+**Note:** Throws `EventDispatchException` only for unexpected infrastructure failures.
+
+### `DispatchResult`
+Immutable result of a dispatch operation.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `success()` | `boolean` | Whether the dispatch succeeded overall |
+| `event()` | `Event` | The event that was dispatched |
+| `subscribersAttempted()` | `int` | Number of subscribers attempted |
+| `subscribersSucceeded()` | `int` | Number of subscribers that succeeded |
+===== eventbus\error\README.md =====
+ # Event Bus Error Architecture
+
+## Package
+`platform.core.eventbus.error`
+
+## Purpose
+The Event Bus Error Architecture defines all standard errors used by the Event Bus subsystem within Shree AI OS. No dispatching or service logic is implemented.
+
+## Architectural Responsibility
+- Provides a complete error architecture for the Event Bus subsystem.
+- Ensures consistent error reporting across all Event Bus operations.
+- Follows the Platform-wide error pattern established by other subsystems.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Error Architecture
+
+### `EventErrorCode`
+Enumeration of all possible Event Bus error conditions.
+
+| Code | Description |
+|------|-------------|
+| `EVENT_INVALID` | An event failed structural validation |
+| `EVENT_VALIDATION_FAILED` | Event validation failed due to missing or invalid fields |
+| `EVENT_NO_SUBSCRIBERS` | No subscribers found for the event topic |
+| `EVENT_DISPATCH_FAILED` | Event dispatch failed due to an unexpected error |
+| `EVENT_TOPIC_NOT_FOUND` | The event topic was not found in the registry |
+| `EVENT_SUBSCRIBER_FAILED` | A subscriber failed to process the event |
+| `EVENT_PUBLISH_FAILED` | Event publishing failed due to an unexpected error |
+
+### `EventError`
+Immutable error model containing error code, message, timestamp, and optional details.
+
+| Field | Type | Description |
+|-------|------|-------------|
+===== eventbus\model\README.md =====
+# Event Domain Models
+
+## Package
+`platform.core.eventbus.model`
+
+## Purpose
+The Event Domain Models define the immutable Platform language for the Event Bus subsystem within Shree AI OS. These models provide the type-safe data structures that the `platform.core.eventbus.api` package uses for event operations.
+
+## Architectural Responsibility
+- Defines the immutable domain objects used by the Event Bus subsystem.
+- Provides the type-safe language that the `platform.core.eventbus.api` package uses for event operations.
+- Ensures all event information is validated at construction time.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Domain Models
+
+### `Event`
+Represents a platform event.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id()` | `EventId` | Unique event identifier |
+| `topic()` | `EventTopic` | Event topic |
+| `metadata()` | `EventMetadata` | Event metadata |
+| `payload()` | `Object` | Event payload (may be null) |
+| `timestamp()` | `Instant` | Event creation timestamp |
+
+**Invariant:** All fields except payload are non-null and validated at construction time.
+
+### `EventId`
+Represents a unique event identifier.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+===== eventbus\service\README.md =====
+# Default Event Bus Service
+
+## Package
+`platform.core.eventbus.service`
+
+## Purpose
+The Default Event Bus Service provides the default in-memory implementation of the EventBus contract within Shree AI OS. It coordinates publishing and subscriber management, and delegates actual event delivery to the Event Dispatch Engine.
+
+## Architectural Responsibility
+- Coordinates publishing and subscriber management.
+- Owns the subscriber registry.
+- Delegates actual event delivery to the Event Dispatch Engine.
+- Ensures all events are validated before processing.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Implementation
+
+### `DefaultEventBusService`
+The default in-memory implementation of the EventBus contract.
+
+| Method | Description |
+|--------|-------------|
+| `publish(Event)` | Validates event, checks subscribers, delegates to EventDispatchEngine |
+| `subscribe(EventTopic, EventSubscriber)` | Validates topic and subscriber, registers subscriber |
+| `unsubscribe(EventTopic, EventSubscriber)` | Validates, removes subscriber, cleans up empty topics |
+| `hasSubscribers(EventTopic)` | Read-only lookup for subscribers |
+| `registeredTopics()` | Returns unmodifiable collection of all registered topics |
+
+### Constructor Dependencies
+
+| Dependency | Type | Description |
+|------------|------|-------------|
+| `EventValidator` | `platform.core.eventbus.validator.EventValidator` | Validates events, topics, and subscribers |
+| `LifecycleService` | `platform.core.lifecycle.api.LifecycleService` | Lifecycle service (future compatibility) |
+===== eventbus\validator\README.md =====
+# Event Validation Layer
+
+## Package
+`platform.core.eventbus.validator`
+
+## Purpose
+The Event Validation Layer verifies the structural correctness of Event Bus domain models within Shree AI OS. It remains completely independent from dispatching and service execution.
+
+## Architectural Responsibility
+- Verifies the structural correctness of Event Bus domain models.
+- Remains completely independent from dispatching and service execution.
+- Protects the Platform Language by ensuring all models meet invariants.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contract
+
+### `EventValidator`
+A stateless utility class that provides validation methods for Event Bus domain models.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `validateEvent(Event)` | `ValidationResult` | Validates an Event |
+| `validateEventId(EventId)` | `ValidationResult` | Validates an EventId |
+| `validateTopic(EventTopic)` | `ValidationResult` | Validates an EventTopic |
+| `validateMetadata(EventMetadata)` | `ValidationResult` | Validates EventMetadata |
+| `validateSubscriber(EventSubscriber)` | `ValidationResult` | Validates an EventSubscriber |
+| `validatePayload(Object)` | `ValidationResult` | Validates an event payload |
+
+## Validation Rules
+
+### Event
+- ✓ Exists (not null)
+- ✓ EventId exists and is valid
+- ✓ Topic exists and is valid
+===== health\api\README.md =====
+# Health Service Public API
+
+## Package
+`platform.core.health.api`
+
+## Purpose
+The Health Service Public API defines health monitoring contracts for the Platform within Shree AI OS. It enables health checking across all Platform components.
+
+## Architectural Responsibility
+- Defines the public contract for Platform health monitoring.
+- Specifies WHAT the Health Service can do — implementations define HOW.
+- Enables health checking across all Platform components.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contract
+
+### `HealthService`
+The public contract for Platform health monitoring.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `register(HealthComponent)` | `boolean` | Registers a health component for monitoring |
+| `check(HealthComponent)` | `Optional<HealthReport>` | Checks health of a specific component |
+| `checkAll()` | `Collection<HealthReport>` | Checks health of all registered components |
+| `unregister(HealthComponent)` | `boolean` | Unregisters a health component |
+| `exists(HealthComponent)` | `boolean` | Returns whether a component is registered |
+
+## Domain Models (Forward References for EIO-602)
+
+### `HealthComponent`
+Represents a platform component for health monitoring.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+===== health\engine\README.md =====
+# Health Evaluation Engine
+
+## Architecture
+
+```
+platform.core.health.engine
+├── HealthEvaluationEngine.java    — Stateless evaluation engine
+├── EvaluationResult.java          — Immutable evaluation result
+├── package-info.java
+└── README.md
+```
+
+## Architectural Responsibility
+
+The Health Evaluation Engine performs **runtime health evaluation** for platform components. It is the component that actually determines health status, generates indicators, and creates metrics.
+
+### What the Engine Does
+
+- ✅ Evaluates health of platform components
+- ✅ Generates HealthReport with status, indicators, and metrics
+- ✅ Returns EvaluationResult with success/failure status
+- ✅ Performs actual health checks (CPU, Memory, JVM, etc.)
+- ✅ Generates health indicators
+- ✅ Calculates health metrics
+- ✅ Throws HealthCheckFailedException on failures
+
+### What the Engine Does NOT Do
+
+- ❌ Validate models (that's HealthValidator's job)
+- ❌ Coordinate operations (that's HealthService's job)
+- ❌ Store components (that's HealthService's job)
+- ❌ Own storage or access ConcurrentHashMap
+- ❌ Register or unregister components
+- ❌ Create threads or schedule jobs
+- ❌ Publish events
+- ❌ Access Spring or other frameworks
+- ❌ Contain business logic
+
+## Evaluation Flow
+
+```
+===== health\error\README.md =====
+# Health Error Architecture
+
+## Architecture
+
+```
+platform.core.health.error
+├── HealthErrorCode.java              — Error code enum
+├── HealthError.java                  — Immutable error model
+├── HealthException.java              — Base runtime exception
+├── HealthComponentNotFoundException.java — Component not found
+├── HealthCheckFailedException.java   — Check failed
+├── InvalidHealthComponentException.java — Invalid component
+├── package-info.java
+└── README.md
+```
+
+## Architectural Responsibility
+
+The Health Error Architecture provides **structured error handling** for the Health subsystem. It follows the exact pattern established by Registry, Discovery, Lifecycle, Event Bus, and Configuration modules.
+
+### What the Error Architecture Does
+
+- ✅ Defines error codes for all Health error conditions
+- ✅ Provides immutable error model (HealthError)
+- ✅ Provides base exception (HealthException)
+- ✅ Provides concrete exceptions for specific error scenarios
+- ✅ Enables consistent error handling across Health subsystem
+- ✅ Wraps structured error information in exceptions
+
+### What the Error Architecture Does NOT Do
+
+- ❌ Monitor health (that's the Health Engine's job)
+- ❌ Evaluate health status
+- ❌ Execute health checks
+- ❌ Validate models (that's the HealthValidator's job)
+- ❌ Access Registry, Lifecycle, Event Bus, Configuration
+- ❌ Access databases or external services
+- ❌ Create threads or schedule tasks
+- ❌ Publish events
+- ❌ Contain business logic
+
+===== health\model\README.md =====
+# Health Domain Models
+
+## Architecture
+
+```
+platform.core.health.model
+├── HealthComponentId.java    — Immutable health component identifier
+├── HealthComponent.java      — Immutable health component
+├── HealthStatus.java         — Enum of health states
+├── HealthSeverity.java       — Enum of severity levels
+├── HealthIndicator.java      — Immutable health observation
+├── HealthMetrics.java        — Immutable health metrics
+├── HealthCheck.java          — Immutable health check request
+├── HealthReport.java         — Immutable health check result
+├── package-info.java
+└── README.md
+```
+
+## Model Descriptions
+
+### HealthComponentId
+Immutable value object representing a unique identifier for a health component.
+- **Field:** `String value()`
+- **Validation:** Non-null and non-blank
+- **Usage:** Primary key for health component registration
+
+### HealthComponent
+Immutable value object representing a platform component for health monitoring.
+- **Fields:**
+  - `HealthComponentId id()` — Unique identifier
+  - `String name()` — Human-readable name
+  - `String category()` — Component category (e.g., "Kernel", "Service", "AI Provider")
+- **Validation:** All fields non-null
+- **Usage:** Represents kernels, infrastructure services, or platform components
+
+### HealthStatus (Enum)
+Represents the overall health state of a component.
+- **Values:**
+  - `HEALTHY` — Component is healthy and operating normally
+  - `DEGRADED` — Component is degraded but still operational
+  - `UNHEALTHY` — Component is unhealthy and not operating correctly
+===== health\service\README.md =====
+# Health Service Implementation
+
+## Architecture
+
+```
+platform.core.health.service
+├── DefaultHealthService.java    — Default service implementation
+├── package-info.java
+└── README.md
+```
+
+## Architectural Responsibility
+
+The Health Service Implementation provides the **default in-memory implementation** of the HealthService contract. It coordinates validation and health evaluation while owning the component storage.
+
+### What the Service Does
+
+- ✅ Implements the HealthService API contract
+- ✅ Owns health component storage (in-memory ConcurrentHashMap)
+- ✅ Coordinates validation via HealthValidator
+- ✅ Coordinates evaluation via HealthEvaluationEngine
+- ✅ Returns immutable collections
+- ✅ Ensures thread-safe health management
+- ✅ Handles registration, checking, and unregistration
+
+### What the Service Does NOT Do
+
+- ❌ Perform health evaluation directly (delegates to HealthEvaluationEngine)
+- ❌ Validate models directly (delegates to HealthValidator)
+- ❌ Inspect CPU, memory, or services
+- ❌ Ping databases or external services
+- ❌ Create threads or schedule work
+- ❌ Publish events
+- ❌ Access Lifecycle, Registry, Event Bus, or Configuration directly
+- ❌ Contain business logic
+
+## Internal Flow
+
+### register(HealthComponent)
+
+```
+===== health\validator\README.md =====
+# Health Validation Layer
+
+## Architecture
+
+```
+platform.core.health.validator
+├── HealthValidator.java    — Stateless validation utility
+├── package-info.java
+└── README.md
+```
+
+## Architectural Responsibility
+
+The Health Validator is a **stateless validation layer** that protects the Platform Language by ensuring all Health models meet structural requirements before being used by the Health Engine.
+
+### What the Validator Does
+
+- ✅ Validates HealthComponentId structure
+- ✅ Validates HealthComponent structure
+- ✅ Validates HealthIndicator structure
+- ✅ Validates HealthMetrics structure
+- ✅ Validates HealthCheck structure
+- ✅ Validates HealthReport structure
+- ✅ Returns ValidationResult with errors and warnings
+- ✅ Enforces architectural invariants
+
+### What the Validator Does NOT Do
+
+- ❌ Evaluate health (that's the Health Engine's job)
+- ❌ Ping services or monitor CPU
+- ❌ Access Registry, Lifecycle, Event Bus, Configuration
+- ❌ Access databases or external services
+- ❌ Create threads or schedule tasks
+- ❌ Cache results
+- ❌ Throw exceptions for validation failures (returns ValidationResult instead)
+- ❌ Mutate models
+- ❌ Execute health checks
+
+## Validation Flow
+
+```
+===== lifecycle\api\README.md =====
+# Lifecycle Public API
+
+## Package
+`platform.core.lifecycle.api`
+
+## Purpose
+The Lifecycle API defines the Platform contract for Kernel lifecycle management within Shree AI OS.
+
+This API specifies WHAT the Platform can do. Future services define HOW the Platform does it.
+
+## Architectural Responsibility
+- Defines the official Platform contract for kernel lifecycle operations.
+- Specifies WHAT the Platform can do — future services define HOW.
+- Ensures lifecycle management is independent of implementation details.
+- Provides a stable API for kernel state and health queries.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-008 — Kernel Lifecycle Philosophy
+- KERNEL-009 — Kernel Lifecycle Contract
+- KERNEL-010 — Kernel State Model
+- KERNEL-011 — Kernel Lifecycle Events
+- KERNEL-012 — Kernel Lifecycle Invariants
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contracts
+
+### `LifecycleService`
+The official Platform contract for kernel lifecycle management.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `initialize(KernelId)` | `boolean` | Initializes a kernel for operation |
+| `start(KernelId)` | `boolean` | Starts a kernel |
+| `stop(KernelId)` | `boolean` | Stops a kernel |
+| `suspend(KernelId)` | `boolean` | Suspends a kernel |
+===== lifecycle\engine\README.md =====
+# Lifecycle State Transition Engine
+
+## Package
+`platform.core.lifecycle.engine`
+
+## Purpose
+The Transition Engine is the ONLY component responsible for executing Lifecycle State Transitions within Shree AI OS. No other component shall directly change Kernel lifecycle state.
+
+## Architectural Responsibility
+- Executes validated lifecycle state transitions.
+- Creates `LifecycleTransition` and `TransitionResult` records.
+- Never mutates external state — returns results for the caller to apply.
+- Remains completely stateless — all state is passed as parameters.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-008 — Kernel Lifecycle Philosophy
+- KERNEL-009 — Kernel Lifecycle Contract
+- KERNEL-010 — Kernel State Model
+- KERNEL-011 — Kernel Lifecycle Events
+- KERNEL-012 — Kernel Lifecycle Invariants
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contracts
+
+### `LifecycleTransitionEngine`
+Stateless engine for executing lifecycle state transitions.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `transition(KernelId, KernelState, KernelState)` | `TransitionResult` | Executes a validated state transition and produces a result |
+
+## Execution Flow
+
+```
+transition(kernelId, currentState, targetState)
+===== lifecycle\error\README.md =====
+# Lifecycle Error Architecture
+
+## Package
+`platform.core.lifecycle.error`
+
+## Purpose
+Standardized error model for the Lifecycle Service that provides a consistent error architecture following the Platform pattern.
+
+## Architectural Responsibility
+- Defines the standard error model used by all Lifecycle services.
+- Provides a consistent error architecture following the Platform pattern.
+- Ensures all lifecycle errors are consistent, typed, and documented.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-008 — Kernel Lifecycle Philosophy
+- KERNEL-009 — Kernel Lifecycle Contract
+- KERNEL-010 — Kernel State Model
+- KERNEL-011 — Kernel Lifecycle Events
+- KERNEL-012 — Kernel Lifecycle Invariants
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Error Model
+
+### `LifecycleErrorCode`
+Standardized error codes for lifecycle operations.
+
+| Code | Description |
+|------|-------------|
+| `LIFECYCLE_INVALID_TRANSITION` | A state transition violates the Lifecycle State Model |
+| `LIFECYCLE_KERNEL_NOT_INITIALIZED` | Execution was attempted before kernel initialization |
+| `LIFECYCLE_KERNEL_ALREADY_RUNNING` | Attempted to start an already running kernel |
+| `LIFECYCLE_KERNEL_ALREADY_STOPPED` | Attempted to stop an already stopped kernel |
+| `LIFECYCLE_KERNEL_ALREADY_SUSPENDED` | Attempted to suspend an already suspended kernel |
+| `LIFECYCLE_KERNEL_TERMINATED` | Attempted to operate on a terminated kernel |
+| `LIFECYCLE_VALIDATION_FAILED` | Lifecycle validation failed |
+===== lifecycle\model\README.md =====
+ # Lifecycle Domain Models
+
+## Package
+`platform.core.lifecycle.model`
+
+## Purpose
+Domain models defining the Platform language for kernel lifecycle management. These immutable value types represent kernel state, health, transitions, and transition results.
+
+## Architectural Responsibility
+- Defines the immutable domain objects used by the Lifecycle subsystem.
+- Provides the type-safe language that the `platform.core.lifecycle.api` package uses for lifecycle operations.
+- Ensures all lifecycle information is validated at construction time.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-008 — Kernel Lifecycle Philosophy
+- KERNEL-009 — Kernel Lifecycle Contract
+- KERNEL-010 — Kernel State Model
+- KERNEL-011 — Kernel Lifecycle Events
+- KERNEL-012 — Kernel Lifecycle Invariants
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Domain Models
+
+### `KernelState` (Enum)
+Represents the lifecycle state of a Kernel.
+
+| State | Description |
+|-------|-------------|
+| `CREATED` | Kernel has been created but not initialized |
+| `INITIALIZED` | Kernel has been initialized but not started |
+| `RUNNING` | Kernel is running and operational |
+| `SUSPENDED` | Kernel is suspended (state preserved for later resumption) |
+| `STOPPED` | Kernel has been stopped |
+| `FAILED` | Kernel has encountered an error |
+| `TERMINATED` | Kernel has been permanently terminated |
+===== lifecycle\service\README.md =====
+# Default Lifecycle Service
+
+## Package
+`platform.core.lifecycle.service`
+
+## Purpose
+Reference implementation of the Lifecycle Service that provides lifecycle orchestration for kernels within Shree AI OS.
+
+The service coordinates lifecycle operations by delegating validation to LifecycleValidator. It never owns lifecycle transition rules.
+
+## Architectural Responsibility
+- Provides the reference implementation of lifecycle orchestration.
+- Coordinates lifecycle operations by delegating validation to LifecycleValidator.
+- Maintains current lifecycle state for registered kernels.
+- Never owns lifecycle transition rules — validation is delegated.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-008 — Kernel Lifecycle Philosophy
+- KERNEL-009 — Kernel Lifecycle Contract
+- KERNEL-010 — Kernel State Model
+- KERNEL-011 — Kernel Lifecycle Events
+- KERNEL-012 — Kernel Lifecycle Invariants
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contracts
+
+### `DefaultLifecycleService`
+Reference implementation of `LifecycleService`.
+
+| Method | Description |
+|--------|-------------|
+| `initialize(KernelId)` | Initializes a kernel for operation |
+| `start(KernelId)` | Starts a kernel |
+| `stop(KernelId)` | Stops a kernel |
+| `suspend(KernelId)` | Suspends a kernel |
+===== lifecycle\validator\README.md =====
+# Lifecycle Validation
+
+## Package
+`platform.core.lifecycle.validator`
+
+## Purpose
+Validation layer for the Lifecycle Service that enforces all lifecycle rules before any state transition occurs.
+
+The validator answers the question: *"Is this transition allowed?"*
+It never answers: *"Perform the transition."*
+
+## Architectural Responsibility
+- Enforces all lifecycle rules before any state transition occurs.
+- Answers the question: "Is this transition allowed?" — it never performs the transition.
+- Returns structured validation results supporting multiple errors in a single execution.
+- Reuses the approved Registry validation architecture.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-008 — Kernel Lifecycle Philosophy
+- KERNEL-009 — Kernel Lifecycle Contract
+- KERNEL-010 — Kernel State Model
+- KERNEL-011 — Kernel Lifecycle Events
+- KERNEL-012 — Kernel Lifecycle Invariants
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contracts
+
+### `LifecycleValidator`
+Stateless validator for lifecycle transition readiness.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `validateKernelId(KernelId)` | `ValidationResult` | Validates a kernel identifier |
+| `validateState(KernelState)` | `ValidationResult` | Validates a kernel state |
+| `validateHealth(KernelHealth)` | `ValidationResult` | Validates kernel health |
+===== plugin\api\README.md =====
+# Plugin API
+
+## Purpose
+
+The Plugin API defines the public contracts for the Plugin Framework within Shree AI OS. It specifies **WHAT** the Platform can do with plugins—not **HOW** it does it.
+
+This package contains only interfaces and immutable value objects. No implementation, no business logic, no persistence.
+
+## Architecture
+
+```
+PluginService (interface)
+    │
+    ├── register(Plugin) → boolean
+    ├── get(Plugin) → Optional<PluginDescriptor>
+    ├── list() → Collection<PluginDescriptor>
+    ├── unregister(Plugin) → boolean
+    └── exists(Plugin) → boolean
+    │
+    ▼
+Plugin Models
+    │
+    ├── Plugin (identity)
+    ├── PluginDescriptor (metadata)
+    ├── PluginState (lifecycle)
+    └── PluginRequest (operation)
+    │
+    ▼
+Future Implementation
+    (platform.core.plugin.service)
+    (platform.core.plugin.engine)
+    (platform.core.plugin.loader)
+```
+
+## PluginService
+
+The central interface for plugin operations.
+
+### Methods
+
+| Method | Description | Returns |
+===== plugin\engine\README.md =====
+# Plugin Lifecycle Engine
+
+## Overview
+
+The Plugin Lifecycle Engine is a stateless, thread-safe component that governs plugin state transitions within Shree AI OS. It implements a deterministic state machine with five states and five allowed transitions.
+
+## State Diagram
+
+```
+        ┌─────────────────────────────────────┐
+        │                                     │
+        v                                     │
+   ┌─────────┐  load   ┌────────┐  start  ┌─────────┐
+   │UNLOADED │───────→│ LOADED │───────→│ STARTED │
+   └─────────┘        └────────┘        └─────────┘
+        ↑                                    │
+        │         ┌──────────┐               │ stop
+        └─────────│  STOPPED │←──────────────┘
+                  └──────────┘
+                       │
+                       │ start
+                       v
+                  ┌─────────┐
+                  │ STARTED │
+                  └─────────┘
+```
+
+## Transition Table
+
+| From       | To         | Method       |
+|------------|------------|--------------|
+| UNLOADED   | LOADED     | `load()`     |
+| LOADED     | STARTED    | `start()`    |
+| STARTED    | STOPPED    | `stop()`     |
+| STOPPED    | STARTED    | `start()`    |
+| STOPPED    | UNLOADED   | `unload()`   |
+
+### Rejected Transitions
+
+| From       | To         | Reason                        |
+|------------|------------|-------------------------------|
+===== plugin\error\README.md =====
+# Plugin Error
+
+## Purpose
+
+The Plugin Error package provides the error handling architecture for the Plugin Framework within Shree AI OS. It defines error codes, immutable error models, and a complete exception hierarchy for consistent error reporting and handling.
+
+## Architecture
+
+```
+PluginErrorCode (enum)
+    │
+    ▼
+PluginError (immutable model)
+    │
+    ▼
+PluginException (base runtime exception)
+    │
+    ├── DuplicatePluginException
+    ├── PluginNotFoundException
+    └── InvalidPluginException
+```
+
+## Error Hierarchy
+
+### PluginErrorCode
+
+Enumeration of all possible Plugin subsystem error conditions.
+
+| Code | Description |
+|------|-------------|
+| `PLUGIN_DUPLICATE` | A plugin with the same identifier is already registered |
+| `PLUGIN_NOT_FOUND` | The requested plugin was not found |
+| `PLUGIN_INVALID` | The plugin is invalid |
+| `PLUGIN_VALIDATION_FAILED` | Plugin validation failed |
+| `PLUGIN_ALREADY_STARTED` | The plugin is already started |
+| `PLUGIN_ALREADY_STOPPED` | The plugin is already stopped |
+| `PLUGIN_LIFECYCLE_FAILED` | The plugin lifecycle operation failed |
+
+### PluginError
+
+Immutable error model that encapsulates error information.
+===== plugin\model\README.md =====
+# Plugin Model
+
+## Purpose
+
+The Plugin Model package defines the immutable Platform Language for the Plugin Framework within Shree AI OS. It contains only data structures — no business logic, no persistence, no services.
+
+## Architecture
+
+```
+PluginId (identity)
+    │
+    ▼
+Plugin (entity)
+    │
+    ▼
+PluginDescriptor (metadata)
+    │
+    ▼
+PluginRequest (operation)
+```
+
+## Model Responsibilities
+
+### PluginId
+
+Immutable value object representing a unique plugin identifier.
+
+**Responsibilities:**
+- Provides unique identity for plugins
+- Validates non-null, non-blank values
+- Value equality based on string value
+
+**Fields:**
+- `String value` — the plugin identifier
+
+**Methods:**
+- `String value()` — returns the identifier
+
+### Plugin
+
+Immutable value object representing a plugin entity.
+===== plugin\service\README.md =====
+# Plugin Service
+
+## Purpose
+
+The Plugin Service package provides the default in-memory implementation of the PluginService contract within Shree AI OS.
+
+## Architecture
+
+```
+DefaultPluginService (implements PluginService)
+    │
+    ├── register(Plugin) → validate → store → return true
+    ├── get(Plugin) → validate → lookup → Optional<PluginDescriptor>
+    ├── list() → unmodifiable collection
+    ├── unregister(Plugin) → validate → remove → boolean
+    └── exists(Plugin) → lookup → boolean
+```
+
+## Storage
+
+- **ConcurrentHashMap<PluginId, PluginDescriptor>** — Thread-safe in-memory storage
+- No persistence, no database, no filesystem
+
+## Dependency Graph
+
+```
+DefaultPluginService
+    ├── PluginValidator (injected)
+    └── PluginLifecycleEngine (injected)
+```
+
+## Examples
+
+### Creating a Service
+
+```java
+PluginValidator validator = new PluginValidator();
+PluginLifecycleEngine engine = new PluginLifecycleEngine();
+PluginService service = new DefaultPluginService(validator, engine);
+```
+
+===== plugin\validator\README.md =====
+# Plugin Validator
+
+## Purpose
+
+The Plugin Validator is a stateless validation layer that ensures every Plugin model satisfies the architectural requirements before being used by the Plugin Framework. It answers the question: "Is this Plugin model valid?" — it never loads, executes, or modifies plugins.
+
+## Architecture
+
+```
+PluginValidator (stateless)
+    │
+    ├── validatePluginId(PluginId) → ValidationResult
+    ├── validatePlugin(Plugin) → ValidationResult
+    ├── validateDescriptor(PluginDescriptor) → ValidationResult
+    ├── validateRequest(PluginRequest) → ValidationResult
+    └── validateState(PluginState) → ValidationResult
+    │
+    ▼
+ValidationResult (from registry.validator)
+```
+
+## Responsibilities
+
+### What the Validator DOES:
+
+- Validates structural integrity of Plugin models
+- Ensures non-null and non-blank constraints
+- Returns structured ValidationResult with multiple errors
+- Enforces architectural invariants from ADD-PLT-301
+
+### What the Validator DOES NOT do:
+
+- ❌ Load plugins
+- ❌ Execute plugins
+- ❌ Start or stop plugins
+- ❌ Modify plugin state
+- ❌ Access Registry, Lifecycle, Event Bus, Configuration
+- ❌ Persist data
+- ❌ Log events
+- ❌ Spawn threads
+
+===== plugin\verification\README.md =====
+# Plugin Verification
+
+## Overview
+
+Before any plugin can be loaded into Shree AI OS, it must pass verification. Think of it like:
+
+- Android verifies APKs
+- VS Code verifies extensions
+- IntelliJ verifies plugins
+
+Shree AI OS does the same.
+
+## Responsibilities
+
+The verifier answers:
+
+- Is this plugin safe?
+- Is metadata valid?
+- Are dependencies satisfied?
+- Is version compatible?
+- Can this plugin run?
+
+**Nothing else.** No loading. No execution. Only verification.
+
+## Architecture
+
+```
+platform.core.plugin.verification
+├── PluginVerifier.java           — Orchestrator
+├── VerificationResult.java       — Complete report
+├── VerificationIssue.java        — Single finding
+├── VerificationSeverity.java     — INFO / WARNING / ERROR
+├── PluginCompatibilityChecker.java — Runtime compatibility
+└── PluginDependencyChecker.java  — Dependency availability
+```
+
+## Verification Pipeline
+
+```
+PluginDescriptor
+        │
+===== registry\api\README.md =====
+# Kernel Registry Public API
+
+## Package
+`platform.core.registry.api`
+
+## Purpose
+The Kernel Registry is the central registration authority for all kernels within Shree AI OS. It provides the public contract for kernel registration, unregistration, and discovery.
+
+## Architectural Responsibility
+- Provides the public contract for kernel registration and discovery.
+- Enforces the principle that no kernel participates in the platform until it is formally registered (KERNEL-005).
+- Maintains a registry of known kernels and their associated metadata.
+- Enables platform awareness, dependency validation, and contract discovery.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-005 — Kernel Registration
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+
+## Public Contracts
+
+### `KernelRegistry<T>`
+The central registration interface parameterized over the registration entry type `T`.
+
+| Method | Description |
+|--------|-------------|
+| `register(String kernelId, T entry)` | Registers a kernel with the platform. |
+| `unregister(String kernelId)` | Unregisters a kernel from the platform. |
+| `find(String kernelId)` | Finds a registered kernel by its unique identifier. |
+| `findAll()` | Returns all currently registered kernels. |
+| `exists(String kernelId)` | Checks whether a kernel is currently registered. |
+
+## Out of Scope
+The following concerns are explicitly **out of scope** for this package and are delegated to the implementation layer:
+
+- **Models** — Registration entry types are defined by the implementation.
+- **Validation** — Validation logic belongs in the implementation layer.
+===== registry\error\README.md =====
+# Registry Error Architecture
+
+## Package
+`platform.core.registry.error`
+
+## Purpose
+Standardized error model for the Kernel Registry. Provides a consistent, typed error handling architecture that supports future Platform Core Services without redesign.
+
+## Architectural Responsibility
+- Provides a standardized error model for the Kernel Registry.
+- Defines error codes, structured error descriptions, and a base exception hierarchy.
+- Supports future Platform Core Services without redesign.
+- Ensures all registry errors are consistent, typed, and documented.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-005 — Kernel Registration
+- KERNEL-007 — Kernel Invariants
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+
+## Public Contracts
+
+### `RegistryErrorCode`
+Enumeration of standardized registry error codes.
+
+| Code | Description |
+|------|-------------|
+| `REGISTRY_DUPLICATE_KERNEL` | A kernel with the same identifier is already registered |
+| `REGISTRY_INVALID_KERNEL` | The kernel data is structurally invalid or malformed |
+| `REGISTRY_KERNEL_NOT_FOUND` | The requested kernel was not found in the registry |
+| `REGISTRY_INVALID_VERSION` | The kernel version is invalid or incompatible |
+| `REGISTRY_VALIDATION_FAILED` | Kernel validation failed — does not satisfy registration prerequisites |
+
+### `RegistryError`
+Immutable error description.
+
+| Method | Returns | Description |
+===== registry\model\README.md =====
+# Kernel Registry Domain Models
+
+## Package
+`platform.core.registry.model`
+
+## Purpose
+Domain models defining the Platform language used by the Kernel Registry API. These immutable value types represent kernel identity, version, metadata, and registration state.
+
+## Architectural Responsibility
+- Defines the immutable value types that represent kernel identity, version, metadata, and registration state.
+- Provides the type-safe language that the `platform.core.registry.api` package uses for registration and discovery.
+- Ensures all kernel identity and version information is validated at construction time.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-005 — Kernel Registration
+- KERNEL-006 — Kernel Discovery
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+
+## Domain Models
+
+### `KernelId`
+Represents the unique identity of a Kernel.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `value()` | `String` | The underlying identifier string |
+
+- Immutable by design (final class, final field)
+- Validates non-null and non-blank at construction
+- Implements `equals()`, `hashCode()`, `toString()`
+
+### `KernelVersion`
+Represents the semantic version of a Kernel (Major.Minor.Patch).
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+===== registry\service\README.md =====
+# Default Kernel Registry Service
+
+## Package
+`platform.core.registry.service`
+
+## Purpose
+Provides the default in-memory implementation of the Kernel Registry. This implementation serves as the official reference implementation for the Platform Foundation.
+
+## Architectural Responsibility
+- Provides the default in-memory implementation of the `KernelRegistry` interface.
+- Serves as the official reference implementation for the Platform Foundation.
+- Owns the registry storage and enforces all registration, unregistration, and lookup operations.
+- Ensures thread-safe access to registered kernels.
+- Never bypasses validation or error architecture.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-005 — Kernel Registration
+- KERNEL-007 — Kernel Invariants
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+- ADD-PLT-206 — Kernel Orchestration
+
+## Public Contracts
+
+### `DefaultKernelRegistry`
+Default in-memory implementation of `KernelRegistry<RegisteredKernel>`.
+
+| Method | Description |
+|--------|-------------|
+| `register(String kernelId, RegisteredKernel entry)` | Registers a kernel after validation and duplicate check |
+| `unregister(String kernelId)` | Unregisters a kernel by identifier |
+| `find(String kernelId)` | Finds a registered kernel by identifier |
+| `findAll()` | Returns all registered kernels (unmodifiable) |
+| `exists(String kernelId)` | Checks if a kernel is registered |
+
+## Registration Flow
+```
+===== registry\validator\README.md =====
+# Kernel Registration Validation
+
+## Package
+`platform.core.registry.validator`
+
+## Purpose
+Validation layer for the Kernel Registry that ensures every Kernel satisfies the architectural requirements before registration.
+
+The validator answers the question: *"Can this Kernel be registered?"*
+It never answers: *"Register the Kernel."*
+
+## Architectural Responsibility
+- Ensures every Kernel satisfies the architectural requirements before registration.
+- Returns structured validation results supporting multiple errors in a single execution.
+- Enforces the architectural invariants defined in KERNEL-007.
+- Remains independent of the registry implementation.
+
+## Ownership
+**Platform Core**
+
+## Constitutional Authority
+- CONST-001
+- KERNEL-005 — Kernel Registration
+- KERNEL-007 — Kernel Invariants
+- ADD-PLT-202 — Platform Core
+- ADD-PLT-205 — Platform Core Services
+
+## Public Contracts
+
+### `ValidationResult`
+Structured result returned by the validator.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `isValid()` | `boolean` | `true` if there are zero errors |
+| `errors()` | `List<String>` | Unmodifiable list of error messages |
+| `warnings()` | `List<String>` | Unmodifiable list of warning messages |
+| `builder()` | `Builder` | Creates a new builder instance |
+
+### `KernelRegistrationValidator`
+Stateless validator for kernel registration readiness.
