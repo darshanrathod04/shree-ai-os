@@ -7,15 +7,19 @@ import platform.kernels.memory.api.MemorySearchService;
 import platform.kernels.memory.api.MemoryService;
 import platform.kernels.memory.api.MemoryStatisticsService;
 import platform.kernels.memory.engine.MemoryProcessingEngine;
+import platform.kernels.memory.engine.MemoryProcessingResult;
 import platform.kernels.memory.model.CreateMemoryRequest;
 import platform.kernels.memory.model.Memory;
 import platform.kernels.memory.model.MemoryContent;
 import platform.kernels.memory.model.MemoryExport;
 import platform.kernels.memory.model.MemoryId;
 import platform.kernels.memory.model.MemoryImport;
+import platform.kernels.memory.model.MemoryImportRequest;
 import platform.kernels.memory.model.MemoryImportResult;
 import platform.kernels.memory.model.MemoryMetadata;
+import platform.kernels.memory.model.MemoryExportRequest;
 import platform.kernels.memory.model.MemoryResult;
+import platform.kernels.memory.model.MemorySearchRequest;
 import platform.kernels.memory.model.MemoryStatistics;
 import platform.kernels.memory.model.MemoryStatus;
 import platform.kernels.memory.model.MemoryType;
@@ -151,11 +155,11 @@ public final class DefaultMemoryService implements
                 request.createdAt()
         );
 
-        // Process for storage via engine
-        Memory processed = processingEngine.processForStorage(memory);
+        // Process via engine
+        MemoryProcessingResult result = processingEngine.processCreate(request);
 
         // Store in memory
-        memories.put(id, processed);
+        memories.put(id, memory);
         return id;
     }
 
@@ -308,26 +312,58 @@ public final class DefaultMemoryService implements
     @Override
     public List<Memory> search(String query) {
         Objects.requireNonNull(query, "query must not be null");
-        return processingEngine.search(query);
+        
+        // Prepare search via engine
+        MemorySearchRequest searchRequest = new MemorySearchRequest(query, null, null, null);
+        MemoryProcessingResult result = processingEngine.prepareSearch(searchRequest);
+        
+        // Execute search (service responsibility)
+        return memories.values().stream()
+                .filter(m -> m.content().text().toLowerCase().contains(query.toLowerCase()))
+                .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
     public List<Memory> searchByTags(Set<String> tags) {
         Objects.requireNonNull(tags, "tags must not be null");
-        return processingEngine.searchByTags(tags);
+        
+        // Prepare search via engine
+        MemorySearchRequest searchRequest = new MemorySearchRequest("", null, null, tags);
+        MemoryProcessingResult result = processingEngine.prepareSearch(searchRequest);
+        
+        // Execute search (service responsibility)
+        return memories.values().stream()
+                .filter(m -> tags.stream().anyMatch(tag -> m.metadata().tags().contains(tag)))
+                .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
     public List<Memory> searchByDate(java.time.Instant from, java.time.Instant to) {
         Objects.requireNonNull(from, "from must not be null");
         Objects.requireNonNull(to, "to must not be null");
-        return processingEngine.searchByDate(from, to);
+        
+        // Prepare search via engine
+        MemorySearchRequest searchRequest = new MemorySearchRequest("", from, to, null);
+        MemoryProcessingResult result = processingEngine.prepareSearch(searchRequest);
+        
+        // Execute search (service responsibility)
+        return memories.values().stream()
+                .filter(m -> !m.createdAt().isBefore(from) && !m.createdAt().isAfter(to))
+                .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
     public List<Memory> searchBySimilarity(String text) {
         Objects.requireNonNull(text, "text must not be null");
-        return processingEngine.searchBySimilarity(text);
+        
+        // Prepare search via engine
+        MemorySearchRequest searchRequest = new MemorySearchRequest(text, null, null, null);
+        MemoryProcessingResult result = processingEngine.prepareSearch(searchRequest);
+        
+        // Execute search (service responsibility) - simplified similarity
+        return memories.values().stream()
+                .filter(m -> m.content().text().toLowerCase().contains(text.toLowerCase()))
+                .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
@@ -349,8 +385,11 @@ public final class DefaultMemoryService implements
             throw new platform.kernels.memory.error.MemoryNotFoundException(id);
         }
 
-        Memory processed = processingEngine.processForExport(memory);
-        return new MemoryExport(processed, Instant.now(), "memory-export-v1");
+        // Prepare export via engine
+        MemoryExportRequest exportRequest = new MemoryExportRequest("memory-export-v1", Instant.now());
+        MemoryProcessingResult result = processingEngine.prepareExport(exportRequest);
+
+        return new MemoryExport(memory, Instant.now(), "memory-export-v1");
     }
 
     @Override
@@ -358,16 +397,23 @@ public final class DefaultMemoryService implements
         Objects.requireNonNull(request, "request must not be null");
 
         Memory imported = request.memory();
-        Memory processed = processingEngine.processForImport(imported);
+
+        // Prepare import via engine
+        MemoryImportRequest importRequest = new MemoryImportRequest(
+                request.source(),
+                "memory-import-v1",
+                request.importedAt()
+        );
+        MemoryProcessingResult result = processingEngine.prepareImport(importRequest);
 
         // Generate a new ID for the imported memory
         MemoryId newId = new MemoryId(UUID.randomUUID().toString());
         Memory newMemory = new Memory(
                 newId,
-                processed.content(),
-                processed.metadata(),
-                processed.createdAt(),
-                processed.updatedAt()
+                imported.content(),
+                imported.metadata(),
+                imported.createdAt(),
+                imported.updatedAt()
         );
 
         memories.put(newId, newMemory);

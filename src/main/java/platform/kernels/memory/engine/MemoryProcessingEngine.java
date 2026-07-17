@@ -1,85 +1,155 @@
 package platform.kernels.memory.engine;
 
-import platform.kernels.memory.model.Memory;
 import platform.kernels.memory.model.MemoryId;
-
-import java.util.List;
-import java.util.Set;
-import platform.kernels.identity.model.IdentityId;
 
 /**
  * <b>MemoryProcessingEngine</b>
  *
- * <p>Forward-reference interface for the Memory Processing Engine (EIO-MEM-106).</p>
+ * <p>Defines the contract for Memory processing operations within the Memory Kernel.</p>
  *
  * <p><b>Architectural Responsibility:</b></p>
  * <ul>
- *   <li>Defines the contract for Memory processing operations.</li>
- *   <li>Performs search, similarity, and content processing.</li>
- *   <li>This is a forward reference only — implementation belongs to EIO-MEM-106.</li>
+ *   <li>Prepares processing results for Memory operations.</li>
+ *   <li>Normalizes processing input and coordinates internal processing workflow.</li>
+ *   <li>Never stores data, validates requests, or performs business logic.</li>
+ *   <li>Never accesses repositories, databases, filesystems, or networks.</li>
+ * </ul>
+ *
+ * <p><b>Design Principles:</b></p>
+ * <ul>
+ *   <li>Stateless — no instance fields, no mutable state.</li>
+ *   <li>Thread-safe — safe for concurrent access.</li>
+ *   <li>Deterministic — same input always produces same output.</li>
+ *   <li>Side-effect free — no external interactions.</li>
  * </ul>
  *
  * <p><b>Ownership:</b> Memory Kernel</p>
  * <p><b>Version:</b> 1.0</p>
  *
- * <p><b>Constitutional Authority:</b> ADD-201</p>
+ * <p><b>Constitutional Authority:</b> EIO-MEM-106</p>
+ *
+ * @see platform.kernels.memory.engine.MemoryProcessingResult
+ * @see platform.kernels.memory.engine.DefaultMemoryProcessingEngine
  */
 public interface MemoryProcessingEngine {
 
     /**
-     * Searches for Memories by text query.
+     * Processes a Memory creation request.
      *
-     * @param query the search query string
-     * @return a list of matching Memories
+     * <p>Prepares the processing result for creating a new Memory. This method
+     * normalizes input and creates processing metadata without persisting anything.</p>
+     *
+     * <p><b>Thread Safety:</b> This operation is thread-safe.</p>
+     *
+     * <p><b>Side Effects:</b> None. This method does not store data or modify state.</p>
+     *
+     * @param request the creation request (must not be null)
+     * @return the processing result
      */
-    List<Memory> search(String query);
+    MemoryProcessingResult processCreate(platform.kernels.memory.model.CreateMemoryRequest request);
 
     /**
-     * Searches for Memories by tags.
+     * Processes a Memory update request.
      *
-     * @param tags the set of tags to search for
-     * @return a list of matching Memories
+     * <p>Prepares the processing result for updating an existing Memory. This method
+     * normalizes input and creates processing metadata without persisting anything.</p>
+     *
+     * <p><b>Thread Safety:</b> This operation is thread-safe.</p>
+     *
+     * <p><b>Side Effects:</b> None. This method does not store data or modify state.</p>
+     *
+     * @param request the update request (must not be null)
+     * @return the processing result
      */
-    List<Memory> searchByTags(Set<String> tags);
+    MemoryProcessingResult processUpdate(platform.kernels.memory.model.UpdateMemoryRequest request);
 
     /**
-     * Searches for Memories by date range.
+     * Processes a Memory deletion request.
      *
-     * @param from the start of the date range
-     * @param to the end of the date range
-     * @return a list of matching Memories
+     * <p>Prepares the processing result for deleting a Memory. This method
+     * normalizes input and creates processing metadata without persisting anything.</p>
+     *
+     * <p><b>Thread Safety:</b> This operation is thread-safe.</p>
+     *
+     * <p><b>Side Effects:</b> None. This method does not store data or modify state.</p>
+     *
+     * @param id the Memory identifier (must not be null)
+     * @return the processing result
      */
-    List<Memory> searchByDate(java.time.Instant from, java.time.Instant to);
+    MemoryProcessingResult processDelete(MemoryId id);
 
     /**
-     * Searches for Memories by similarity to a text.
+     * Processes a Memory archive request.
      *
-     * @param text the reference text for similarity search
-     * @return a list of similar Memories
+     * <p>Prepares the processing result for archiving a Memory. This method
+     * normalizes input and creates processing metadata without persisting anything.</p>
+     *
+     * <p><b>Thread Safety:</b> This operation is thread-safe.</p>
+     *
+     * <p><b>Side Effects:</b> None. This method does not store data or modify state.</p>
+     *
+     * @param id the Memory identifier (must not be null)
+     * @return the processing result
      */
-    List<Memory> searchBySimilarity(String text);
+    MemoryProcessingResult processArchive(MemoryId id);
 
     /**
-     * Processes a Memory for storage.
+     * Processes a Memory restore request.
      *
-     * @param memory the memory to process
-     * @return the processed memory
+     * <p>Prepares the processing result for restoring an archived Memory. This method
+     * normalizes input and creates processing metadata without persisting anything.</p>
+     *
+     * <p><b>Thread Safety:</b> This operation is thread-safe.</p>
+     *
+     * <p><b>Side Effects:</b> None. This method does not store data or modify state.</p>
+     *
+     * @param id the Memory identifier (must not be null)
+     * @return the processing result
      */
-    Memory processForStorage(Memory memory);
+    MemoryProcessingResult processRestore(MemoryId id);
 
     /**
-     * Processes a Memory for export.
+     * Prepares a search operation.
      *
-     * @param memory the memory to export
-     * @return the processed memory
+     * <p>Prepares the processing result for a search request. This method
+     * normalizes input and creates processing metadata without executing the search.</p>
+     *
+     * <p><b>Thread Safety:</b> This operation is thread-safe.</p>
+     *
+     * <p><b>Side Effects:</b> None. This method does not execute searches or modify state.</p>
+     *
+     * @param request the search request (must not be null)
+     * @return the processing result
      */
-    Memory processForExport(Memory memory);
+    MemoryProcessingResult prepareSearch(platform.kernels.memory.model.MemorySearchRequest request);
 
     /**
-     * Processes a Memory for import.
+     * Prepares an import operation.
      *
-     * @param memory the memory to import
-     * @return the processed memory
+     * <p>Prepares the processing result for an import request. This method
+     * normalizes input and creates processing metadata without persisting anything.</p>
+     *
+     * <p><b>Thread Safety:</b> This operation is thread-safe.</p>
+     *
+     * <p><b>Side Effects:</b> None. This method does not store data or modify state.</p>
+     *
+     * @param request the import request (must not be null)
+     * @return the processing result
      */
-    Memory processForImport(Memory memory);
+    MemoryProcessingResult prepareImport(platform.kernels.memory.model.MemoryImportRequest request);
+
+    /**
+     * Prepares an export operation.
+     *
+     * <p>Prepares the processing result for an export request. This method
+     * normalizes input and creates processing metadata without persisting anything.</p>
+     *
+     * <p><b>Thread Safety:</b> This operation is thread-safe.</p>
+     *
+     * <p><b>Side Effects:</b> None. This method does not store data or modify state.</p>
+     *
+     * @param request the export request (must not be null)
+     * @return the processing result
+     */
+    MemoryProcessingResult prepareExport(platform.kernels.memory.model.MemoryExportRequest request);
 }
