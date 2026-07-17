@@ -1,4 +1,4 @@
- # Memory Kernel — Error Architecture
+# Memory Kernel — Error Architecture
 
 ## Package
 `platform.kernels.memory.error`
