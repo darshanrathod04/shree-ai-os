@@ -2,18 +2,18 @@
 
 ## Document Information
 
-| Field | Value |
-|-------|-------|
-| **Document ID** | MISSION-001 |
-| **Document Type** | Platform Mission |
-| **Platform** | Shree AI OS |
-| **Version** | 1.0 (Founding Edition) |
-| **Status** | Draft |
-| **Owner** | Chief AI Architect |
-| **Founder** | Darshan Rathod |
-| **Classification** | Platform Governance |
-| **Created** | 11 July 2026 |
-| **Last Updated** | 11 July 2026 |
+| Field              | Value                  |
+|--------------------|------------------------|
+| **Document ID**    | MISSION-001            |
+| **Document Type**  | Platform Mission       |
+| **Platform**       | Shree AI OS            |
+| **Version**        | 1.0 (Founding Edition) |
+| **Status**         | Draft                  |
+| **Owner**          | Chief AI Architect     |
+| **Founder**        | Darshan Rathod         |
+| **Classification** | Platform Governance    |
+| **Created**        | 11 July 2026           |
+| **Last Updated**   | 11 July 2026           |
 
 ---
 

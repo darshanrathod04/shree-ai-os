@@ -12,9 +12,15 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConversationContext {
 
-    @Setter
-    @Getter
     private String lastIntent;
+
+    public String getLastIntent() {
+        return lastIntent;
+    }
+
+    public void setLastIntent(String lastIntent) {
+        this.lastIntent = lastIntent;
+    }
 
     private String mode = "CHAT"; // CHAT | TEACHING
     private String topic = null;

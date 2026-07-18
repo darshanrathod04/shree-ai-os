@@ -66,27 +66,6 @@ Health
 
 Kernel Loader
 
-Runtime
-
-Identity
-
-Memory
-
-Knowledge
-
-Planning
-
-Reasoning
-
-Capability
-
-Plugin
-
-Security
-
-Analytics
-
-Audit
 
 Future Platform Services
 

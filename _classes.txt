@@ -1,0 +1,436 @@
+application | class | AiAgentApplication | 
+platform.agents | enum | AgentRole | 
+platform.agents | class | BaseAgent | 
+platform.agents | class | ExecutorAgent | 
+platform.agents | class | PlannerAgent | 
+platform.agents | class | ReviewerAgent | 
+platform.approval | class | ApprovalService | 
+platform.autonomy | class | AgentGoal | 
+platform.autonomy | class | AutonomousLoop | 
+platform.autonomy | class | AutonomousScheduler | Pause autonomous processing (called when user request arrives).
+platform.autonomy | class | GoalManager | Save goal state to goals.json.
+platform.autonomy | class | GoalTask | Structured task data for roadmap/next-step responses.
+platform.autonomy | class | SelfGoalEngine | 
+platform.autonomy | class | SubGoal | 
+platform.autonomy | class | SubGoalPlanner | 
+platform.brain | class | AgentBrain | Check if the input is just a leftover generic phrase after course name extraction.
+platform.brain | interface | BrainInterface | 
+platform.brain | class | CognitiveLoop | 
+platform.brain | class | ConversationManager | MAIN BRAIN ENTRYPOINT
+platform.brain | class | ConversationStateMachine | 
+platform.brain.curiosity | class | CuriosityEngine | 
+platform.brain.curiosity | class | CuriosityState | 
+platform.brain.executive | class | ExecutiveControlEngine | 
+platform.brain.executive | class | ExecutiveDecision | 
+platform.brain | class | IntentEngine | Context-aware intent detection with priority ordering.
+platform.brain | class | OllamaBrain | 
+platform.brain.perception | class | IdentityPerceptionEngine | Known role/profession/title keywords that should NEVER be treated as names.
+platform.brain | class | PromptBuilder | 
+platform.brain | class | WorldModel | 
+platform.capability | interface | Capability | Capability interface — describes a capability WITHOUT executing it.
+platform.capability | class | CapabilityConfig | Capability Registry configuration.
+platform.capability | class | CapabilityContext | Immutable context object for capability lookup.
+platform.capability | class | CapabilityMatch | Immutable result of a capability lookup.
+platform.capability | class | CapabilityMetadata | Immutable metadata for a Capability.
+platform.capability | class | CapabilityRegistry | Capability Registry — SHADOW MODE.
+platform.capability | class | ChatCapability | ChatCapability — describes the Chat capability.
+platform.capability | class | LearningCapability | LearningCapability — describes the Learning capability.
+platform.capability | class | QuizCapability | QuizCapability — describes the Quiz capability.
+platform.capability | class | RoadmapCapability | RoadmapCapability — describes the Roadmap/Planning capability.
+platform.chief | class | ChiefInsight | 
+platform.chief | class | ChiefOfStaffEngine | Run full analysis of all available data.
+platform.cognition | class | CognitiveDecision | 
+platform.cognition | class | CognitiveGovernorEngine | Main cognitive control entry point
+platform.cognition | class | ConceptExtractionEngine | Extract important concepts from interaction.
+platform.cognition | class | DecisionEngine | 
+platform.cognition.learning | class | LearningMemory | 
+platform.cognition.learning | class | LearningRecord | 
+platform.cognition.learning | class | LearningStore | 
+platform.cognition.learning | class | SelfLearningEngine | 
+platform.cognition | class | MetaCognitionEngine | 
+platform.cognition | class | MetaState | 
+platform.cognition | class | MetaThought | 
+platform.cognition | class | MotivationEngine | 
+platform.cognition | class | MotivationState | 
+platform.cognition | class | PerceptionEngine | 
+platform.cognition | class | ReasoningEngine | 
+platform.cognition | class | ReflectionEngine | 
+platform.cognition | class | ReflectionResult | 
+platform.cognition | class | ResponseComposer | 
+platform.cognition | class | Thought | 
+platform.cognition.uqc | class | ClassificationResult | Immutable classification result from UniversalQueryClassifier.
+platform.cognition.uqc | class | DetectedEntity | Immutable entity detected by the Universal Query Classifier.
+platform.cognition.uqc | class | IntentConfidence | Immutable confidence scores for a single predicted intent.
+platform.cognition.uqc | enum | QueryCategory | Extensible query category enum for Universal Query Classifier.
+platform.cognition.uqc | class | UniversalQueryClassifier | Universal Query Classifier (UQC) — SHADOW MODE.
+platform.config | class | SecurityConfig | 
+platform.context | class | ContextStore | 
+platform.context | class | ConversationContext | 
+platform.context | class | ConversationEntry | 
+platform.context | class | ConversationManager | 
+platform.context | class | ConversationSession | Represents a conversation session with its own context and message history.
+platform.context | class | ConversationSessionManager | Manages conversation sessions lifecycle.
+platform.context | enum | ConversationState | 
+platform.context | class | LessonEngine | Engine for managing lesson content and progress.
+platform.context | class | LessonState | Per-session lesson progress state.
+platform.context | class | SessionMessage | Represents a single message in a conversation session.
+platform.context | class | SessionRepository | Repository for persistent storage of conversation sessions.
+platform.controller | class | AgentApprovalController | 
+platform.controller | class | AgentController | Main chat endpoint with session support.
+platform.controller | class | AgentHistoryController | 
+platform.controller | class | ChiefController | 
+platform.controller | class | DashboardController | Read-only dashboard endpoints for the frontend.
+platform.controller | class | KnowledgeGraphController | 
+platform.controller | class | MultiAgentController | 
+platform.controller | class | PlanningController | 
+platform.controller | class | ProjectController | 
+platform.controller | class | TaskPlannerController | 
+platform.core.configuration.api | interface | ConfigurationService | <b>ConfigurationService</b>
+platform.core.configuration.api |  |  | <b>Configuration Service Public API</b>
+platform.core.configuration.engine | class | ConfigurationResolutionEngine | <b>ConfigurationResolutionEngine</b>
+platform.core.configuration.engine |  |  | <b>Configuration Resolution Engine</b>
+platform.core.configuration.engine | class | ResolutionResult | <b>ResolutionResult</b>
+platform.core.configuration.error | class | ConfigurationError | <b>ConfigurationError</b>
+platform.core.configuration.error | enum | ConfigurationErrorCode | <b>ConfigurationErrorCode</b>
+platform.core.configuration.error | class | ConfigurationException | <b>ConfigurationException</b>
+platform.core.configuration.error | class | ConfigurationNotFoundException | <b>ConfigurationNotFoundException</b>
+platform.core.configuration.error | class | DuplicateConfigurationException | <b>DuplicateConfigurationException</b>
+platform.core.configuration.error | class | InvalidConfigurationException | <b>InvalidConfigurationException</b>
+platform.core.configuration.error |  |  | <b>Configuration Error Architecture</b>
+platform.core.configuration.model | class | ConfigurationEntry | <b>ConfigurationEntry</b>
+platform.core.configuration.model | class | ConfigurationKey | <b>ConfigurationKey</b>
+platform.core.configuration.model | class | ConfigurationNamespace | <b>ConfigurationNamespace</b>
+platform.core.configuration.model | enum | ConfigurationType | <b>ConfigurationType</b>
+platform.core.configuration.model |  |  | <b>Configuration Domain Models</b>
+platform.core.configuration.service | class | DefaultConfigurationService | <b>DefaultConfigurationService</b>
+platform.core.configuration.service |  |  | <b>Configuration Service Layer</b>
+platform.core.configuration.validator | class | ConfigurationValidator | <b>ConfigurationValidator</b>
+platform.core.configuration.validator |  |  | <b>Configuration Validation</b>
+platform.core.discovery.api | interface | DiscoveryService | <b>DiscoveryService</b>
+platform.core.discovery.api |  |  | <b>Discovery Service Public API</b>
+platform.core.discovery.error | class | CapabilityNotFoundException | <b>CapabilityNotFoundException</b>
+platform.core.discovery.error | class | ContractNotFoundException | <b>ContractNotFoundException</b>
+platform.core.discovery.error | class | DiscoveryError | <b>DiscoveryError</b>
+platform.core.discovery.error | enum | DiscoveryErrorCode | <b>DiscoveryErrorCode</b>
+platform.core.discovery.error | class | DiscoveryException | <b>DiscoveryException</b>
+platform.core.discovery.error | class | InvalidDiscoveryRequestException | <b>InvalidDiscoveryRequestException</b>
+platform.core.discovery.error |  |  | <b>Discovery Error Architecture</b>
+platform.core.discovery.model | class | CapabilityId | <b>CapabilityId</b>
+platform.core.discovery.model | class | ContractId | <b>ContractId</b>
+platform.core.discovery.model | class | DiscoveryResult | <b>DiscoveryResult</b>
+platform.core.discovery.model |  |  | <b>Discovery Domain Models</b>
+platform.core.discovery.model | enum | ResolutionStatus | <b>ResolutionStatus</b>
+platform.core.discovery.service | class | DefaultDiscoveryService | <b>DefaultDiscoveryService</b>
+platform.core.discovery.service |  |  | <b>Discovery Service Implementation</b>
+platform.core.discovery.validator | class | DiscoveryValidator | <b>DiscoveryValidator</b>
+platform.core.discovery.validator |  |  | <b>Discovery Validation</b>
+platform.core.eventbus.api | interface | EventBus | <b>EventBus</b>
+platform.core.eventbus.api |  |  | <b>Event Bus Public API</b>
+platform.core.eventbus.engine | class | DispatchResult | <b>DispatchResult</b>
+platform.core.eventbus.engine | interface | EventDispatchEngine | <b>EventDispatchEngine</b>
+platform.core.eventbus.engine |  |  | <b>Event Dispatch Engine</b>
+platform.core.eventbus.error | class | EventBusException | <b>EventBusException</b>
+platform.core.eventbus.error | class | EventDispatchException | <b>EventDispatchException</b>
+platform.core.eventbus.error | class | EventError | <b>EventError</b>
+platform.core.eventbus.error | enum | EventErrorCode | <b>EventErrorCode</b>
+platform.core.eventbus.error | class | InvalidEventException | <b>InvalidEventException</b>
+platform.core.eventbus.error | class | NoSubscribersException | <b>NoSubscribersException</b>
+platform.core.eventbus.error |  |  | <b>Event Bus Error Architecture</b>
+platform.core.eventbus.model | class | Event | <b>Event</b>
+platform.core.eventbus.model | class | EventId | <b>EventId</b>
+platform.core.eventbus.model | class | EventMetadata | <b>EventMetadata</b>
+platform.core.eventbus.model | enum | EventPriority | <b>EventPriority</b>
+platform.core.eventbus.model | interface | EventSubscriber | <b>EventSubscriber</b>
+platform.core.eventbus.model | class | EventTopic | <b>EventTopic</b>
+platform.core.eventbus.model |  |  | <b>Event Domain Models</b>
+platform.core.eventbus.service | class | DefaultEventBusService | <b>DefaultEventBusService</b>
+platform.core.eventbus.service |  |  | <b>Event Bus Service Layer</b>
+platform.core.eventbus.validator | class | EventValidator | <b>EventValidator</b>
+platform.core.eventbus.validator |  |  | <b>Event Validation Layer</b>
+platform.core.health.api | interface | HealthService | <b>HealthService</b>
+platform.core.health.api |  |  | <b>Health Service Public API</b>
+platform.core.health.engine | class | EvaluationResult | <b>EvaluationResult</b>
+platform.core.health.engine | class | HealthEvaluationEngine | <b>HealthEvaluationEngine</b>
+platform.core.health.engine |  |  | <b>Health Evaluation Engine</b>
+platform.core.health.error | class | HealthCheckFailedException | <b>HealthCheckFailedException</b>
+platform.core.health.error | class | HealthComponentNotFoundException | <b>HealthComponentNotFoundException</b>
+platform.core.health.error | class | HealthError | <b>HealthError</b>
+platform.core.health.error | enum | HealthErrorCode | <b>HealthErrorCode</b>
+platform.core.health.error | class | HealthException | <b>HealthException</b>
+platform.core.health.error | class | InvalidHealthComponentException | <b>InvalidHealthComponentException</b>
+platform.core.health.error |  |  | <b>Health Error Architecture</b>
+platform.core.health.model | class | HealthCheck | <b>HealthCheck</b>
+platform.core.health.model | class | HealthComponent | <b>HealthComponent</b>
+platform.core.health.model | class | HealthComponentId | <b>HealthComponentId</b>
+platform.core.health.model | class | HealthIndicator | <b>HealthIndicator</b>
+platform.core.health.model | class | HealthMetrics | <b>HealthMetrics</b>
+platform.core.health.model | class | HealthReport | <b>HealthReport</b>
+platform.core.health.model | enum | HealthSeverity | <b>HealthSeverity</b>
+platform.core.health.model | enum | HealthStatus | <b>HealthStatus</b>
+platform.core.health.model |  |  | <b>Health Domain Models</b>
+platform.core.health.service | class | DefaultHealthService | <b>DefaultHealthService</b>
+platform.core.health.service |  |  | <b>Health Service Implementation</b>
+platform.core.health.validator | class | HealthValidator | <b>HealthValidator</b>
+platform.core.health.validator |  |  | <b>Health Validation Layer</b>
+platform.core.lifecycle.api | interface | LifecycleService | <b>LifecycleService</b>
+platform.core.lifecycle.api |  |  | <b>Lifecycle Public API</b>
+platform.core.lifecycle.engine | class | LifecycleTransitionEngine | <b>LifecycleTransitionEngine</b>
+platform.core.lifecycle.engine |  |  | <b>Lifecycle State Transition Engine</b>
+platform.core.lifecycle.error | class | InvalidTransitionException | <b>InvalidTransitionException</b>
+platform.core.lifecycle.error | class | KernelAlreadyRunningException | <b>KernelAlreadyRunningException</b>
+platform.core.lifecycle.error | class | KernelNotInitializedException | <b>KernelNotInitializedException</b>
+platform.core.lifecycle.error | class | LifecycleError | <b>LifecycleError</b>
+platform.core.lifecycle.error | enum | LifecycleErrorCode | <b>LifecycleErrorCode</b>
+platform.core.lifecycle.error | class | LifecycleException | <b>LifecycleException</b>
+platform.core.lifecycle.error |  |  | <b>Lifecycle Error Architecture</b>
+platform.core.lifecycle.model | class | KernelHealth | <b>KernelHealth</b>
+platform.core.lifecycle.model | enum | KernelState | <b>KernelState</b>
+platform.core.lifecycle.model | class | LifecycleTransition | <b>LifecycleTransition</b>
+platform.core.lifecycle.model |  |  | <b>Lifecycle Domain Models</b>
+platform.core.lifecycle.model | class | TransitionResult | <b>TransitionResult</b>
+platform.core.lifecycle.service | class | DefaultLifecycleService | <b>DefaultLifecycleService</b>
+platform.core.lifecycle.service |  |  | <b>Lifecycle Service Implementation</b>
+platform.core.lifecycle.validator | class | LifecycleValidator | <b>LifecycleValidator</b>
+platform.core.lifecycle.validator |  |  | <b>Lifecycle Validation</b>
+platform.core.plugin.api |  |  | <b>Plugin API</b>
+platform.core.plugin.api | interface | PluginService | <b>PluginService</b>
+platform.core.plugin.engine |  |  | <b>Plugin Lifecycle Engine</b>
+platform.core.plugin.engine | class | PluginLifecycleEngine | <b>PluginLifecycleEngine</b>
+platform.core.plugin.engine | class | PluginTransitionResult | <b>PluginTransitionResult</b>
+platform.core.plugin.error | class | DuplicatePluginException | <b>DuplicatePluginException</b>
+platform.core.plugin.error | class | InvalidPluginException | <b>InvalidPluginException</b>
+platform.core.plugin.error |  |  | <b>Plugin Error</b>
+platform.core.plugin.error | class | PluginError | <b>PluginError</b>
+platform.core.plugin.error | enum | PluginErrorCode | <b>PluginErrorCode</b>
+platform.core.plugin.error | class | PluginException | <b>PluginException</b>
+platform.core.plugin.error | class | PluginNotFoundException | <b>PluginNotFoundException</b>
+platform.core.plugin.model |  |  | <b>Plugin Model</b>
+platform.core.plugin.model | class | Plugin | <b>Plugin</b>
+platform.core.plugin.model | class | PluginDescriptor | <b>PluginDescriptor</b>
+platform.core.plugin.model | class | PluginId | <b>PluginId</b>
+platform.core.plugin.model | class | PluginRequest | <b>PluginRequest</b>
+platform.core.plugin.model | enum | PluginState | <b>PluginState</b>
+platform.core.plugin.service | class | DefaultPluginService | <b>DefaultPluginService</b>
+platform.core.plugin.service |  |  | <b>Plugin Service</b>
+platform.core.plugin.validator |  |  | <b>Plugin Validator</b>
+platform.core.plugin.validator | class | PluginValidator | <b>PluginValidator</b>
+platform.core.plugin.verification |  |  | <b>Plugin Verification</b>
+platform.core.plugin.verification | class | PluginCompatibilityChecker | <b>PluginCompatibilityChecker</b>
+platform.core.plugin.verification | class | PluginDependencyChecker | <b>PluginDependencyChecker</b>
+platform.core.plugin.verification | class | PluginVerifier | <b>PluginVerifier</b>
+platform.core.plugin.verification | class | VerificationIssue | <b>VerificationIssue</b>
+platform.core.plugin.verification | class | VerificationResult | <b>VerificationResult</b>
+platform.core.plugin.verification | enum | VerificationSeverity | <b>VerificationSeverity</b>
+platform.core.registry.api | interface | KernelRegistry | <b>KernelRegistry</b>
+platform.core.registry.api |  |  | <b>Kernel Registry Public API</b>
+platform.core.registry.error | class | DuplicateKernelException | <b>DuplicateKernelException</b>
+platform.core.registry.error | class | InvalidKernelException | <b>InvalidKernelException</b>
+platform.core.registry.error | class | KernelNotFoundException | <b>KernelNotFoundException</b>
+platform.core.registry.error |  |  | <b>Registry Error Architecture</b>
+platform.core.registry.error | class | RegistryError | <b>RegistryError</b>
+platform.core.registry.error | enum | RegistryErrorCode | <b>RegistryErrorCode</b>
+platform.core.registry.error | class | RegistryException | <b>RegistryException</b>
+platform.core.registry.model | class | KernelId | <b>KernelId</b>
+platform.core.registry.model | class | KernelMetadata | <b>KernelMetadata</b>
+platform.core.registry.model | class | KernelVersion | <b>KernelVersion</b>
+platform.core.registry.model |  |  | <b>Kernel Registry Domain Models</b>
+platform.core.registry.model | class | RegisteredKernel | <b>RegisteredKernel</b>
+platform.core.registry.service | class | DefaultKernelRegistry | <b>DefaultKernelRegistry</b>
+platform.core.registry.service |  |  | <b>Kernel Registry Service</b>
+platform.core.registry.validator | class | KernelRegistrationValidator | <b>KernelRegistrationValidator</b>
+platform.core.registry.validator |  |  | <b>Kernel Registration Validation</b>
+platform.core.registry.validator | class | ValidationResult | <b>ValidationResult</b>
+platform.debate | class | CriticAgent | 
+platform.debate | class | DebateEngine | 
+platform.debate | class | DebateMemory | 
+platform.debate | class | DebateState | 
+platform.debate | class | DebateTurn | 
+platform.debate | class | JudgeAgent | 
+platform.debate | class | ProposerAgent | 
+platform.debate | class | RefinerAgent | 
+platform.debate | class | ResearchAgent | 
+platform.debate.swarm | class | AdaptiveSwarmSelector | 
+platform.debate.swarm | class | AgentPerformanceMemory | 
+platform.debate.swarm | class | DebateSwarmEngine | 
+platform.debate.swarm | class | JudgeAgent | 
+platform.debate.swarm | class | SwarmJudge | 
+platform.debate.swarm | record | SwarmResult | 
+platform.debate.swarm | class | SwarmWorkerAgent | 
+platform.dto | class | AgentRequest | 
+platform.dto | class | AgentResponse | 
+platform.dto | class | ApprovalRequest | 
+platform.dto | class | ApprovalResponse | 
+platform.execution | interface | ExecutableCapability | Core contract for all executable capabilities in Shree AI OS.
+platform.execution | class | ExecutionContext | Immutable execution context helper.
+platform.execution | class | ExecutionMetadata | Immutable metadata model for execution tracking.
+platform.execution | class | ExecutionRequest | Immutable execution request model.
+platform.execution | class | ExecutionResult | Immutable execution result model.
+platform.execution | enum | ExecutionStatus | Execution status enumeration for the Runtime Layer.
+platform.execution | enum | ExecutionType | Execution type enumeration for the Runtime Layer.
+platform.execution |  |  | Execution Contract Package - Runtime Layer ABI.
+platform.graph | enum | EntityType | 
+platform.graph | class | KnowledgeEntity | 
+platform.graph | class | KnowledgeGraphEngine | Get user summary: what they own, work on, learn, etc.
+platform.graph | class | KnowledgeRelationship | 
+platform.graph | enum | RelationshipType | 
+platform.intent | class | IntentClassifier | 
+platform.intent | enum | IntentType | 
+platform.learning.adaptive | class | AdaptiveLearningEngine | AdaptiveLearningEngine is the central decision-making component for
+platform.learning.adaptive | enum | DifficultyLevel | Difficulty levels for adaptive lesson content.
+platform.learning.adaptive | class | LearningMetrics | Immutable snapshot of learning metrics for a session.
+platform.learning.adaptive | enum | LearningStyle | Learning style preferences detected or configured for a student.
+platform.learning.adaptive | class | Recommendation | Immutable recommendation object produced by RecommendationEngine.
+platform.learning.adaptive | class | RecommendationEngine | RecommendationEngine generates deterministic, structured recommendations
+platform.learning.adaptive | class | StudentLearningProfile | Per-session student learning profile.
+platform.learning | class | Chapter | A chapter within a structured course.
+platform.learning | class | Course | A structured course consisting of ordered chapters.
+platform.learning | class | CourseEngine | CourseEngine integrates with AgentBrain to provide structured course functionality.
+platform.learning | class | CourseRepository | Loads predefined courses from JSON files under src/main/resources/courses/.
+platform.learning | class | CourseService | Manages course access and per-session course progress.
+platform.learning | class | CourseState | Per-session course learning progress.
+platform.learning.curriculum | class | AssignmentResource | Immutable assignment resource loaded from assignment.json files.
+platform.learning.curriculum | class | CourseCatalog | Catalog of available courses based on curriculum course.json files.
+platform.learning.curriculum | class | CurriculumRepository | CurriculumRepository provides access to curriculum resources.
+platform.learning.curriculum | class | CurriculumService | Service layer for curriculum-driven course access.
+platform.learning.curriculum | class | LessonContentLoader | Facade for loading lesson content from curriculum resources.
+platform.learning.curriculum | class | LessonResource | Immutable lesson resource loaded from a .md file on the classpath.
+platform.learning.curriculum | class | QuizResource | Immutable quiz resource loaded from quiz.json files.
+platform.learning.curriculum | class | ResourceLoader | Loads curriculum resource files (lesson .md, quiz.json, assignment.json) from the classpath.
+platform.learning | class | LearningSessionEngine | LearningSessionEngine is responsible ONLY for learning session business logic.
+platform.learning | class | Lesson | A single lesson within a chapter.
+platform.learning | class | LessonPromptBuilder | LessonPromptBuilder generates teaching prompts using ONLY:
+platform.learning.quiz | class | AnswerEvaluator | Pure deterministic answer evaluator.
+platform.learning.quiz | class | QuizAttempt | Records a single answer attempt for a quiz question.
+platform.learning.quiz | class | QuizEngine | QuizEngine is the main entry point for quiz operations.
+platform.learning.quiz | class | QuizQuestion | Domain model for a single quiz question.
+platform.learning.quiz | class | QuizRepository | Repository layer for quiz resources.
+platform.learning.quiz | class | QuizResult | Immutable quiz result produced after quiz completion.
+platform.learning.quiz | class | QuizService | Service layer for quiz business logic.
+platform.learning.quiz | class | QuizSession | Per-session quiz state. Belongs to ConversationSession.
+platform.learning | class | TeachingEngine | TeachingEngine is responsible ONLY for:
+platform.llm | class | OllamaClient | Get the number of currently active (in-flight) Ollama requests.
+platform.memory | class | ActivityFeed | 
+platform.memory | class | AgentCommunicationMemory | 
+platform.memory | class | AgentMessage | 
+platform.memory | class | ConversationEntry | 
+platform.memory.episodic | class | Episode | 
+platform.memory.episodic | class | EpisodeStore | 
+platform.memory.episodic | enum | EpisodeType | 
+platform.memory | class | EpisodicMemoryEngine | Store episode directly. Now delegates to EpisodeStore (single source of truth).
+platform.memory | class | EpisodicRecallEngine | Recall relevant past experiences for planning.
+platform.memory | class | MemoryEmbedder | 
+platform.memory | class | MemoryFacade | Unified facade for all memory operations.
+platform.memory | class | MemoryFile | 
+platform.memory | class | MemoryRecallEngine | 
+platform.memory | class | MemoryRecallService | 
+platform.memory | class | MemoryRetriever | 
+platform.memory | class | MemoryStore | 
+platform.memory | class | MemoryVector | 
+platform.memory.semantic | class | Concept | 
+platform.memory.semantic | class | ConceptGraphEngine | Create or reinforce connection
+platform.memory.semantic | class | ConceptRelation | 
+platform.memory.semantic | class | SemanticConcept | 
+platform.memory.semantic | class | SemanticMemoryEngine | Save semantic memory to semantic_memory.json.
+platform.memory | class | UserProfile | Save profile to profile.json.
+platform.memory | class | VectorMemory | 
+platform.memory | class | VectorMemoryStore | 
+platform.orchestrator | class | AgentOrchestrator | 
+platform.personality | class | AgentPersonality | Minimal system prompt for legacy generate() path.
+platform.personality | enum | ExpressionLevel | 
+platform.personality | class | PersonalityEngine | Auto-detect personality mode based on current context.
+platform.personality | class | PersonalityProfile | 
+platform.planner | class | ExecutionPlan | 
+platform.planner | class | Plan | 
+platform.planner | class | PlanExecutor | 
+platform.planner | class | PlannerBrain | 
+platform.planner | class | PlannerRules | 
+platform.planner | class | PlanStep | 
+platform.planner | class | TaskItem | 
+platform.planner | class | TaskPlannerService | 
+platform.planning | class | AutonomousPlanningEngine | Generate a complete execution plan from a goal.
+platform.planning | class | ExecutionPlan | 
+platform.planning | class | ExecutionTask | 
+platform.planning | class | PlanMilestone | 
+platform.planning | enum | PlanStatus | 
+platform.production | class | ContextResolutionEngine | ContextResolutionEngine determines the current active context.
+platform.production | class | ConversationOptimizer | ConversationOptimizer detects lightweight replies that should
+platform.production | class | FallbackEngine | FallbackEngine provides graceful fallback when a requested mode
+platform.production | class | ResolvedContext | Immutable resolved context object.
+platform.production | class | ResponseRouter | ResponseRouter routes intents to the correct handler based on
+platform.project | class | Project | 
+platform.project | class | ProjectDecision | 
+platform.project | class | ProjectIntelligenceEngine | Get project status summary for dashboard.
+platform.project | class | ProjectMilestone | 
+platform.project | class | ProjectRisk | 
+platform.project | enum | ProjectStatus | 
+platform.project | class | ProjectTask | 
+platform.resolver | class | CapabilityResolution | Immutable result of a capability resolution.
+platform.resolver | class | CapabilityResolver | Capability Resolver — SHADOW MODE ONLY.
+platform.resolver | class | CapabilityScorer | Deterministic scoring engine for capability resolution.
+platform.resolver |  |  | Capability Resolver — Shadow Mode.
+platform.resolver | enum | ResolutionStrategy | Defines the strategy used to resolve which capability should handle a request.
+platform.router | class | SkillRouter | 
+platform.rules | class | AgentRules | 
+platform.runtime.api | interface | Runtime | <b>Runtime</b>
+platform.runtime.api | class | RuntimeBuilder | <b>RuntimeBuilder</b>
+platform.runtime.config | class | RuntimeConfiguration | <b>RuntimeConfiguration</b>
+platform.runtime.contracts | class | RuntimeContract | <b>RuntimeContract</b>
+platform.runtime.exceptions | class | InvalidRuntimeStateException | <b>InvalidRuntimeStateException</b>
+platform.runtime.exceptions | class | RuntimeException | <b>RuntimeException</b>
+platform.runtime.execution | class | ExecutionContext | <b>ExecutionContext</b>
+platform.runtime.execution | interface | ExecutionPipeline | <b>ExecutionPipeline</b>
+platform.runtime.execution | class | ExecutionRequest | <b>ExecutionRequest</b>
+platform.runtime.execution | class | ExecutionResult | <b>ExecutionResult</b>
+platform.runtime.execution | class | ExecutionSession | <b>ExecutionSession</b>
+platform.runtime.internal | class | DefaultExecutionPipeline | <b>DefaultExecutionPipeline</b>
+platform.runtime.internal | class | DefaultRuntime | <b>DefaultRuntime</b>
+platform.runtime.internal | class | DefaultRuntimeLifecycle | <b>DefaultRuntimeLifecycle</b>
+platform.runtime.lifecycle | interface | RuntimeLifecycle | <b>RuntimeLifecycle</b>
+platform.runtime.lifecycle | interface | RuntimeLifecycleListener | <b>RuntimeLifecycleListener</b>
+platform.runtime.lifecycle | enum | RuntimeState | <b>RuntimeState</b>
+platform.runtime |  |  | <b>Runtime Kernel</b>
+platform.runtime.pipeline | class | DefaultExecutionChain | Default implementation of ExecutionChain.
+platform.runtime.pipeline | class | DefaultExecutionPipeline | Default implementation of ExecutionPipeline.
+platform.runtime.pipeline | interface | ExecutionChain | Execution chain for pipeline stage progression.
+platform.runtime.pipeline | interface | ExecutionPipeline | Execution pipeline contract for the Runtime Layer.
+platform.runtime.pipeline | interface | ExecutionStage | Execution stage contract for the Runtime Pipeline.
+platform.runtime.pipeline |  |  | Runtime Pipeline Package - Execution Backbone.
+platform.runtime.pipeline | class | PipelineContext | Immutable pipeline context.
+platform.runtime.pipeline | class | PipelineExecutionState | Internal runtime execution state.
+platform.runtime.pipeline | class | PipelineResult | Immutable pipeline result.
+platform.runtime.pipeline | class | PipelineStageDescriptor | Immutable descriptor for pipeline stages.
+platform.self | class | SelfModelEngine | 
+platform.self | class | SelfProfile | 
+platform.self | class | SelfState | 
+platform.service | class | AgentService | Process a message with session support.
+platform.skills | class | ChatSkill | 
+platform.skills | class | DefaultSkill | 
+platform.skills | class | GreetingSkill | 
+platform.skills | class | ReminderSkill | 
+platform.skills | interface | Skill | 
+platform.skills | class | StudySkill | 
+platform.skills | class | TimeSkill | 
+platform.skills | class | WeatherSkill | 
+platform.society | class | AgentSociety | 
+platform.society | class | DynamicAgent | 
+platform.society | class | EvolutionEngine | 
+platform.state | class | AgentState | 
+platform.tools | class | ToolRegistry | 
+platform.validation | class | DecisionValidator | Decision Validator - Shadow Mode Only.
+platform.validation |  |  | Decision Validator - Shadow Mode Package.
+platform.validation | class | RuleDescriptor | Descriptor for a validation rule.
+platform.validation.rules | class | CapabilityRule | Validates capability availability and health.
+platform.validation.rules | class | ConfidenceRule | Validates confidence level of the decision.
+platform.validation.rules | class | ContextRule | Validates context availability.
+platform.validation.rules | class | DecisionExistsRule | Validates that decision exists and is well-formed.
+platform.validation.rules | class | ExecutionModeRule | Validates execution mode of the capability.
+platform.validation.rules | class | RiskRule | Validates risk level of the decision action.
+platform.validation.rules | class | SessionRule | Validates session consistency.
+platform.validation | class | ValidationMetrics | Thread-safe validation metrics collector.
+platform.validation | class | ValidationOutcome | Result of a single validation rule execution.
+platform.validation | class | ValidationPipelineReport | Pipeline report for diagnostics.
+platform.validation | class | ValidationResult | Immutable validation result for a decision.
+platform.validation | interface | ValidationRule | Single validation rule interface.
+platform.validation | enum | ValidationStatus | Validation status outcomes for decisions.
+platform.validation | enum | ValidationStrategy | Validation strategy types.
+platform.validation | class | ValidationTrace | Immutable validation trace recording each validation step.

@@ -2,15 +2,15 @@
 
 ## Document Information
 
-| Field | Value |
-|-------|-------|
-| Document ID | STD-001 |
+| Field         | Value                |
+|---------------|----------------------|
+| Document ID   | STD-001              |
 | Document Type | Engineering Standard |
-| Platform | Shree AI OS |
-| Version | 1.0 |
-| Status | Approved |
-| Owner | Chief AI Architect |
-| Approval | Founder |
+| Platform      | Shree AI OS          |
+| Version       | 1.0                  |
+| Status        | Approved             |
+| Owner         | Chief AI Architect   |
+| Approval      | Founder              |
 
 ---
 
