@@ -1,5 +1,8 @@
 package platform.kernels.planning.api;
 
+import platform.kernels.planning.model.PlanningConstraints;
+import platform.kernels.planning.model.ValidationCriteria;
+
 /**
  * <b>PlanningService</b>
  *
@@ -25,7 +28,7 @@ package platform.kernels.planning.api;
  * <p><b>Ownership:</b> Planning Kernel</p>
  * <p><b>Version:</b> 1.0</p>
  *
- * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001</p>
+ * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001, EIO-PLAN-102</p>
  *
  * @see GoalPlanningService
  * @see TaskPlanningService
@@ -90,7 +93,7 @@ public interface PlanningService {
      */
     record PlanningRequest(String objectiveId,
                            PlanningTypes.PlanningScope planningScope,
-                           PlanningTypes.PlanningConstraints constraints) {
+                           PlanningConstraints constraints) {
     }
 
     /**
@@ -102,7 +105,7 @@ public interface PlanningService {
      */
     record PlanRefinementRequest(String planId,
                                  PlanningTypes.RefinementContext refinementContext,
-                                 PlanningTypes.PlanningConstraints updatedConstraints) {
+                                 PlanningConstraints updatedConstraints) {
     }
 
     /**
@@ -112,7 +115,7 @@ public interface PlanningService {
      * @param validationCriteria the validation criteria (must not be {@code null})
      */
     record PlanValidationRequest(String planId,
-                                 PlanningTypes.ValidationCriteria validationCriteria) {
+                                 ValidationCriteria validationCriteria) {
     }
 
     /**

@@ -1,5 +1,8 @@
 package platform.kernels.planning.api;
 
+import platform.kernels.planning.model.PlanningObjective;
+import platform.kernels.planning.model.GoalConstraints;
+
 /**
  * <b>GoalPlanningService</b>
  *
@@ -27,7 +30,7 @@ package platform.kernels.planning.api;
  * <p><b>Ownership:</b> Planning Kernel</p>
  * <p><b>Version:</b> 1.0</p>
  *
- * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001</p>
+ * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001, EIO-PLAN-102</p>
  *
  * @see PlanningService
  * @see TaskPlanningService
@@ -118,8 +121,8 @@ public interface GoalPlanningService {
      * @param constraints     the goal constraints (must not be {@code null})
      */
     record GoalCreationRequest(String goalDescription,
-                               PlanningTypes.PlanningObjective objective,
-                               PlanningTypes.GoalConstraints constraints) {
+                               PlanningObjective objective,
+                               GoalConstraints constraints) {
     }
 
     /**
@@ -143,7 +146,7 @@ public interface GoalPlanningService {
      */
     record GoalRefinementRequest(String goalId,
                                  PlanningTypes.RefinementContext refinementContext,
-                                 PlanningTypes.PlanningObjectives updatedObjectives) {
+                                 java.util.List<PlanningObjective> updatedObjectives) {
     }
 
     /**
@@ -163,7 +166,7 @@ public interface GoalPlanningService {
      * @param objectives      the planning objectives (must not be {@code null})
      */
     record ObjectiveDefinitionRequest(String goalId,
-                                     PlanningTypes.PlanningObjectives objectives) {
+                                      java.util.List<PlanningObjective> objectives) {
     }
 
     /**

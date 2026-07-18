@@ -1,5 +1,7 @@
 package platform.kernels.planning.api;
 
+import platform.kernels.planning.model.TaskRequirements;
+
 /**
  * <b>TaskPlanningService</b>
  *
@@ -27,7 +29,7 @@ package platform.kernels.planning.api;
  * <p><b>Ownership:</b> Planning Kernel</p>
  * <p><b>Version:</b> 1.0</p>
  *
- * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001</p>
+ * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001, EIO-PLAN-102</p>
  *
  * @see PlanningService
  * @see GoalPlanningService
@@ -40,7 +42,7 @@ public interface TaskPlanningService {
      *
      * <p>This operation creates executable tasks from a planning goal,
      * defining the work required to achieve the goal.</p>
- *
+     *
      * <p><b>Semantic Boundary:</b> This method defines the contract only.
      * Implementations will be provided in subsequent Engineering Orders.</p>
      *
@@ -118,7 +120,7 @@ public interface TaskPlanningService {
      * @param taskConstraints the task constraints (must not be {@code null})
      */
     record TaskGenerationRequest(String goalId,
-                                 TaskGenerationStrategy generationStrategy,
+                                 PlanningTypes.TaskGenerationStrategy generationStrategy,
                                  PlanningTypes.TaskConstraints taskConstraints) {
     }
 
@@ -161,7 +163,7 @@ public interface TaskPlanningService {
      */
     record TaskRefinementRequest(String taskId,
                                  PlanningTypes.RefinementContext refinementContext,
-                                 PlanningTypes.TaskRequirements updatedRequirements) {
+                                 TaskRequirements updatedRequirements) {
     }
 
     /**

@@ -1,5 +1,7 @@
 package platform.kernels.planning.api;
 
+import platform.kernels.planning.model.ValidationCriteria;
+
 /**
  * <b>PlanValidationService</b>
  *
@@ -27,7 +29,7 @@ package platform.kernels.planning.api;
  * <p><b>Ownership:</b> Planning Kernel</p>
  * <p><b>Version:</b> 1.0</p>
  *
- * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001</p>
+ * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001, EIO-PLAN-102</p>
  *
  * @see PlanningService
  * @see GoalPlanningService
@@ -104,7 +106,7 @@ public interface PlanValidationService {
      */
     record PlanValidationRequest(String planId,
                                  PlanningTypes.ValidationScope validationScope,
-                                 PlanningTypes.ValidationCriteria validationCriteria) {
+                                 ValidationCriteria validationCriteria) {
     }
 
     /**
@@ -197,7 +199,7 @@ public interface PlanValidationService {
      */
     enum ConstraintType {
         /**
-         * Temporal constraints (time-based).
+         * Temporary constraints (time-based).
          */
         TEMPORAL,
 

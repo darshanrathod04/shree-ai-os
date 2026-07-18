@@ -24,7 +24,15 @@ package platform.kernels.planning.api;
  * <p><b>Ownership:</b> Planning Kernel</p>
  * <p><b>Version:</b> 1.0</p>
  *
- * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001</p>
+ * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001, EIO-PLAN-102</p>
+ *
+ * @see platform.kernels.planning.model.PlanningConstraints
+ * @see platform.kernels.planning.model.PlanningObjective
+ * @see platform.kernels.planning.model.GoalConstraints
+ * @see platform.kernels.planning.model.ValidationCriteria
+ * @see platform.kernels.planning.model.SchedulingConstraints
+ * @see platform.kernels.planning.model.ResourceAvailability
+ * @see platform.kernels.planning.model.TaskRequirements
  */
 public final class PlanningTypes {
 
@@ -36,54 +44,12 @@ public final class PlanningTypes {
     }
 
     /**
-     * Represents planning constraints.
-     *
-     * @param description the constraint description (must not be {@code null} or empty)
-     */
-    public record PlanningConstraints(String description) {
-    }
-
-    /**
-     * Represents a planning objective.
-     *
-     * @param objectiveId   the objective identifier (must not be {@code null} or empty)
-     * @param description   the objective description (must not be {@code null} or empty)
-     */
-    public record PlanningObjective(String objectiveId, String description) {
-    }
-
-    /**
-     * Represents multiple planning objectives.
-     *
-     * @param objectives the list of objectives (must not be {@code null})
-     */
-    public record PlanningObjectives(java.util.List<PlanningObjective> objectives) {
-    }
-
-    /**
-     * Represents goal constraints.
-     *
-     * @param description the constraint description (must not be {@code null} or empty)
-     */
-    public record GoalConstraints(String description) {
-    }
-
-    /**
      * Represents a refinement context.
      *
      * @param contextId   the context identifier (must not be {@code null} or empty)
      * @param description the context description (must not be {@code null} or empty)
      */
     public record RefinementContext(String contextId, String description) {
-    }
-
-    /**
-     * Represents validation criteria.
-     *
-     * @param criteriaId   the criteria identifier (must not be {@code null} or empty)
-     * @param description  the criteria description (must not be {@code null} or empty)
-     */
-    public record ValidationCriteria(String criteriaId, String description) {
     }
 
     /**
@@ -159,29 +125,12 @@ public final class PlanningTypes {
     }
 
     /**
-     * Represents scheduling constraints.
-     *
-     * @param description the constraint description (must not be {@code null} or empty)
-     */
-    public record SchedulingConstraints(String description) {
-    }
-
-    /**
      * Represents timeline objectives.
      *
      * @param objectiveId   the objective identifier (must not be {@code null} or empty)
      * @param description   the objective description (must not be {@code null} or empty)
      */
     public record TimelineObjectives(String objectiveId, String description) {
-    }
-
-    /**
-     * Represents resource availability.
-     *
-     * @param resourceId    the resource identifier (must not be {@code null} or empty)
-     * @param description   the availability description (must not be {@code null} or empty)
-     */
-    public record ResourceAvailability(String resourceId, String description) {
     }
 
     /**
@@ -216,15 +165,6 @@ public final class PlanningTypes {
      * @param description  the criteria description (must not be {@code null} or empty)
      */
     public record GroupingCriteria(String criteriaId, String description) {
-    }
-
-    /**
-     * Represents task requirements.
-     *
-     * @param requirementsId   the requirements identifier (must not be {@code null} or empty)
-     * @param description      the requirements description (must not be {@code null} or empty)
-     */
-    public record TaskRequirements(String requirementsId, String description) {
     }
 
     // Enums used in request types

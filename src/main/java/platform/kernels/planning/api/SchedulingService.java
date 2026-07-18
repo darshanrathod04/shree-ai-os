@@ -1,5 +1,8 @@
 package platform.kernels.planning.api;
 
+import platform.kernels.planning.model.SchedulingConstraints;
+import platform.kernels.planning.model.ResourceAvailability;
+
 /**
  * <b>SchedulingService</b>
  *
@@ -27,7 +30,7 @@ package platform.kernels.planning.api;
  * <p><b>Ownership:</b> Planning Kernel</p>
  * <p><b>Version:</b> 1.0</p>
  *
- * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001</p>
+ * <p><b>Constitutional Authority:</b> EIO-PLAN-101, EIO-ARCH-001, EIO-PLAN-102</p>
  *
  * @see PlanningService
  * @see GoalPlanningService
@@ -132,7 +135,7 @@ public interface SchedulingService {
      */
     record ScheduleOptimizationRequest(String scheduleId,
                                        PlanningTypes.OptimizationCriteria optimizationCriteria,
-                                       PlanningTypes.SchedulingConstraints constraints) {
+                                       SchedulingConstraints constraints) {
     }
 
     /**
@@ -155,8 +158,8 @@ public interface SchedulingService {
      * @param resources       the available resources (must not be {@code null})
      */
     record ConstraintSchedulingRequest(String planId,
-                                       PlanningTypes.SchedulingConstraints constraints,
-                                       PlanningTypes.ResourceAvailability resources) {
+                                       SchedulingConstraints constraints,
+                                       ResourceAvailability resources) {
     }
 
     /**
