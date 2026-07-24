@@ -1,4 +1,4 @@
-package platform.kernels.planning.service;
+package platform.kernels.planning.engine;
 
 import platform.kernels.planning.model.Goal;
 import platform.kernels.planning.model.PlanningObjective;
@@ -12,9 +12,7 @@ import java.util.List;
 /**
  * <b>PlanningProcessingEngine</b>
  *
- * <p>Processing contract for deterministic planning operations.
- * This is a temporary interface residing in the Service package during PLAN-105.
- * In PLAN-106, this interface will be migrated to {@code platform.kernels.planning.engine}.</p>
+ * <p>Processing contract for deterministic planning operations.</p>
  *
  * <p><b>Architectural Responsibility:</b></p>
  * <ul>
@@ -23,14 +21,14 @@ import java.util.List;
  *   <li>Maintains no implementation — interface only.</li>
  * </ul>
  *
- * <p><b>Ownership:</b> Planning Kernel — Service Layer (temporary)</p>
+ * <p><b>Ownership:</b> Planning Kernel — Engine Layer</p>
  * <p><b>Version:</b> 1.0</p>
  *
  * <p><b>Invariant:</b> This is an interface with no implementation. It defines
- * processing contracts only. Actual processing logic will be implemented by
- * {@code DefaultPlanningProcessingEngine} in PLAN-106.</p>
+ * processing contracts only. Actual processing logic is implemented by
+ * {@code DefaultPlanningProcessingEngine}.</p>
  *
- * <p><b>Constitutional Authority:</b> EIO-PLAN-105, EIO-ARCH-001</p>
+ * <p><b>Constitutional Authority:</b> EIO-PLAN-106, EIO-ARCH-001</p>
  *
  * <p><b>Processing Responsibilities:</b></p>
  * <p>The engine performs deterministic computation only. It transforms validated
