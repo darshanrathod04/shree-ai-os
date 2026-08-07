@@ -188,8 +188,8 @@ Last Updated: DD Month YYYY
 
 ## Related Documentation
 
-- [Architecture README](../architecture/README.md) — Architecture Documentation
-- [Constitution](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
+- [Architecture README](../../architecture/README.md) — Architecture Documentation
+- [Constitution](../../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
 - [Handbook](../handbook/) — Contributor Handbook
 - [Specifications](../specifications/) — Technical Specifications
 

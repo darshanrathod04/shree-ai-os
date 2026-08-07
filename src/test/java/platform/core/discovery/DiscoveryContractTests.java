@@ -1,18 +1,19 @@
 package platform.core.discovery;
 
-import platform.core.discovery.error.ContractNotFoundException;
-import platform.core.discovery.model.ContractId;
-import platform.core.discovery.model.DiscoveryResult;
-import platform.core.discovery.model.ResolutionStatus;
-import platform.core.discovery.service.DefaultDiscoveryService;
-import platform.core.discovery.validator.DiscoveryValidator;
-import platform.core.registry.api.KernelRegistry;
-import platform.core.registry.model.KernelId;
-import platform.core.registry.model.KernelMetadata;
-import platform.core.registry.model.KernelVersion;
-import platform.core.registry.model.RegisteredKernel;
-import platform.core.registry.service.DefaultKernelRegistry;
-import platform.core.registry.validator.KernelRegistrationValidator;
+import com.shreeai.os.platform.core.discovery.error.ContractNotFoundException;
+import com.shreeai.os.platform.core.discovery.error.DiscoveryErrorCode;
+import com.shreeai.os.platform.core.discovery.model.ContractId;
+import com.shreeai.os.platform.core.discovery.model.DiscoveryResult;
+import com.shreeai.os.platform.core.discovery.model.ResolutionStatus;
+import com.shreeai.os.platform.core.discovery.service.DefaultDiscoveryService;
+import com.shreeai.os.platform.core.discovery.validator.DiscoveryValidator;
+import com.shreeai.os.platform.core.registry.api.KernelRegistry;
+import com.shreeai.os.platform.core.registry.model.KernelId;
+import com.shreeai.os.platform.core.registry.model.KernelMetadata;
+import com.shreeai.os.platform.core.registry.model.KernelVersion;
+import com.shreeai.os.platform.core.registry.model.RegisteredKernel;
+import com.shreeai.os.platform.core.registry.service.DefaultKernelRegistry;
+import com.shreeai.os.platform.core.registry.validator.KernelRegistrationValidator;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -97,7 +98,7 @@ public class DiscoveryContractTests {
             service.resolveByContract(contractId);
             throw new AssertionError("Should have thrown ContractNotFoundException");
         } catch (ContractNotFoundException e) {
-            assert e.code() == platform.core.discovery.error.DiscoveryErrorCode.DISCOVERY_CONTRACT_NOT_FOUND
+            assert e.code() == DiscoveryErrorCode.DISCOVERY_CONTRACT_NOT_FOUND
                     : "Error code should be DISCOVERY_CONTRACT_NOT_FOUND";
         }
     }

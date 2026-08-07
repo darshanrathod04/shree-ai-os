@@ -1,8 +1,9 @@
 package platform.runtime.pipeline;
 
-import platform.cognition.CognitiveDecision;
-import platform.execution.ExecutionMetadata;
-import platform.execution.ExecutionRequest;
+import com.shreeai.os.platform.cognition.CognitiveDecision;
+import com.shreeai.os.platform.execution.ExecutionMetadata;
+import com.shreeai.os.platform.execution.ExecutionRequest;
+import com.shreeai.os.platform.runtime.pipeline.*;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

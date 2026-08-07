@@ -1,17 +1,17 @@
 package platform.core.lifecycle;
 
-import platform.core.lifecycle.api.LifecycleService;
-import platform.core.lifecycle.engine.LifecycleTransitionEngine;
-import platform.core.lifecycle.model.KernelState;
-import platform.core.lifecycle.service.DefaultLifecycleService;
-import platform.core.lifecycle.validator.LifecycleValidator;
-import platform.core.registry.api.KernelRegistry;
-import platform.core.registry.model.KernelId;
-import platform.core.registry.model.KernelMetadata;
-import platform.core.registry.model.KernelVersion;
-import platform.core.registry.model.RegisteredKernel;
-import platform.core.registry.service.DefaultKernelRegistry;
-import platform.core.registry.validator.KernelRegistrationValidator;
+import com.shreeai.os.platform.core.lifecycle.api.LifecycleService;
+import com.shreeai.os.platform.core.lifecycle.engine.LifecycleTransitionEngine;
+import com.shreeai.os.platform.core.lifecycle.model.KernelState;
+import com.shreeai.os.platform.core.lifecycle.service.DefaultLifecycleService;
+import com.shreeai.os.platform.core.lifecycle.validator.LifecycleValidator;
+import com.shreeai.os.platform.core.registry.api.KernelRegistry;
+import com.shreeai.os.platform.core.registry.model.KernelId;
+import com.shreeai.os.platform.core.registry.model.KernelMetadata;
+import com.shreeai.os.platform.core.registry.model.KernelVersion;
+import com.shreeai.os.platform.core.registry.model.RegisteredKernel;
+import com.shreeai.os.platform.core.registry.service.DefaultKernelRegistry;
+import com.shreeai.os.platform.core.registry.validator.KernelRegistrationValidator;
 
 import java.time.Instant;
 import java.util.HashSet;

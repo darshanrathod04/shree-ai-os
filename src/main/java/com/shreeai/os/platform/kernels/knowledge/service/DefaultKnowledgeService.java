@@ -5,6 +5,7 @@ import com.shreeai.os.platform.kernels.knowledge.model.*;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeExtractionService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeGraphService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeQueryService;
+import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeSearchService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeService;
 import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeProcessingEngine;
 import com.shreeai.os.platform.kernels.knowledge.error.KnowledgeError;
@@ -76,6 +77,7 @@ import java.util.Objects;
 public final class DefaultKnowledgeService implements
         KnowledgeService,
         KnowledgeQueryService,
+        KnowledgeSearchService,
         KnowledgeGraphService,
         KnowledgeExtractionService {
 
@@ -242,6 +244,7 @@ public final class DefaultKnowledgeService implements
         if (searchTerm == null || searchTerm.isBlank()) {
             throw createValidationException("searchTerm must not be null or blank");
         }
+        // TODO: Implement semantic search
         return new Object[0];
     }
 
@@ -267,6 +270,7 @@ public final class DefaultKnowledgeService implements
     @Override
     public Object[] filterKnowledge(Object criteria) {
         Objects.requireNonNull(criteria, "criteria must not be null");
+        // TODO: Implement filtering
         return new Object[0];
     }
 
@@ -320,6 +324,7 @@ public final class DefaultKnowledgeService implements
     @Override
     public Object[] queryConnections(String entityId) {
         parseKnowledgeId(entityId);
+        // TODO: Implement connection querying
         return new Object[0];
     }
 
@@ -334,6 +339,7 @@ public final class DefaultKnowledgeService implements
     public Object[] traverseGraph(String startEntityId, String[] relationshipTypes) {
         Objects.requireNonNull(relationshipTypes, "relationshipTypes must not be null");
         parseKnowledgeId(startEntityId);
+        // TODO: Implement graph traversal
         return new Object[0];
     }
 
@@ -347,7 +353,92 @@ public final class DefaultKnowledgeService implements
     @Override
     public Object[] getEntityRelationships(String entityId) {
         parseKnowledgeId(entityId);
+        // TODO: Implement relationship retrieval
         return new Object[0];
+    }
+
+    // ========================================================================
+    // KnowledgeSearchService Implementation
+    // ========================================================================
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p><b>Exception Translation:</b> Throws KnowledgeValidationException if validation fails.</p>
+     *
+     * @throws KnowledgeValidationException if validation fails
+     */
+    @Override
+    public List<KnowledgeNode> search(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            throw createValidationException("keyword must not be null or blank");
+        }
+        // TODO: Implement keyword search
+        return List.of();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p><b>Exception Translation:</b> Throws KnowledgeValidationException if validation fails.</p>
+     *
+     * @throws KnowledgeValidationException if validation fails
+     */
+    @Override
+    public List<KnowledgeNode> searchByTopic(String topic) {
+        if (topic == null || topic.isBlank()) {
+            throw createValidationException("topic must not be null or blank");
+        }
+        // TODO: Implement topic search
+        return List.of();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p><b>Exception Translation:</b> Throws KnowledgeValidationException if validation fails.</p>
+     *
+     * @throws KnowledgeValidationException if validation fails
+     */
+    @Override
+    public List<KnowledgeNode> searchByConcept(String concept) {
+        if (concept == null || concept.isBlank()) {
+            throw createValidationException("concept must not be null or blank");
+        }
+        // TODO: Implement concept search
+        return List.of();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p><b>Exception Translation:</b> Throws KnowledgeValidationException if validation fails.</p>
+     *
+     * @throws KnowledgeValidationException if validation fails
+     */
+    @Override
+    public List<KnowledgeNode> searchByTags(Iterable<String> tags) {
+        if (tags == null) {
+            throw createValidationException("tags must not be null");
+        }
+        // TODO: Implement tag search
+        return List.of();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p><b>Exception Translation:</b> Throws KnowledgeValidationException if validation fails.</p>
+     *
+     * @throws KnowledgeValidationException if validation fails
+     */
+    @Override
+    public List<KnowledgeNode> searchBySimilarity(String text) {
+        if (text == null || text.isBlank()) {
+            throw createValidationException("text must not be null or blank");
+        }
+        // TODO: Implement similarity search
+        return List.of();
     }
 
     // ========================================================================
@@ -366,6 +457,7 @@ public final class DefaultKnowledgeService implements
         if (content == null || content.isBlank()) {
             throw createValidationException("content must not be null or blank");
         }
+        // TODO: Implement concept extraction
         return new Object[0];
     }
 
@@ -381,6 +473,7 @@ public final class DefaultKnowledgeService implements
         if (content == null || content.isBlank()) {
             throw createValidationException("content must not be null or blank");
         }
+        // TODO: Implement structured knowledge generation
         return new Object[0];
     }
 
@@ -396,6 +489,7 @@ public final class DefaultKnowledgeService implements
         if (content == null || content.isBlank()) {
             throw createValidationException("content must not be null or blank");
         }
+        // TODO: Implement relationship extraction
         return new Object[0];
     }
 
@@ -411,6 +505,7 @@ public final class DefaultKnowledgeService implements
         if (content == null || content.isBlank()) {
             throw createValidationException("content must not be null or blank");
         }
+        // TODO: Implement content classification
         return new String[0];
     }
 

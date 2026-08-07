@@ -139,7 +139,7 @@ Last Updated: DD Month YYYY
 
 ## Related Documentation
 
-- [Constitution](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
+- [Constitution](../../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
 - [Roadmap](../roadmap/) — Platform Roadmap
 - [Philosophy](../philosophy/) — Engineering Philosophy
 - [Doctrine](../doctrine/) — Platform Doctrine

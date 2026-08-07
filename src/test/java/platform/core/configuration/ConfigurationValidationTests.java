@@ -1,11 +1,11 @@
 package platform.core.configuration;
 
-import platform.core.configuration.model.ConfigurationEntry;
-import platform.core.configuration.model.ConfigurationKey;
-import platform.core.configuration.model.ConfigurationNamespace;
-import platform.core.configuration.model.ConfigurationType;
-import platform.core.configuration.validator.ConfigurationValidator;
-import platform.core.registry.validator.ValidationResult;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationEntry;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationKey;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationNamespace;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationType;
+import com.shreeai.os.platform.core.configuration.validator.ConfigurationValidator;
+import com.shreeai.os.platform.core.registry.validator.ValidationResult;
 
 import java.time.Instant;
 

@@ -35,8 +35,8 @@
 
  :: Spring Boot ::                (v4.0.2)
 
-2026-06-12T20:25:01.900+05:30  INFO 1280 --- [ai-agent] [           main] application.AiAgentApplication     : Starting AiAgentApplication using Java 21.0.7 with PID 1280 (C:\ai-agent\target\classes started by darsh in C:\ai-agent)
-2026-06-12T20:25:01.906+05:30  INFO 1280 --- [ai-agent] [           main] application.AiAgentApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-06-12T20:25:01.900+05:30  INFO 1280 --- [ai-agent] [           main] com.shreeai.os.ShreeAiOsApplication     : Starting AiAgentApplication using Java 21.0.7 with PID 1280 (C:\ai-agent\target\classes started by darsh in C:\ai-agent)
+2026-06-12T20:25:01.906+05:30  INFO 1280 --- [ai-agent] [           main] com.shreeai.os.ShreeAiOsApplication     : No active profile set, falling back to 1 default profile: "default"
 2026-06-12T20:25:03.591+05:30  INFO 1280 --- [ai-agent] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8086 (http)
 2026-06-12T20:25:03.618+05:30  INFO 1280 --- [ai-agent] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
 2026-06-12T20:25:03.618+05:30  INFO 1280 --- [ai-agent] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.15]
@@ -50,7 +50,7 @@ This generated password is for development use only. Your security configuration
 2026-06-12T20:25:04.674+05:30  INFO 1280 --- [ai-agent] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
 2026-06-12T20:25:04.900+05:30  INFO 1280 --- [ai-agent] [           main] o.s.b.w.a.WelcomePageHandlerMapping      : Adding welcome page: class path resource [static/index.html]
 2026-06-12T20:25:05.257+05:30  INFO 1280 --- [ai-agent] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8086 (http) with context path '/'
-2026-06-12T20:25:05.269+05:30  INFO 1280 --- [ai-agent] [           main] application.AiAgentApplication     : Started AiAgentApplication in 4.068 seconds (process running for 4.764)
+2026-06-12T20:25:05.269+05:30  INFO 1280 --- [ai-agent] [           main] com.shreeai.os.ShreeAiOsApplication     : Started AiAgentApplication in 4.068 seconds (process running for 4.764)
 ? Autonomous tick...
 ? Autonomous tick...
 ? Autonomous tick...

@@ -1,5 +1,6 @@
 package platform.capability;
 
+import com.shreeai.os.platform.capability.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

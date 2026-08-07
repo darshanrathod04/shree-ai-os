@@ -1,16 +1,15 @@
 package platform.core.registry;
 
-import platform.core.registry.error.DuplicateKernelException;
-import platform.core.registry.error.InvalidKernelException;
-import platform.core.registry.error.KernelNotFoundException;
-import platform.core.registry.error.RegistryErrorCode;
-import platform.core.registry.error.RegistryException;
-import platform.core.registry.model.KernelId;
-import platform.core.registry.model.KernelMetadata;
-import platform.core.registry.model.KernelVersion;
-import platform.core.registry.model.RegisteredKernel;
-import platform.core.registry.service.DefaultKernelRegistry;
-import platform.core.registry.validator.KernelRegistrationValidator;
+import com.shreeai.os.platform.core.registry.error.DuplicateKernelException;
+import com.shreeai.os.platform.core.registry.error.InvalidKernelException;
+import com.shreeai.os.platform.core.registry.error.RegistryErrorCode;
+import com.shreeai.os.platform.core.registry.error.RegistryException;
+import com.shreeai.os.platform.core.registry.model.KernelId;
+import com.shreeai.os.platform.core.registry.model.KernelMetadata;
+import com.shreeai.os.platform.core.registry.model.KernelVersion;
+import com.shreeai.os.platform.core.registry.model.RegisteredKernel;
+import com.shreeai.os.platform.core.registry.service.DefaultKernelRegistry;
+import com.shreeai.os.platform.core.registry.validator.KernelRegistrationValidator;
 
 import java.time.Instant;
 import java.util.HashSet;

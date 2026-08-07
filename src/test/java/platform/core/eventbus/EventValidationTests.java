@@ -1,18 +1,13 @@
 package platform.core.eventbus;
 
-import platform.core.eventbus.model.Event;
-import platform.core.eventbus.model.EventId;
-import platform.core.eventbus.model.EventMetadata;
-import platform.core.eventbus.model.EventPriority;
-import platform.core.eventbus.model.EventSubscriber;
-import platform.core.eventbus.model.EventTopic;
-import platform.core.eventbus.validator.EventValidator;
-import platform.core.registry.validator.ValidationResult;
-
-import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import com.shreeai.os.platform.core.eventbus.model.Event;
+import com.shreeai.os.platform.core.eventbus.model.EventId;
+import com.shreeai.os.platform.core.eventbus.model.EventMetadata;
+import com.shreeai.os.platform.core.eventbus.model.EventPriority;
+import com.shreeai.os.platform.core.eventbus.model.EventSubscriber;
+import com.shreeai.os.platform.core.eventbus.model.EventTopic;
+import com.shreeai.os.platform.core.eventbus.validator.EventValidator;
+import com.shreeai.os.platform.core.registry.validator.ValidationResult;
 
 /**
  * <b>EventValidationTests</b>

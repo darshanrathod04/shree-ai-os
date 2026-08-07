@@ -29,12 +29,12 @@ Documents are organized by category for easy navigation.
 
 | ID | Title | Location | Status |
 |----|-------|----------|--------|
-| CONST-001 | Constitution of Shree AI OS | [constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md](constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) | Draft |
-| VISION-001 | Platform Vision | [vision/VISION-001-PLATFORM-VISION.md](vision/VISION-001-PLATFORM-VISION.md) | Draft |
-| MISSION-001 | Platform Mission | [mission/MISSION-001-PLATFORM-MISSION.md](mission/MISSION-001-PLATFORM-MISSION.md) | Draft |
-| ORG-001 | Engineering Organization | [organization/ORG-001-ENGINEERING-ORGANIZATION.md](organization/ORG-001-ENGINEERING-ORGANIZATION.md) | Draft |
+| CONST-001 | Constitution of Shree AI OS | [constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md](governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) | Draft |
+| VISION-001 | Platform Vision | [vision/VISION-001-PLATFORM-VISION.md](philosophy/vision/VISION-001-PLATFORM-VISION.md) | Draft |
+| MISSION-001 | Platform Mission | [mission/MISSION-001-PLATFORM-MISSION.md](philosophy/mission/MISSION-001-PLATFORM-MISSION.md) | Draft |
+| ORG-001 | Engineering Organization | [organization/ORG-001-ENGINEERING-ORGANIZATION.md](governance/organization/ORG-001-ENGINEERING-ORGANIZATION.md) | Draft |
 | WORKFLOW-001 | Engineering Workflow | [workflow/WORKFLOW-001-ENGINEERING-WORKFLOW.md](workflow/WORKFLOW-001-ENGINEERING-WORKFLOW.md) | Draft |
-| RULE-001 | Platform Engineering Rules | [rules/RULE-001-PLATFORM-ENGINEERING-RULES.md](rules/RULE-001-PLATFORM-ENGINEERING-RULES.md) | Draft |
+| RULE-001 | Platform Engineering Rules | [rules/RULE-001-PLATFORM-ENGINEERING-RULES.md](governance/rules/RULE-001-PLATFORM-ENGINEERING-RULES.md) | Draft |
 
 ---
 
@@ -43,7 +43,7 @@ Documents are organized by category for easy navigation.
 | ID | Title | Location | Status |
 |----|-------|----------|--------|
 | DOC-ARCH-001 | Architecture Documentation Index | [architecture/README.md](architecture/README.md) | Active |
-| DOC-ARCH-RUNTIME-001 | Runtime Architecture Index | [architecture/runtime/README.md](architecture/runtime/README.md) | Active |
+| DOC-ARCH-RUNTIME-001 | Runtime Architecture Index | [architecture/runtime/README.md](architecture/platform/runtime/README.md) | Active |
 
 **Note:** Architecture Design Documents (ADD) will be added as they are created.
 
@@ -112,7 +112,7 @@ Documents are organized by category for easy navigation.
 
 | ID | Title | Location | Status |
 |----|-------|----------|--------|
-| DOC-STD-001 | Engineering Standards Index | [standards/README.md](standards/README.md) | Active |
+| DOC-STD-001 | Engineering Standards Index | [standards/README.md](engineering/standards/README.md) | Active |
 
 ---
 
@@ -120,7 +120,7 @@ Documents are organized by category for easy navigation.
 
 | ID | Title | Location | Status |
 |----|-------|----------|--------|
-| DOC-DOCTRINE-001 | Platform Doctrine Index | [doctrine/README.md](doctrine/README.md) | Active |
+| DOC-DOCTRINE-001 | Platform Doctrine Index | [doctrine/README.md](philosophy/doctrine/README.md) | Active |
 
 ---
 
@@ -160,8 +160,8 @@ Documents are organized by category for easy navigation.
 
 | ID | Title | Location | Status |
 |----|-------|----------|--------|
-| DOC-VISION-001 | Vision Documentation Index | [vision/README.md](vision/README.md) | Active |
-| VISION-001 | Platform Vision | [vision/VISION-001-PLATFORM-VISION.md](vision/VISION-001-PLATFORM-VISION.md) | Draft |
+| DOC-VISION-001 | Vision Documentation Index | [vision/README.md](philosophy/vision/README.md) | Active |
+| VISION-001 | Platform Vision | [vision/VISION-001-PLATFORM-VISION.md](philosophy/vision/VISION-001-PLATFORM-VISION.md) | Draft |
 
 ---
 
@@ -169,8 +169,8 @@ Documents are organized by category for easy navigation.
 
 | ID | Title | Location | Status |
 |----|-------|----------|--------|
-| DOC-ORG-001 | Organization Documentation Index | [organization/README.md](organization/README.md) | Active |
-| ORG-001 | Engineering Organization | [organization/ORG-001-ENGINEERING-ORGANIZATION.md](organization/ORG-001-ENGINEERING-ORGANIZATION.md) | Draft |
+| DOC-ORG-001 | Organization Documentation Index | [organization/README.md](governance/organization/README.md) | Active |
+| ORG-001 | Engineering Organization | [organization/ORG-001-ENGINEERING-ORGANIZATION.md](governance/organization/ORG-001-ENGINEERING-ORGANIZATION.md) | Draft |
 
 ---
 
@@ -180,10 +180,10 @@ Documents are organized by category for easy navigation.
 
 - [Documentation Home](README.md)
 - [Foundation Layer](foundation/README.md)
-- [Constitution](constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md)
+- [Constitution](governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md)
 - [Architecture](architecture/README.md)
 - [Architecture Decision Records](ADR/README.md)
-- [Engineering Standards](standards/README.md)
+- [Engineering Standards](engineering/standards/README.md)
 
 ---
 

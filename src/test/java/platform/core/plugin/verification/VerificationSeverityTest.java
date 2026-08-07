@@ -1,5 +1,6 @@
 package platform.core.plugin.verification;
 
+import com.shreeai.os.platform.core.plugin.verification.VerificationSeverity;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

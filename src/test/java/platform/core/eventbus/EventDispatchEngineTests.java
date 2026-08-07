@@ -1,14 +1,13 @@
 package platform.core.eventbus;
 
-import platform.core.eventbus.engine.DispatchResult;
-import platform.core.eventbus.engine.EventDispatchEngine;
-import platform.core.eventbus.error.EventDispatchException;
-import platform.core.eventbus.model.Event;
-import platform.core.eventbus.model.EventId;
-import platform.core.eventbus.model.EventMetadata;
-import platform.core.eventbus.model.EventPriority;
-import platform.core.eventbus.model.EventSubscriber;
-import platform.core.eventbus.model.EventTopic;
+import com.shreeai.os.platform.core.eventbus.engine.DispatchResult;
+import com.shreeai.os.platform.core.eventbus.engine.EventDispatchEngine;
+import com.shreeai.os.platform.core.eventbus.model.Event;
+import com.shreeai.os.platform.core.eventbus.model.EventId;
+import com.shreeai.os.platform.core.eventbus.model.EventMetadata;
+import com.shreeai.os.platform.core.eventbus.model.EventPriority;
+import com.shreeai.os.platform.core.eventbus.model.EventSubscriber;
+import com.shreeai.os.platform.core.eventbus.model.EventTopic;
 
 import java.util.ArrayList;
 import java.util.List;

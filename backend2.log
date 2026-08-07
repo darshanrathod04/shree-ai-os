@@ -38,8 +38,8 @@
 
  :: Spring Boot ::                (v4.0.2)
 
-2026-06-18T12:08:04.644+05:30  INFO 7836 --- [ai-agent] [           main] application.AiAgentApplication     : Starting AiAgentApplication using Java 21.0.7 with PID 7836 (C:\ai-agent\target\classes started by darsh in C:\ai-agent)
-2026-06-18T12:08:04.651+05:30  INFO 7836 --- [ai-agent] [           main] application.AiAgentApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-06-18T12:08:04.644+05:30  INFO 7836 --- [ai-agent] [           main] com.shreeai.os.ShreeAiOsApplication     : Starting AiAgentApplication using Java 21.0.7 with PID 7836 (C:\ai-agent\target\classes started by darsh in C:\ai-agent)
+2026-06-18T12:08:04.651+05:30  INFO 7836 --- [ai-agent] [           main] com.shreeai.os.ShreeAiOsApplication     : No active profile set, falling back to 1 default profile: "default"
 2026-06-18T12:08:06.704+05:30  INFO 7836 --- [ai-agent] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
 2026-06-18T12:08:06.731+05:30  INFO 7836 --- [ai-agent] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
 2026-06-18T12:08:06.732+05:30  INFO 7836 --- [ai-agent] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.15]
@@ -59,7 +59,7 @@ This generated password is for development use only. Your security configuration
 2026-06-18T12:08:08.309+05:30  INFO 7836 --- [ai-agent] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
 2026-06-18T12:08:08.588+05:30  INFO 7836 --- [ai-agent] [           main] o.s.b.w.a.WelcomePageHandlerMapping      : Adding welcome page: class path resource [static/index.html]
 2026-06-18T12:08:09.039+05:30  INFO 7836 --- [ai-agent] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
-2026-06-18T12:08:09.051+05:30  INFO 7836 --- [ai-agent] [           main] application.AiAgentApplication     : Started AiAgentApplication in 5.288 seconds (process running for 6.121)
+2026-06-18T12:08:09.051+05:30  INFO 7836 --- [ai-agent] [           main] com.shreeai.os.ShreeAiOsApplication     : Started AiAgentApplication in 5.288 seconds (process running for 6.121)
 2026-06-18T12:08:09.053+05:30  INFO 7836 --- [ai-agent] [omous-scheduler] c.d.agent.autonomy.AutonomousScheduler   : [Autonomous] Tick #1 starting... Thought in progress: false, Paused: false, Active Ollama: 0
 2026-06-18T12:08:24.065+05:30  INFO 7836 --- [ai-agent] [omous-scheduler] c.d.agent.autonomy.AutonomousScheduler   : [Autonomous] Tick #2 starting... Thought in progress: false, Paused: false, Active Ollama: 0
 2026-06-18T12:08:39.067+05:30  INFO 7836 --- [ai-agent] [omous-scheduler] c.d.agent.autonomy.AutonomousScheduler   : [Autonomous] Tick #3 starting... Thought in progress: false, Paused: false, Active Ollama: 0

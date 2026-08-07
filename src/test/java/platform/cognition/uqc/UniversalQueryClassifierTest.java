@@ -1,5 +1,9 @@
 package platform.cognition.uqc;
 
+import com.shreeai.os.platform.cognition.uqc.ClassificationResult;
+import com.shreeai.os.platform.cognition.uqc.DetectedEntity;
+import com.shreeai.os.platform.cognition.uqc.QueryCategory;
+import com.shreeai.os.platform.cognition.uqc.UniversalQueryClassifier;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

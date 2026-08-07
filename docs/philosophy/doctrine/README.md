@@ -162,10 +162,10 @@ Last Updated: DD Month YYYY
 
 ## Related Documentation
 
-- [Constitution](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
+- [Constitution](../../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
 - [Philosophy](../philosophy/) — Engineering Philosophy
-- [Vision](../vision/) — Platform Vision
-- [Values (Constitution)](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md#article-iv--core-values) — Core Values
+- [Vision](../philosophy/vision/) — Platform Vision
+- [Values (Constitution)](../../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md#article-iv--core-values) — Core Values
 
 ---
 

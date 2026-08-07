@@ -172,7 +172,7 @@ Last Updated: DD Month YYYY
 
 ## Related Documentation
 
-- [Architecture README](../README.md) — Architecture Documentation Index
+- [Architecture README](../../README.md) — Architecture Documentation Index
 - [Constitution](../constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
 - [Standards](../standards/) — Engineering Standards
 - [Specifications](../specifications/) — Technical Specifications

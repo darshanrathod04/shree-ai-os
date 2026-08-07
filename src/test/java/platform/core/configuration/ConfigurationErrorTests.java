@@ -1,11 +1,11 @@
 package platform.core.configuration;
 
-import platform.core.configuration.error.ConfigurationError;
-import platform.core.configuration.error.ConfigurationErrorCode;
-import platform.core.configuration.error.ConfigurationException;
-import platform.core.configuration.error.ConfigurationNotFoundException;
-import platform.core.configuration.error.DuplicateConfigurationException;
-import platform.core.configuration.error.InvalidConfigurationException;
+import com.shreeai.os.platform.core.configuration.error.ConfigurationError;
+import com.shreeai.os.platform.core.configuration.error.ConfigurationErrorCode;
+import com.shreeai.os.platform.core.configuration.error.ConfigurationException;
+import com.shreeai.os.platform.core.configuration.error.ConfigurationNotFoundException;
+import com.shreeai.os.platform.core.configuration.error.DuplicateConfigurationException;
+import com.shreeai.os.platform.core.configuration.error.InvalidConfigurationException;
 
 import java.time.Instant;
 

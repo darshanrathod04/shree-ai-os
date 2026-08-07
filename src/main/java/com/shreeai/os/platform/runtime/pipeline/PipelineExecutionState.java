@@ -142,7 +142,7 @@ public final class PipelineExecutionState {
      *
      * @param message the failure message (never null)
      */
-    void markFailure(String message) {
+    public void markFailure(String message) {
         this.failed = true;
         addMessage(message);
     }
@@ -191,7 +191,7 @@ public final class PipelineExecutionState {
      *
      * @param message the message to add (never null)
      */
-    void addMessage(String message) {
+    public void addMessage(String message) {
         if (message != null) {
             messages.add(message);
         }
@@ -203,7 +203,7 @@ public final class PipelineExecutionState {
      * @param key the metadata key (never null)
      * @param value the metadata value (can be null)
      */
-    void addMetadata(String key, Object value) {
+    public void addMetadata(String key, Object value) {
         if (key != null) {
             metadata.put(key, value);
         }
@@ -339,7 +339,7 @@ public final class PipelineExecutionState {
      *
      * @return unmodifiable map of metadata
      */
-    Map<String, Object> getMetadata() {
+    public Map<String, Object> getMetadata() {
         return Collections.unmodifiableMap(metadata);
     }
 

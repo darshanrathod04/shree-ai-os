@@ -1,11 +1,11 @@
 package platform.core.configuration;
 
-import platform.core.configuration.engine.ConfigurationResolutionEngine;
-import platform.core.configuration.engine.ResolutionResult;
-import platform.core.configuration.model.ConfigurationEntry;
-import platform.core.configuration.model.ConfigurationKey;
-import platform.core.configuration.model.ConfigurationNamespace;
-import platform.core.configuration.model.ConfigurationType;
+import com.shreeai.os.platform.core.configuration.engine.ConfigurationResolutionEngine;
+import com.shreeai.os.platform.core.configuration.engine.ResolutionResult;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationEntry;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationKey;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationNamespace;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationType;
 
 import java.time.Instant;
 

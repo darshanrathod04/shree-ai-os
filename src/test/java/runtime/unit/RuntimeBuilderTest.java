@@ -1,11 +1,11 @@
  package runtime.unit;
 
 import org.junit.jupiter.api.Test;
-import platform.runtime.api.Runtime;
-import platform.runtime.api.RuntimeBuilder;
-import platform.runtime.config.RuntimeConfiguration;
-import platform.runtime.contracts.RuntimeContract;
-import platform.runtime.lifecycle.RuntimeState;
+import com.shreeai.os.platform.runtime.api.Runtime;
+import com.shreeai.os.platform.runtime.api.RuntimeBuilder;
+import com.shreeai.os.platform.runtime.config.RuntimeConfiguration;
+import com.shreeai.os.platform.runtime.contracts.RuntimeContract;
+import com.shreeai.os.platform.runtime.lifecycle.RuntimeState;
 
 import static org.junit.jupiter.api.Assertions.*;
 

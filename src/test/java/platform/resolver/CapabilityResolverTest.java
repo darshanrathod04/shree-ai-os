@@ -1,9 +1,11 @@
 package platform.resolver;
 
-import platform.capability.*;
+import com.shreeai.os.platform.capability.*;
+import com.shreeai.os.platform.resolver.CapabilityResolution;
+import com.shreeai.os.platform.resolver.CapabilityResolver;
+import com.shreeai.os.platform.resolver.ResolutionStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import platform.capability.*;
 
 import java.util.List;
 

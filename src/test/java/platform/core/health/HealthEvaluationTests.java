@@ -1,18 +1,15 @@
 package platform.core.health;
 
-import platform.core.health.error.HealthCheckFailedException;
-import platform.core.health.error.HealthComponentNotFoundException;
-import platform.core.health.error.InvalidHealthComponentException;
-import platform.core.health.model.HealthComponent;
-import platform.core.health.model.HealthComponentId;
-import platform.core.health.model.HealthIndicator;
-import platform.core.health.model.HealthMetrics;
-import platform.core.health.model.HealthReport;
-import platform.core.health.model.HealthSeverity;
-import platform.core.health.model.HealthStatus;
-import platform.core.health.service.DefaultHealthService;
-import platform.core.health.validator.HealthValidator;
-import platform.core.health.engine.HealthEvaluationEngine;
+import com.shreeai.os.platform.core.health.error.InvalidHealthComponentException;
+import com.shreeai.os.platform.core.health.model.HealthComponent;
+import com.shreeai.os.platform.core.health.model.HealthComponentId;
+import com.shreeai.os.platform.core.health.model.HealthIndicator;
+import com.shreeai.os.platform.core.health.model.HealthMetrics;
+import com.shreeai.os.platform.core.health.model.HealthReport;
+import com.shreeai.os.platform.core.health.model.HealthStatus;
+import com.shreeai.os.platform.core.health.service.DefaultHealthService;
+import com.shreeai.os.platform.core.health.validator.HealthValidator;
+import com.shreeai.os.platform.core.health.engine.HealthEvaluationEngine;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

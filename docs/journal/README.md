@@ -200,7 +200,7 @@ Journals include thoughtful reflection, not just activity logs.
 
 ## Related Documentation
 
-- [Constitution](../constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
+- [Constitution](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
 - [Research](../research/) — Research Documentation
 - [Decisions](../decisions/) — Platform Decisions
 - [Roadmap](../roadmap/) — Platform Roadmap

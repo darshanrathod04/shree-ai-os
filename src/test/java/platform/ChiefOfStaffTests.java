@@ -1,11 +1,11 @@
  package platform;
 
-import platform.chief.ChiefInsight;
-import platform.chief.ChiefOfStaffEngine;
-import platform.project.ProjectIntelligenceEngine;
-import platform.project.Project;
-import platform.project.ProjectRisk;
-import platform.graph.KnowledgeGraphEngine;
+import com.shreeai.os.platform.chief.ChiefInsight;
+import com.shreeai.os.platform.chief.ChiefOfStaffEngine;
+import com.shreeai.os.platform.project.ProjectIntelligenceEngine;
+import com.shreeai.os.platform.project.Project;
+import com.shreeai.os.platform.project.ProjectRisk;
+import com.shreeai.os.platform.graph.KnowledgeGraphEngine;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
