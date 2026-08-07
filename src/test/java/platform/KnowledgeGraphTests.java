@@ -1,12 +1,11 @@
 package platform;
 
-import platform.graph.*;
+import com.shreeai.os.platform.graph.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import platform.graph.*;
 
 import java.io.File;
 import java.util.List;

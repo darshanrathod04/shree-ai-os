@@ -1,8 +1,12 @@
 package platform.validation;
 
-import platform.cognition.Thought;
-import platform.context.ConversationSession;
-import platform.production.ResolvedContext;
+import com.shreeai.os.platform.cognition.Thought;
+import com.shreeai.os.platform.context.ConversationSession;
+import com.shreeai.os.platform.production.ResolvedContext;
+import com.shreeai.os.platform.validation.DecisionValidator;
+import com.shreeai.os.platform.validation.ValidationResult;
+import com.shreeai.os.platform.validation.ValidationRule;
+import com.shreeai.os.platform.validation.ValidationStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

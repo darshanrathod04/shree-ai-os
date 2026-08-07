@@ -162,9 +162,9 @@ Last Updated: DD Month YYYY
 
 ## Related Documentation
 
-- [Constitution](../constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
-- [Doctrine](../doctrine/) — Platform Doctrine
-- [Vision](../vision/) — Platform Vision
+- [Constitution](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
+- [Doctrine](doctrine/) — Platform Doctrine
+- [Vision](vision/) — Platform Vision
 - [Standards](../standards/) — Engineering Standards
 
 ---

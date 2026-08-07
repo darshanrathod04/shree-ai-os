@@ -1,15 +1,14 @@
 package platform;
 
-import platform.planning.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import platform.planning.AutonomousPlanningEngine;
-import platform.planning.ExecutionPlan;
-import platform.planning.ExecutionTask;
-import platform.planning.PlanMilestone;
+import com.shreeai.os.platform.planning.AutonomousPlanningEngine;
+import com.shreeai.os.platform.planning.ExecutionPlan;
+import com.shreeai.os.platform.planning.ExecutionTask;
+import com.shreeai.os.platform.planning.PlanMilestone;
 
 import java.io.File;
 import java.util.List;

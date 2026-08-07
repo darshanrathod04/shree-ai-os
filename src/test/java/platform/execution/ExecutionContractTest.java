@@ -1,12 +1,13 @@
 package platform.execution;
 
-import platform.context.ConversationSession;
-import platform.cognition.CognitiveDecision;
-import platform.production.ResolvedContext;
+import com.shreeai.os.platform.context.ConversationSession;
+import com.shreeai.os.platform.cognition.CognitiveDecision;
+import com.shreeai.os.platform.execution.*;
+import com.shreeai.os.platform.production.ResolvedContext;
 import org.junit.jupiter.api.Test;
-import platform.validation.ValidationResult;
-import platform.validation.ValidationStatus;
-import platform.validation.ValidationStrategy;
+import com.shreeai.os.platform.validation.ValidationResult;
+import com.shreeai.os.platform.validation.ValidationStatus;
+import com.shreeai.os.platform.validation.ValidationStrategy;
 
 import java.time.Instant;
 import java.util.HashMap;

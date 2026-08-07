@@ -1,29 +1,14 @@
 package platform.core.eventbus;
 
-import platform.core.eventbus.engine.DispatchResult;
-import platform.core.eventbus.engine.EventDispatchEngine;
-import platform.core.eventbus.error.InvalidEventException;
-import platform.core.eventbus.model.Event;
-import platform.core.eventbus.model.EventId;
-import platform.core.eventbus.model.EventMetadata;
-import platform.core.eventbus.model.EventPriority;
-import platform.core.eventbus.model.EventSubscriber;
-import platform.core.eventbus.model.EventTopic;
-import platform.core.eventbus.service.DefaultEventBusService;
-import platform.core.eventbus.validator.EventValidator;
-import platform.core.lifecycle.api.LifecycleService;
-import platform.core.lifecycle.engine.LifecycleTransitionEngine;
-import platform.core.registry.api.KernelRegistry;
-import platform.core.registry.model.KernelId;
-import platform.core.registry.model.KernelMetadata;
-import platform.core.registry.model.KernelVersion;
-import platform.core.registry.model.RegisteredKernel;
-import platform.core.registry.service.DefaultKernelRegistry;
-import platform.core.registry.validator.KernelRegistrationValidator;
-
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
+import com.shreeai.os.platform.core.eventbus.engine.DispatchResult;
+import com.shreeai.os.platform.core.eventbus.engine.EventDispatchEngine;
+import com.shreeai.os.platform.core.eventbus.model.Event;
+import com.shreeai.os.platform.core.eventbus.model.EventSubscriber;
+import com.shreeai.os.platform.core.eventbus.model.EventTopic;
+import com.shreeai.os.platform.core.eventbus.service.DefaultEventBusService;
+import com.shreeai.os.platform.core.eventbus.validator.EventValidator;
+import com.shreeai.os.platform.core.lifecycle.api.LifecycleService;
+import com.shreeai.os.platform.core.lifecycle.engine.LifecycleTransitionEngine;
 
 /**
  * <b>EventSubscriptionTests</b>

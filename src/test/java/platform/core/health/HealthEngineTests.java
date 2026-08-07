@@ -1,15 +1,15 @@
 package platform.core.health;
 
-import platform.core.health.error.HealthCheckFailedException;
-import platform.core.health.model.HealthComponent;
-import platform.core.health.model.HealthComponentId;
-import platform.core.health.model.HealthIndicator;
-import platform.core.health.model.HealthMetrics;
-import platform.core.health.model.HealthReport;
-import platform.core.health.model.HealthSeverity;
-import platform.core.health.model.HealthStatus;
-import platform.core.health.engine.EvaluationResult;
-import platform.core.health.engine.HealthEvaluationEngine;
+import com.shreeai.os.platform.core.health.model.HealthCheck;
+import com.shreeai.os.platform.core.health.model.HealthComponent;
+import com.shreeai.os.platform.core.health.model.HealthComponentId;
+import com.shreeai.os.platform.core.health.model.HealthIndicator;
+import com.shreeai.os.platform.core.health.model.HealthMetrics;
+import com.shreeai.os.platform.core.health.model.HealthReport;
+import com.shreeai.os.platform.core.health.model.HealthSeverity;
+import com.shreeai.os.platform.core.health.model.HealthStatus;
+import com.shreeai.os.platform.core.health.engine.EvaluationResult;
+import com.shreeai.os.platform.core.health.engine.HealthEvaluationEngine;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -77,7 +77,7 @@ public class HealthEngineTests {
         // Arrange - create a valid check first
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> engine.evaluate(null, check));
@@ -104,7 +104,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -122,7 +122,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -140,7 +140,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -159,7 +159,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -177,7 +177,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -195,7 +195,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, true);
+        HealthCheck check = new HealthCheck(component, true);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -215,7 +215,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -383,11 +383,11 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id1 = new HealthComponentId("component-1");
         HealthComponent component1 = new HealthComponent(id1, "Component 1", "Category");
-        platform.core.health.model.HealthCheck check1 = new platform.core.health.model.HealthCheck(component1, false);
+        HealthCheck check1 = new HealthCheck(component1, false);
 
         HealthComponentId id2 = new HealthComponentId("component-2");
         HealthComponent component2 = new HealthComponent(id2, "Component 2", "Category");
-        platform.core.health.model.HealthCheck check2 = new platform.core.health.model.HealthCheck(component2, true);
+        HealthCheck check2 = new HealthCheck(component2, true);
 
         // Act
         EvaluationResult result1 = engine.evaluate(component1, check1);
@@ -425,7 +425,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -445,7 +445,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -463,7 +463,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -481,7 +481,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -501,7 +501,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);
@@ -519,7 +519,7 @@ public class HealthEngineTests {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
-        platform.core.health.model.HealthCheck check = new platform.core.health.model.HealthCheck(component, false);
+        HealthCheck check = new HealthCheck(component, false);
 
         // Act
         EvaluationResult result = engine.evaluate(component, check);

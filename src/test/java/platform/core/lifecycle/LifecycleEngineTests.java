@@ -1,11 +1,11 @@
 package platform.core.lifecycle;
 
-import platform.core.lifecycle.engine.LifecycleTransitionEngine;
-import platform.core.lifecycle.model.KernelState;
-import platform.core.lifecycle.model.LifecycleTransition;
-import platform.core.lifecycle.model.TransitionResult;
-import platform.core.lifecycle.validator.LifecycleValidator;
-import platform.core.registry.model.KernelId;
+import com.shreeai.os.platform.core.lifecycle.engine.LifecycleTransitionEngine;
+import com.shreeai.os.platform.core.lifecycle.model.KernelState;
+import com.shreeai.os.platform.core.lifecycle.model.LifecycleTransition;
+import com.shreeai.os.platform.core.lifecycle.model.TransitionResult;
+import com.shreeai.os.platform.core.lifecycle.validator.LifecycleValidator;
+import com.shreeai.os.platform.core.registry.model.KernelId;
 
 /**
  * <b>LifecycleEngineTests</b>

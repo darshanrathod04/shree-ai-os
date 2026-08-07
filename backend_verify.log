@@ -8,8 +8,8 @@
 
  :: Spring Boot ::                (v4.0.2)
 
-2026-06-18T12:25:17.278+05:30  INFO 26316 --- [ai-agent] [           main] application.AiAgentApplication     : Starting AiAgentApplication using Java 21.0.7 with PID 26316 (C:\ai-agent\target\classes started by darsh in C:\ai-agent)
-2026-06-18T12:25:17.285+05:30  INFO 26316 --- [ai-agent] [           main] application.AiAgentApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-06-18T12:25:17.278+05:30  INFO 26316 --- [ai-agent] [           main] com.shreeai.os.ShreeAiOsApplication     : Starting AiAgentApplication using Java 21.0.7 with PID 26316 (C:\ai-agent\target\classes started by darsh in C:\ai-agent)
+2026-06-18T12:25:17.285+05:30  INFO 26316 --- [ai-agent] [           main] com.shreeai.os.ShreeAiOsApplication     : No active profile set, falling back to 1 default profile: "default"
 2026-06-18T12:25:19.268+05:30  INFO 26316 --- [ai-agent] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
 2026-06-18T12:25:19.296+05:30  INFO 26316 --- [ai-agent] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
 2026-06-18T12:25:19.297+05:30  INFO 26316 --- [ai-agent] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.15]

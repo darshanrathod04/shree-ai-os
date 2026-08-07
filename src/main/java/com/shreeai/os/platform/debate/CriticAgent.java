@@ -1,0 +1,29 @@
+package com.shreeai.os.platform.debate;
+
+import com.shreeai.os.platform.llm.OllamaClient;
+import org.springframework.stereotype.Component;
+
+@Component
+public class CriticAgent {
+
+    private final OllamaClient llm;
+
+    public CriticAgent(OllamaClient llm) {
+        this.llm = llm;
+    }
+
+    public String critique(String answer) {
+
+        String prompt = """
+        Critically analyze this answer.
+        Find logical errors, missing steps,
+        or improvements.
+
+        Answer:
+        %s
+        """.formatted(answer);
+
+        return llm.generate(prompt);
+    }
+}
+

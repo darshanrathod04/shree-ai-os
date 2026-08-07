@@ -1,8 +1,8 @@
 package platform.core.lifecycle;
 
-import platform.core.lifecycle.error.*;
-import platform.core.lifecycle.model.KernelState;
-import platform.core.registry.model.KernelId;
+import com.shreeai.os.platform.core.lifecycle.error.*;
+import com.shreeai.os.platform.core.lifecycle.model.KernelState;
+import com.shreeai.os.platform.core.registry.model.KernelId;
 
 /**
  * <b>LifecycleErrorTests</b>

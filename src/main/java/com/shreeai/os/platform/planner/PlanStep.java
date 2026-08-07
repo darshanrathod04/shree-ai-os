@@ -1,0 +1,15 @@
+package com.shreeai.os.platform.planner;
+
+public class PlanStep {
+
+    private final String action;
+
+    public PlanStep(String action) {
+        this.action = action;
+    }
+
+    public String getAction() {
+        return action;
+    }
+}
+

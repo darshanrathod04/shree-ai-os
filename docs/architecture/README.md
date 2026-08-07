@@ -77,7 +77,7 @@ Documentation for core platform kernels that provide foundational capabilities.
 
 Documentation for the runtime execution environment and related components.
 
-**Location:** See [runtime/](runtime/) for runtime-specific documentation.
+**Location:** See [runtime/](platform/runtime/) for runtime-specific documentation.
 
 **Examples:**
 - Runtime initialization and lifecycle
@@ -204,7 +204,7 @@ Last Updated: DD Month YYYY
 
 ## Related Documentation
 
-- [Constitution](../constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
+- [Constitution](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
 - [ADR Index](../adr/) — Architecture Decision Records
 - [Standards](../standards/) — Engineering Standards
 - [Specifications](../specifications/) — Technical Specifications

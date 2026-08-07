@@ -72,8 +72,8 @@ workflow/
 
 ## Related Documentation
 
-- [Constitution](../constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
-- [Rules](../rules/) — Platform Engineering Rules
+- [Constitution](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
+- [Rules](../governance/rules/) — Platform Engineering Rules
 - [Handbook](../handbook/) — Contributor Handbook
 - [Standards](../standards/) — Engineering Standards
 

@@ -1,13 +1,13 @@
 package platform.core.health;
 
-import platform.core.health.error.HealthCheckFailedException;
-import platform.core.health.error.HealthComponentNotFoundException;
-import platform.core.health.error.HealthError;
-import platform.core.health.error.HealthErrorCode;
-import platform.core.health.error.HealthException;
-import platform.core.health.error.InvalidHealthComponentException;
-import platform.core.health.model.HealthComponent;
-import platform.core.health.model.HealthComponentId;
+import com.shreeai.os.platform.core.health.error.HealthCheckFailedException;
+import com.shreeai.os.platform.core.health.error.HealthComponentNotFoundException;
+import com.shreeai.os.platform.core.health.error.HealthError;
+import com.shreeai.os.platform.core.health.error.HealthErrorCode;
+import com.shreeai.os.platform.core.health.error.HealthException;
+import com.shreeai.os.platform.core.health.error.InvalidHealthComponentException;
+import com.shreeai.os.platform.core.health.model.HealthComponent;
+import com.shreeai.os.platform.core.health.model.HealthComponentId;
 
 import org.junit.jupiter.api.Test;
 

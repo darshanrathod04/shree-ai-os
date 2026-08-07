@@ -1,15 +1,14 @@
 package platform.core.configuration;
 
-import platform.core.configuration.engine.ConfigurationResolutionEngine;
-import platform.core.configuration.engine.ResolutionResult;
-import platform.core.configuration.error.DuplicateConfigurationException;
-import platform.core.configuration.error.InvalidConfigurationException;
-import platform.core.configuration.model.ConfigurationEntry;
-import platform.core.configuration.model.ConfigurationKey;
-import platform.core.configuration.model.ConfigurationNamespace;
-import platform.core.configuration.model.ConfigurationType;
-import platform.core.configuration.service.DefaultConfigurationService;
-import platform.core.configuration.validator.ConfigurationValidator;
+import com.shreeai.os.platform.core.configuration.engine.ConfigurationResolutionEngine;
+import com.shreeai.os.platform.core.configuration.error.DuplicateConfigurationException;
+import com.shreeai.os.platform.core.configuration.error.InvalidConfigurationException;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationEntry;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationKey;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationNamespace;
+import com.shreeai.os.platform.core.configuration.model.ConfigurationType;
+import com.shreeai.os.platform.core.configuration.service.DefaultConfigurationService;
+import com.shreeai.os.platform.core.configuration.validator.ConfigurationValidator;
 
 import java.time.Instant;
 import java.util.Collection;

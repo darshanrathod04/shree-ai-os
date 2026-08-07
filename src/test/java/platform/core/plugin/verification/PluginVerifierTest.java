@@ -1,11 +1,15 @@
 package platform.core.plugin.verification;
 
+import com.shreeai.os.platform.core.plugin.verification.PluginCompatibilityChecker;
+import com.shreeai.os.platform.core.plugin.verification.PluginDependencyChecker;
+import com.shreeai.os.platform.core.plugin.verification.PluginVerifier;
+import com.shreeai.os.platform.core.plugin.verification.VerificationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import platform.core.plugin.model.Plugin;
-import platform.core.plugin.model.PluginDescriptor;
-import platform.core.plugin.model.PluginId;
-import platform.core.plugin.model.PluginState;
+import com.shreeai.os.platform.core.plugin.model.Plugin;
+import com.shreeai.os.platform.core.plugin.model.PluginDescriptor;
+import com.shreeai.os.platform.core.plugin.model.PluginId;
+import com.shreeai.os.platform.core.plugin.model.PluginState;
 
 import java.time.Instant;
 import java.util.Set;

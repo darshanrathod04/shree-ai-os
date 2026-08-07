@@ -1,11 +1,15 @@
 package platform.validation;
 
-import platform.capability.Capability;
-import platform.capability.CapabilityRegistry;
-import platform.cognition.Thought;
-import platform.context.ConversationSession;
-import platform.production.ResolvedContext;
-import platform.validation.rules.DecisionExistsRule;
+import com.shreeai.os.platform.capability.Capability;
+import com.shreeai.os.platform.capability.CapabilityRegistry;
+import com.shreeai.os.platform.cognition.Thought;
+import com.shreeai.os.platform.context.ConversationSession;
+import com.shreeai.os.platform.production.ResolvedContext;
+import com.shreeai.os.platform.validation.DecisionValidator;
+import com.shreeai.os.platform.validation.ValidationMetrics;
+import com.shreeai.os.platform.validation.ValidationResult;
+import com.shreeai.os.platform.validation.ValidationStatus;
+import com.shreeai.os.platform.validation.rules.DecisionExistsRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;

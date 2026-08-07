@@ -1,10 +1,10 @@
 package platform.core.lifecycle;
 
-import platform.core.lifecycle.model.KernelHealth;
-import platform.core.lifecycle.model.KernelState;
-import platform.core.lifecycle.validator.LifecycleValidator;
-import platform.core.registry.model.KernelId;
-import platform.core.registry.validator.ValidationResult;
+import com.shreeai.os.platform.core.lifecycle.model.KernelHealth;
+import com.shreeai.os.platform.core.lifecycle.model.KernelState;
+import com.shreeai.os.platform.core.lifecycle.validator.LifecycleValidator;
+import com.shreeai.os.platform.core.registry.model.KernelId;
+import com.shreeai.os.platform.core.registry.validator.ValidationResult;
 
 import java.time.Instant;
 import java.util.Map;

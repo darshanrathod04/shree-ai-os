@@ -1,19 +1,18 @@
 package platform.core.health;
 
-import platform.core.health.model.HealthCheck;
-import platform.core.health.model.HealthComponent;
-import platform.core.health.model.HealthComponentId;
-import platform.core.health.model.HealthIndicator;
-import platform.core.health.model.HealthMetrics;
-import platform.core.health.model.HealthReport;
-import platform.core.health.model.HealthSeverity;
-import platform.core.health.model.HealthStatus;
-import platform.core.health.validator.HealthValidator;
+import com.shreeai.os.platform.core.health.model.HealthCheck;
+import com.shreeai.os.platform.core.health.model.HealthComponent;
+import com.shreeai.os.platform.core.health.model.HealthComponentId;
+import com.shreeai.os.platform.core.health.model.HealthIndicator;
+import com.shreeai.os.platform.core.health.model.HealthMetrics;
+import com.shreeai.os.platform.core.health.model.HealthReport;
+import com.shreeai.os.platform.core.health.model.HealthSeverity;
+import com.shreeai.os.platform.core.health.model.HealthStatus;
+import com.shreeai.os.platform.core.health.validator.HealthValidator;
 
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 

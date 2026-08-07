@@ -1,22 +1,21 @@
 package platform;
 
-import platform.chief.ChiefOfStaffEngine;
-import platform.chief.ChiefInsight;
-import platform.dto.AgentResponse;
-import platform.graph.KnowledgeGraphEngine;
-import platform.graph.KnowledgeEntity;
-import platform.planning.*;
-import platform.planning.AutonomousPlanningEngine;
-import platform.planning.ExecutionPlan;
-import platform.planning.ExecutionTask;
-import platform.planning.PlanMilestone;
-import platform.project.ProjectIntelligenceEngine;
-import platform.project.Project;
-import platform.service.AgentService;
+import com.shreeai.os.platform.chief.ChiefOfStaffEngine;
+import com.shreeai.os.platform.chief.ChiefInsight;
+import com.shreeai.os.platform.dto.AgentResponse;
+import com.shreeai.os.platform.graph.KnowledgeGraphEngine;
+import com.shreeai.os.platform.graph.KnowledgeEntity;
+import com.shreeai.os.platform.planning.AutonomousPlanningEngine;
+import com.shreeai.os.platform.planning.ExecutionPlan;
+import com.shreeai.os.platform.planning.ExecutionTask;
+import com.shreeai.os.platform.planning.PlanMilestone;
+import com.shreeai.os.platform.project.ProjectIntelligenceEngine;
+import com.shreeai.os.platform.project.Project;
+import com.shreeai.os.platform.service.AgentService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import platform.project.ProjectRisk;
+import com.shreeai.os.platform.project.ProjectRisk;
 
 import java.io.File;
 import java.util.*;
