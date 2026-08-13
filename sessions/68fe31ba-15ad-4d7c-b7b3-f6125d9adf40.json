@@ -1,0 +1,85 @@
+{
+  "sessionId" : "68fe31ba-15ad-4d7c-b7b3-f6125d9adf40",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1786153850.185442100,
+    "lastUpdated" : 1786153850.185442100,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "currentQuestion" : null,
+    "totalQuestions" : 0,
+    "completed" : false,
+    "remainingQuestions" : 0,
+    "inProgress" : false
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1786153850.185442100,
+  "lastAccessedAt" : 1786153920.230208300,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I am building Smart Campus Connect",
+    "timestamp" : 1786153850.188526500,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A **Hello there! That sounds like an exciting initiative you're working on with the **Smart Campus Connect** project, which is all about integrating technology into campus life for better communication and efficiency. As your AI tutor here to help guide you along this innovation journey, I have a few suggestions that might align well with your goal of securing an internship in such projects:\n\n1. **Project Management Skills** - Internships often provide hands-on experience leading small teams or managing parts of larger initiatives like yours. You could start by learning project management basics through resources like \"Making the Client Happy\" (MIT) online course available on edX, which covers Agile and Scrum methodologies that are relevant to tech projects in a campus setting.\n   \n2. **Coding Skills** - If you're proficient or want to become proficient with coding languages such as Python or JavaScript (which many Smart Campus Connect solutions use), I recommend the \"Automate The Boring Stuff With Python\" book by Al Sweigard, and interactive platforms like Codecademy.\n   \n3. **Data Analysis** - Understanding how to analyze data can be key in projects that rely on smart campus technology for decision-making processes: start with books or online courses such as \"Python For Data Analysis\" (IPython) from O'Reilly Media, and take advantage of the free resources available at Kaggle.com.\n   \n4. **Design Thinking** - To ensure your Smart Campus Connect is user-friendly, it’s vital to understand design thinking: you might find \"The Design of Everyday Things\" by Don Norman insightful and accessible reading material that can be found in most libraries or purchased online. \n   \n5. **Soft Skills** - Communication skills will help you when presenting your ideas, pitching for internships, and collaborating with team members: consider enrolling yourself in courses like Toastmasters International to practice public speaking effectively within a supportive community setting.\n   \n6. **Networking Opportunities** – Joining tech-focused clubs or groups at your school can connect you with peers who have similar interests, and they may share opportunities for internships: look into the National Inventors Hall of Fame (NITHF) to find like-minded inventors.\n   \n7. **Career Resources** - Use resources provided by career services at your educational institution or explore external platforms such as InternshipMatch and LinkedIn, which can connect you with internships that could lead directly into Smart Campus Connect projects across universities nationwide. \n\nRemember to consistently update these skills while keeping track of the latest developments in technology related to smart campus initiatives through journals like \"Journal Of Universal Access In Human-Computer Interaction\" and conferences such as ACM ICE/COMPLEX, which are great places for networking with professionals working on similar projects.\n   \nKeep up your enthusiasm! With dedication to learning and a proactive approach in seeking opportunities that align closely with Smart Campus Connect, you'll find yourself well-prepared when the time comes to apply internships where such initiatives are prevalent. Good luck on this exciting journey – I am here whenever you need guidance or support! Take your time.",
+    "timestamp" : 1786153920.230208300,
+    "intent" : null
+  } ],
+  "summary" : "USER: I am building Smart Campus Connect\nAI: \uD83D\uDE0A **Hello there! That sounds like an exciting ini...\n",
+  "messageCount" : 2,
+  "firstMessage" : "I am building Smart Campus Con...",
+  "expired" : false
+}

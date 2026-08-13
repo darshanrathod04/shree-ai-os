@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.runtime.pipeline.stages;
 
+import com.shreeai.os.platform.kernels.identity.model.IdentityId;
 import com.shreeai.os.platform.kernels.memory.api.MemoryService;
 import com.shreeai.os.platform.kernels.memory.model.CreateMemoryRequest;
 import com.shreeai.os.platform.kernels.memory.model.MemoryContent;
@@ -108,12 +109,12 @@ public final class MemoryStoreStage implements ExecutionStage {
             );
 
             MemoryMetadata memoryMetadata = new MemoryMetadata(
-                    null, // ID will be generated
+                    new MemoryId("pending-" + requestId), // ID will be replaced by service
                     MemoryType.EPISODIC,
                     MemoryStatus.ACTIVE,
                     MemoryVisibility.PRIVATE,
-                    null, // owner
-                    null, // tags
+                    new IdentityId("sdk-local-user"), // owner
+                    java.util.Set.of(), // empty tags
                     0.7, // importance
                     0.8, // confidence
                     "pipeline-execution",

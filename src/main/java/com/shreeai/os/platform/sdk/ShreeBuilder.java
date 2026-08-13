@@ -1,7 +1,11 @@
 package com.shreeai.os.platform.sdk;
 
-import com.shreeai.os.platform.sdk.exceptions.ConfigurationException;
 import com.shreeai.os.platform.runtime.api.Runtime;
+import com.shreeai.os.platform.runtime.api.RuntimeBuilder;
+import com.shreeai.os.platform.runtime.config.RuntimeConfiguration;
+import com.shreeai.os.platform.runtime.contracts.RuntimeContract;
+import com.shreeai.os.platform.runtime.service.DefaultRuntimeService;
+import com.shreeai.os.platform.sdk.exceptions.ConfigurationException;
 
 import java.util.Objects;
 
@@ -71,6 +75,36 @@ public final class ShreeBuilder {
                 ? configuration
                 : SDKConfiguration.builder().apiKey(apiKey).build();
 
-        return new ShreeAI(effectiveConfig, runtime);
+        // Construct Runtime if not provided
+        Runtime effectiveRuntime = runtime;
+        if (effectiveRuntime == null) {
+            effectiveRuntime = createDefaultRuntime();
+        }
+
+        return new ShreeAI(effectiveConfig, effectiveRuntime);
+    }
+    
+    /**
+     * Creates a default Runtime instance for local SDK usage.
+     *
+     * @return a new Runtime instance
+     */
+    private Runtime createDefaultRuntime() {
+        RuntimeConfiguration runtimeConfig = RuntimeConfiguration.builder()
+                .runtimeName("sdk-local-runtime")
+                .autoStartEnabled(true)
+                .build();
+
+        RuntimeContract runtimeContract = RuntimeContract.builder()
+                .contractVersion("1.0.0")
+                .supportsSessions(true)
+                .supportsPipelines(true)
+                .build();
+
+        DefaultRuntimeService runtimeService = new DefaultRuntimeService(runtimeConfig, runtimeContract);
+        runtimeService.initialize();
+        runtimeService.start();
+        
+        return runtimeService;
     }
 }

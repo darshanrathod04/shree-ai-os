@@ -40,8 +40,8 @@ import java.util.Objects;
  */
 public final class ChiefValidator {
 
-    private ChiefValidator() {
-        // Utility class — no instantiation
+    public ChiefValidator() {
+        // Public constructor for service-layer instantiation
     }
 
     /**

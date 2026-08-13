@@ -1,0 +1,85 @@
+{
+  "sessionId" : "5ec612cd-9f13-4e2a-9a9e-1e7881c3e259",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "START_COURSE",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "Knowledge:\nJava is an OOP language",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : "java",
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : 1786166102.641078400,
+    "lastAccess" : 1786166102.641078400,
+    "learningStatus" : "IN_PROGRESS",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1786166102.622755800,
+    "lastUpdated" : 1786166102.622755800,
+    "completedLessonKeys" : [ ],
+    "totalCompletedLessons" : 0
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "currentQuestion" : null,
+    "totalQuestions" : 0,
+    "inProgress" : false,
+    "remainingQuestions" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1786166102.622755800,
+  "lastAccessedAt" : 1786166147.326670000,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I want to learn Java",
+    "timestamp" : 1786166102.624756500,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDCD8 **Lesson 1**\n\nThis Java course chapter introduces the fundamentals of Java, including its purpose and setup process for development environments. It highlights Java's main features like platform independence (via JVM), object-oriented programming principles such as classes and inheritance, strong typing with statically compiled code, automatic memory management via garbage collection, and a comprehensive standard library known as the Java API. The lesson concludes by presenting an example program that prints \"Hello World\", demonstrating how to start writing simple Java applications.\n\n### Explanation: \nThe course's objective is for learners to understand what Java is—an object-oriented, platform-independent language known as Write Once, Run Anywhere (WORA) due to its portability across different operating systems thanks to the JVM bytecode execution. The key characteristics discussed include statically compiled code that ensures type safety and garbage collection for memory management. Moreover, Java's rich standard library supports extensive application development needs. A simple \"Hello World\" program example is provided at this stage of learning as a practical demonstration on how one begins writing in Java using basic syntax conventions such as class definition with the `public` access modifier and main method to start an executable code block within programs.\n\n### Example: \n```java\npublic class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hello World\");\n    }\n}\n```\nThis snippet of Java source code defines a `main` method in the `HelloWorld` class, which outputs \"Hello World\" when executed by the JVM; it's an essential first step for learners to familiarize themselves with writing and running basic programs.\n\n---\nSay **'complete'** to mark this lesson done and continue.\nSay **'exit course'** to leave the course.\nSay **'progress'** to see your course progress.",
+    "timestamp" : 1786166147.326670000,
+    "intent" : null
+  } ],
+  "firstMessage" : "I want to learn Java",
+  "summary" : "USER: I want to learn Java\nAI: \uD83D\uDCD8 **Lesson 1**\n\nThis Java course chapter introduc...\n",
+  "messageCount" : 2,
+  "expired" : false
+}

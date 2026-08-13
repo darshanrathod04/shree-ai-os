@@ -47,8 +47,8 @@ public final class DefaultExecutionProcessingEngine implements ExecutionProcessi
     /**
      * Private constructor to prevent instantiation.
      */
-    private DefaultExecutionProcessingEngine() {
-        throw new UnsupportedOperationException("DefaultExecutionProcessingEngine is a static utility class and cannot be instantiated");
+    public DefaultExecutionProcessingEngine() {
+        // Public constructor for service-layer instantiation
     }
 
     /**
@@ -80,7 +80,9 @@ public final class DefaultExecutionProcessingEngine implements ExecutionProcessi
         ExecutionResult executionResult = createExecutionResult(executionRequest, processedAt, metadata);
         ActionState actionState = createActionState(executionRequest, processedAt, metadata);
         ExecutionMetrics executionMetrics = createExecutionMetrics(executionRequest, processedAt, metadata);
-        ExecutionSnapshot executionSnapshot = createExecutionSnapshot(executionRequest, executionResult, null, actionState, processedAt, metadata);
+        // Create a workflow state for the snapshot (required by ExecutionSnapshot contract)
+        WorkflowState workflowState = createWorkflowState(executionRequest, processedAt, metadata);
+        ExecutionSnapshot executionSnapshot = createExecutionSnapshot(executionRequest, executionResult, workflowState, actionState, processedAt, metadata);
 
         metadata.put("processingType", "ACTION_EXECUTION");
         metadata.put("actionId", executionRequest.actionId());
@@ -176,7 +178,9 @@ public final class DefaultExecutionProcessingEngine implements ExecutionProcessi
         ExecutionResult executionResult = createExecutionResult(executionRequest, processedAt, metadata);
         ActionState taskState = createTaskState(executionRequest, processedAt, metadata);
         ExecutionMetrics executionMetrics = createExecutionMetrics(executionRequest, processedAt, metadata);
-        ExecutionSnapshot executionSnapshot = createExecutionSnapshot(executionRequest, executionResult, null, taskState, processedAt, metadata);
+        // Create a workflow state for the snapshot (required by ExecutionSnapshot contract)
+        WorkflowState workflowState = createWorkflowState(executionRequest, processedAt, metadata);
+        ExecutionSnapshot executionSnapshot = createExecutionSnapshot(executionRequest, executionResult, workflowState, taskState, processedAt, metadata);
 
         metadata.put("processingType", "TASK_EXECUTION");
         metadata.put("taskId", executionRequest.actionId());
@@ -268,7 +272,9 @@ public final class DefaultExecutionProcessingEngine implements ExecutionProcessi
 
         ExecutionResult executionResult = createExecutionResult(recoveryRequest, processedAt, metadata);
         ExecutionMetrics executionMetrics = createExecutionMetrics(recoveryRequest, processedAt, metadata);
-        ExecutionSnapshot executionSnapshot = createExecutionSnapshot(recoveryRequest, executionResult, null, null, processedAt, metadata);
+        // Create a workflow state for the snapshot (required by ExecutionSnapshot contract)
+        WorkflowState workflowState = createWorkflowState(recoveryRequest, processedAt, metadata);
+        ExecutionSnapshot executionSnapshot = createExecutionSnapshot(recoveryRequest, executionResult, workflowState, null, processedAt, metadata);
 
         return new ExecutionProcessingResult(
                 true,

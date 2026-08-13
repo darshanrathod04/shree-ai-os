@@ -1,0 +1,85 @@
+{
+  "sessionId" : "02cbfd09-e534-40da-9bf7-4776b0d5c984",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1786162314.877623600,
+    "lastUpdated" : 1786162314.877623600,
+    "completedLessonKeys" : [ ],
+    "totalCompletedLessons" : 0
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "inProgress" : false,
+    "remainingQuestions" : 0,
+    "currentQuestion" : null,
+    "totalQuestions" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1786162314.877623600,
+  "lastAccessedAt" : 1786162367.069969100,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I am building Smart Campus Connect",
+    "timestamp" : 1786162314.878638100,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello! It's wonderful to see you working on the **Smart Campus Connect** project—a great initiative for enhancing campus life with technology! As an AI tutor, here are some steps and resources that could help guide your path towards securing an internship:\n\n1. Develop a Skill Set Relevant to Your Project: Enhance skills such as **data analysis**, programming languages like Python or Java for backend development, C# if you're planning on working with .NET technologies, and UI/UX design principles using tools like Adobe XD or Figma.\n   \n2. Create a Portfolio Showcasing Your Work: Build small projects related to Smart Campus Connect that showcases your skills in the chosen technology stacks (frontend frameworks such as React or Angular if applicable). Consider contributing open-source code on platforms like GitHub, where internship supervisors might find you.\n\n3. Network with Professionals: Join forums and social media groups related to IoT, smart campus solutions, and technology in education. Engage with professionals who can provide insights or potential mentorship opportunities.\n\n4. Seek Internships Through Your School's Career Center: Visit your school’s career center where they often have a list of internships available directly related to fields like yours—especially those focusing on IoT and smart technologies in educational environments. You can apply for these positions, tailoring each cover letter to highlight how you would contribute specifically through the Smart Campus Connect initiative.\n   \n5. Prepare Your Resume: Craft a clear and concise resume that emphasizes your technical skills, projects like Smart Campus Connect, relevant coursework in computer science or engineering, as well as soft skills such as team collaboration and problem-solving abilities. Use the 'Curriculum Vitae' format if you prefer it more comprehensive for academic internships.\n   \n6. Interview Preparation: Be ready to discuss your project during interviews by practicing answers with a mentor or friend, focusing on problem-solving scenarios and how technology can impact campus life positively through initiatives like yours.\n\n7. Research Potential Internship Opportunities in Academia: Look for programs that align closely with the work you're doing at your school—university research projects, faculty positions interested in IoT integration into education systems or departments of Computer Science and Engineering where they might be seeking interns to help implement smart campus technologies.\n   \n8. Attend Conferences: If there are any conferences focused on educational technology (EdTech) such as the International Conference for Learning Sciences, it could provide networking opportunities with professionals in your field of interest and potential leads on relevant projects or internships. \n\nRemember to stay motivated throughout this journey—building Smart Campus Connect is a fantastic way to gain experience while making an impactful contribution! Good luck; I'm here for any further guidance you need along the way. Take your time.",
+    "timestamp" : 1786162367.069969100,
+    "intent" : null
+  } ],
+  "summary" : "USER: I am building Smart Campus Connect\nAI: \uD83D\uDE0A Hello! It's wonderful to see you working on the...\n",
+  "messageCount" : 2,
+  "expired" : false,
+  "firstMessage" : "I am building Smart Campus Con..."
+}

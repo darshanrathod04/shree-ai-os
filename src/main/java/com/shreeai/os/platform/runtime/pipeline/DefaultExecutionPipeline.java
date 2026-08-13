@@ -96,8 +96,55 @@ public final class DefaultExecutionPipeline implements com.shreeai.os.platform.r
     }
 
     public com.shreeai.os.platform.runtime.execution.ExecutionResult execute(com.shreeai.os.platform.runtime.execution.ExecutionRequest request, com.shreeai.os.platform.runtime.execution.ExecutionContext context) {
-        // Delegate to pipeline execution
-        return null; // TODO: Implement proper delegation
+        // Bridge: Convert execution contract to pipeline contract
+        if (request == null || context == null) {
+            return com.shreeai.os.platform.runtime.execution.ExecutionResult.failure(
+                    request != null ? request.requestId() : "unknown",
+                    "Request and context must not be null"
+            );
+        }
+
+        try {
+            // Convert runtime.execution.ExecutionRequest to execution.ExecutionRequest for PipelineContext
+            com.shreeai.os.platform.execution.ExecutionRequest pipelineRequest = 
+                com.shreeai.os.platform.execution.ExecutionRequest.builder()
+                    .requestId(request.requestId())
+                    .userInput(request.payload())
+                    .build();
+            
+            // Convert ExecutionRequest to PipelineContext
+            com.shreeai.os.platform.runtime.pipeline.PipelineContext pipelineContext = 
+                com.shreeai.os.platform.runtime.pipeline.PipelineContext.builder()
+                    .executionRequest(pipelineRequest)
+                    .build();
+
+            // Execute using pipeline contract
+            com.shreeai.os.platform.runtime.pipeline.PipelineResult pipelineResult = execute(pipelineContext);
+
+            // Convert PipelineResult to ExecutionResult
+            if (pipelineResult != null && pipelineResult.isSuccess()) {
+                String output = pipelineResult.getMessages().isEmpty() 
+                        ? "Pipeline completed successfully" 
+                        : String.join("; ", pipelineResult.getMessages());
+                return com.shreeai.os.platform.runtime.execution.ExecutionResult.success(
+                        request.requestId(), 
+                        output
+                );
+            } else {
+                String error = pipelineResult != null && pipelineResult.getMessages() != null
+                        ? String.join("; ", pipelineResult.getMessages())
+                        : "Pipeline execution failed";
+                return com.shreeai.os.platform.runtime.execution.ExecutionResult.failure(
+                        request.requestId(), 
+                        error
+                );
+            }
+        } catch (Exception e) {
+            return com.shreeai.os.platform.runtime.execution.ExecutionResult.failure(
+                    request.requestId(),
+                    "Pipeline execution error: " + e.getMessage()
+            );
+        }
     }
     
     public PipelineResult execute(PipelineContext context) {

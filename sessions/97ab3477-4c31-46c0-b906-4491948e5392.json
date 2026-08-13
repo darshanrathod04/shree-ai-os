@@ -1,0 +1,85 @@
+{
+  "sessionId" : "97ab3477-4c31-46c0-b906-4491948e5392",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "START_COURSE",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "Knowledge:\nJava is an OOP language",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : "java",
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : 1786155675.031279800,
+    "lastAccess" : 1786155675.031279800,
+    "learningStatus" : "IN_PROGRESS",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1786155675.016973600,
+    "lastUpdated" : 1786155675.016973600,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "inProgress" : false,
+    "remainingQuestions" : 0,
+    "currentQuestion" : null,
+    "totalQuestions" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1786155675.016973600,
+  "lastAccessedAt" : 1786155691.738313700,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I want to learn Java",
+    "timestamp" : 1786155675.018329200,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDCD8 **Lesson 1**\n\nThis Java course introduces you to the basics of writing and compiling your first \"Hello, World!\" program in Java, providing a foundation for understanding how object-oriented programming works within this language that is designed to run on any platform through its JVM bytecode interpretation process. The lesson also includes setting up an appropriate development environment wherein these concepts will be put into practice using the robust standard library available with Java's static typing and automatic memory management features, facilitated by garbage collection technology.\n\n### Example: Hello World Program in Java ### \n```java\npublic class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, world!\");\n    }\n}\n```\n\n---\nSay **'complete'** to mark this lesson done and continue.\nSay **'exit course'** to leave the course.\nSay **'progress'** to see your course progress.",
+    "timestamp" : 1786155691.738313700,
+    "intent" : null
+  } ],
+  "summary" : "USER: I want to learn Java\nAI: \uD83D\uDCD8 **Lesson 1**\n\nThis Java course introduces you t...\n",
+  "messageCount" : 2,
+  "firstMessage" : "I want to learn Java",
+  "expired" : false
+}

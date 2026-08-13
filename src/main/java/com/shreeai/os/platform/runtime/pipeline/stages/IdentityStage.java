@@ -58,14 +58,12 @@ public final class IdentityStage implements ExecutionStage {
                     .timestamp(context.getTimestamp())
                     .build();
 
-            // Create a new context reference for the chain
-            // Note: In a real implementation, we'd pass the updated context
-            // For now, we'll add attributes to the existing context via metadata
+            // Store identity information in state
             state.addMetadata("identityId", identityId);
             state.addMetadata("identityType", identityType);
             state.addMessage("Identity resolved: " + identityId + " (" + identityType + ")");
 
-            // Continue to next stage
+            // Continue to next stage with updated context
             return chain.next(updatedContext, state);
 
         } catch (Exception e) {

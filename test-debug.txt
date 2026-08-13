@@ -1,0 +1,103 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------------< platform:shreeAiOS >-------------------------
+[INFO] Building ai-agent 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.5.0:clean (default-clean) @ shreeAiOS ---
+[INFO] Deleting C:\ai-agent\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ shreeAiOS ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 25 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ shreeAiOS ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 904 source files with javac [debug parameters release 21] to target\classes
+[INFO] /C:/ai-agent/src/main/java/com/shreeai/os/platform/controller/DashboardController.java: Some input files use or override a deprecated API.
+[INFO] /C:/ai-agent/src/main/java/com/shreeai/os/platform/controller/DashboardController.java: Recompile with -Xlint:deprecation for details.
+[INFO] /C:/ai-agent/src/main/java/com/shreeai/os/platform/context/ConversationContext.java: Some input files use unchecked or unsafe operations.
+[INFO] /C:/ai-agent/src/main/java/com/shreeai/os/platform/context/ConversationContext.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ shreeAiOS ---
+[INFO] skip non existing resourceDirectory C:\ai-agent\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ shreeAiOS ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 70 source files with javac [debug parameters release 21] to target\test-classes
+[INFO] /C:/ai-agent/src/test/java/com/shreeai/os/platform/CognitiveCoreIntegrationTests.java: Some input files use or override a deprecated API.
+[INFO] /C:/ai-agent/src/test/java/com/shreeai/os/platform/CognitiveCoreIntegrationTests.java: Recompile with -Xlint:deprecation for details.
+[INFO] /C:/ai-agent/src/test/java/com/shreeai/os/platform/core/discovery/DiscoveryCapabilityTests.java: Some input files use unchecked or unsafe operations.
+[INFO] /C:/ai-agent/src/test/java/com/shreeai/os/platform/core/discovery/DiscoveryCapabilityTests.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ shreeAiOS ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.shreeai.os.platform.verification.SDKToRuntimePipelineIntegrationTest
+[INIT] DefaultRuntimeService
+[START] DefaultRuntimeService
+[INIT] DefaultRuntimeService
+[START] DefaultRuntimeService
+[INIT] DefaultRuntimeService
+[START] DefaultRuntimeService
+[INIT] DefaultRuntimeService
+[START] DefaultRuntimeService
+[ERROR] Tests run: 4, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.532 s <<< FAILURE! -- in com.shreeai.os.platform.verification.SDKToRuntimePipelineIntegrationTest
+[ERROR] com.shreeai.os.platform.verification.SDKToRuntimePipelineIntegrationTest.testApplicationReadySmokeTest -- Time elapsed: 0.432 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Execution should succeed ==> expected: <true> but was: <false>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:69)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:41)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:228)
+	at com.shreeai.os.platform.verification.SDKToRuntimePipelineIntegrationTest.testApplicationReadySmokeTest(SDKToRuntimePipelineIntegrationTest.java:205)
+
+[ERROR] com.shreeai.os.platform.verification.SDKToRuntimePipelineIntegrationTest.testCanonicalPipelineExecutesAllStages -- Time elapsed: 0.025 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Pipeline should succeed. Status: FAILED ==> expected: <true> but was: <false>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:69)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:41)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:228)
+	at com.shreeai.os.platform.verification.SDKToRuntimePipelineIntegrationTest.testCanonicalPipelineExecutesAllStages(SDKToRuntimePipelineIntegrationTest.java:155)
+
+[ERROR] com.shreeai.os.platform.verification.SDKToRuntimePipelineIntegrationTest.testRuntimeSubmitReturnsSessionWithActualResult -- Time elapsed: 0.009 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Execution should succeed ==> expected: <true> but was: <false>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+	at org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:69)
+	at org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:41)
+	at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:228)
+	at com.shreeai.os.platform.verification.SDKToRuntimePipelineIntegrationTest.testRuntimeSubmitReturnsSessionWithActualResult(SDKToRuntimePipelineIntegrationTest.java:120)
+
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Failures: 
+[ERROR]   SDKToRuntimePipelineIntegrationTest.testApplicationReadySmokeTest:205 Execution should succeed ==> expected: <true> but was: <false>
+[ERROR]   SDKToRuntimePipelineIntegrationTest.testCanonicalPipelineExecutesAllStages:155 Pipeline should succeed. Status: FAILED ==> expected: <true> but was: <false>
+[ERROR]   SDKToRuntimePipelineIntegrationTest.testRuntimeSubmitReturnsSessionWithActualResult:120 Execution should succeed ==> expected: <true> but was: <false>
+[INFO] 
+[ERROR] Tests run: 4, Failures: 3, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  34.720 s
+[INFO] Finished at: 2026-08-11T09:54:13+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.4:test (default-test) on project shreeAiOS: There are test failures.
+[ERROR] 
+[ERROR] See C:\ai-agent\target\surefire-reports for the individual test results.
+[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

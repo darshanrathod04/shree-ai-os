@@ -5,6 +5,8 @@ import com.shreeai.os.platform.execution.ExecutionMetadata;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +57,18 @@ public final class PipelineExecutionState {
     private boolean failed;
     private boolean shortCircuited;
     private boolean terminated;
-    private boolean nextStageInvoked;
+
+    /**
+     * Per-frame "next stage invoked" flags.
+     *
+     * <p>The ExecutionChain recursively invokes stages. Each frame (stage invocation)
+     * needs its own flag so that deeper frames cannot clobber the flag state of
+     * an outer frame. The flag for the current frame is at the top of the stack.</p>
+     *
+     * <p>This is a root-cause fix for the shared single-boolean design that failed
+     * to track the recursive chain traversal correctly.</p>
+     */
+    private final Deque<Boolean> nextStageInvokedStack;
 
     // =====================================================
     // CONSTRUCTOR
@@ -79,7 +92,7 @@ public final class PipelineExecutionState {
         this.failed = false;
         this.shortCircuited = false;
         this.terminated = false;
-        this.nextStageInvoked = false;
+        this.nextStageInvokedStack = new ArrayDeque<>();
     }
 
     // =====================================================
@@ -89,7 +102,8 @@ public final class PipelineExecutionState {
     /**
      * Mark the current stage as started.
      *
-     * <p>This method is called by the runtime before invoking a stage.</p>
+     * <p>This method is called by the runtime before invoking a stage.
+     * It pushes a new frame onto the next-stage-invoked stack.</p>
      *
      * @return the stage name that was started
      */
@@ -99,8 +113,8 @@ public final class PipelineExecutionState {
         }
 
         visitedStages.add(stageName);
-        // Reset the flag for this new stage
-        this.nextStageInvoked = false;
+        // Push a fresh frame for this stage invocation
+        nextStageInvokedStack.push(false);
         return stageName;
     }
 
@@ -155,31 +169,53 @@ public final class PipelineExecutionState {
     }
 
     /**
-     * Mark that the next stage was invoked.
+     * Mark that the next stage was invoked for the current frame.
      *
-     * <p>This is called when chain.next() is invoked, indicating the stage
+     * <p>This is called when chain.next() is invoked, indicating the current stage
      * wants to continue to the next stage.</p>
      */
     public void markNextStageInvoked() {
-        this.nextStageInvoked = true;
+        if (!nextStageInvokedStack.isEmpty()) {
+            nextStageInvokedStack.pop();
+            nextStageInvokedStack.push(true);
+        }
     }
 
     /**
-     * Check if the next stage was invoked.
+     * Check if the next stage was invoked for the current frame.
      *
-     * @return true if chain.next() was called
+     * @return true if chain.next() was called by the current frame
      */
     public boolean wasNextStageInvoked() {
-        return nextStageInvoked;
+        if (nextStageInvokedStack.isEmpty()) {
+            return false;
+        }
+        return nextStageInvokedStack.peek();
     }
 
     /**
-     * Reset the next stage invoked flag.
+     * Reset the current frame's next stage invoked flag to false.
      *
-     * <p>This is called before invoking a stage to reset the flag for the next check.</p>
+     * <p>This is used during stage traversal transitions. When a frame finishes,
+     * its flag is removed so the previous frame's flag is once again current.</p>
      */
     public void resetNextStageInvoked() {
-        this.nextStageInvoked = false;
+        if (!nextStageInvokedStack.isEmpty()) {
+            nextStageInvokedStack.pop();
+            nextStageInvokedStack.push(false);
+        }
+    }
+
+    /**
+     * Pop the current frame's flag. Called after a stage returns.
+     *
+     * <p>This restores the caller frame's flag to the top of the stack so the
+     * runtime can correctly inspect whether the outer stage invoked chain.next().</p>
+     */
+    public void popStageFrame() {
+        if (!nextStageInvokedStack.isEmpty()) {
+            nextStageInvokedStack.pop();
+        }
     }
 
     // =====================================================
@@ -394,12 +430,16 @@ public final class PipelineExecutionState {
         } else if (shortCircuited) {
             status = "SHORT_CIRCUIT";
             success = false;
+        } else if (visitedStages.size() >= stages.size()) {
+            // All stages visited - normal completion.
+            // The chain marks the state as terminated when it exhausts the
+            // stage list during normal progression, so normal completion
+            // must take precedence over the TERMINATED status.
+            status = "COMPLETED";
+            success = true;
         } else if (terminated) {
             status = "TERMINATED";
             success = false;
-        } else if (visitedStages.size() >= stages.size()) {
-            status = "COMPLETED";
-            success = true;
         } else {
             status = "INCOMPLETE";
             success = false;

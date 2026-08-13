@@ -1,0 +1,85 @@
+{
+  "sessionId" : "79830c76-7c60-46ed-89cf-1af84ad1b36d",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1786155734.546011700,
+    "lastUpdated" : 1786155734.546011700,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "inProgress" : false,
+    "remainingQuestions" : 0,
+    "currentQuestion" : null,
+    "totalQuestions" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1786155734.546011700,
+  "lastAccessedAt" : 1786155852.243302600,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I am learning Spring Boot",
+    "timestamp" : 1786155734.548226400,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A **Hello there! That's great to hear that you are interested in diving into the world of **Spring Boot** development. This powerful technology can help create robust, web applications quickly and efficiently. Let’s get started on your path toward securing an internship by learning some essential Spring Boot concepts step-by-step:\n\n1. Understanding Basic JAVA Concepts: As a foundation for any Java application, including Spring Boot projects, it's important to grasp the basic **Java** programming constructs such as variables, data types, control structures (if statements, loops), and object-oriented principles like inheritance, encapsulation, polymorphism, and abstraction.\n\n2. Introduction to Maven: Since many real-world Spring Boot applications rely on dependencies managed by a build tool called **Maven** for their project setup, let's explore how it works as well as learn the basics of creating simple projects with Maven in Java. Resources like [Spring One Dev Guide](https://spring.io/guides/) and tutorials from sites such as GeeksforGeeks or Tutorialspoint can be helpful here.\n\n3. Getting Familiar with Spring Boot: Now that you have a handle on the basics, it's time to understand how **Spring Boot** extends these concepts further while simplifying application development through convention-over-configuration principles and auto-configuration abilities. Check out [Spring One Dev Guide](https://spring.io/guides/) for comprehensive Spring Boot tutorials that start from scratch using Maven as the build tool.\n\n4. Creating Your First Spring Boot Application: Follow along with an example project on how to create a simple \"Hello World\" application in Java leveraging **Maven** and **Spring Boot Starter Dependencies** (e.g., web, data jpa). Once you have created this basic application successfully via the guide's instructions or by following [this HelloWorldApp](https://github.com/Darshan-Vachaspati/springboothelloworld) example project on GitHub, take note of how Spring Boot automatically configures your app to run with a servlet container like Tomcat when you launch it using Maven commands such as `mvn spring-boot:run`.\n\n5. Exploring RESTful APIs in Spring Boot: After understanding the basics and getting familiarized with building web applications, let's learn how we can develop **RESTful services** by creating a controller that handles HTTP requests for different endpoints using `@RestController` annotations on your service classes or helpers like `ResponseEntity`. Utilize resources such as [this Spring Boot REST tutorial](https://www.tutorialspoons.com/Spring_Boot) to guide you through the process of setting up controllers, handling request mappings with `@GetMapping`, `@PostMapping`, etc., and returning responses via HTTP status codes (200 OK for successful requests or 404 Not Found when an endpoint does not exist).\n\n6. Data Access using Spring Boot: A key aspect to any web application is managing data storage, retrievals/updates, and maintaining good database interaction practices through **JPA**(Java Persistence API) along with Hibernate ORM framework which acts as a JPA implementation in the back-end for relational databases. Begin by understanding how Entity Managers work to create entities (objects representing rows), persist these objects into your chosen DBMS, and query data using Criteria Queries or even simple SQL statements where needed via `@Query` annotations on repository interfaces like `CrudRepository`.\n\n7. Integrating Authentication: If you're planning for an internship in a Spring Boot-based project with authentication requirements (like user login), learn about setting up **Spring Security** to handle this process effectively, by securing your resources using `@PreAuthorize`, creating roles like `ROLE_USER` or `ROLE_ADMIN`, and implementing password hashing techniques for secure credential storage. Look into [this Spring Boot Authentication tutorial](https://www.tugandiego.com/blog/spring-boot-authentication/) to get started on integrating these functionalities with your application using OAuth2, JWT (JSON Web Tokens), or LDAP protocols if needed.\n\n8. Testing Your Spring Boot Application: Once you've developed a basic understanding of building and managing web applications in **Spring Boot**, take time to write unit tests for controllers/services ensuring correct behavior using frameworks like JUnit5 & Mockito (or any other preferred testing tool). Understand the importance of writing test-first code by following examples from resources such as [this Test First Spring Blog post](https://www.baeldung.com/spring-boot-tests) on how to use `@SpringBootTest` or `MockMvc` for integration and functional Take your time.",
+    "timestamp" : 1786155852.243302600,
+    "intent" : null
+  } ],
+  "summary" : "USER: I am learning Spring Boot\nAI: \uD83D\uDE0A **Hello there! That's great to hear that you ar...\n",
+  "messageCount" : 2,
+  "firstMessage" : "I am learning Spring Boot",
+  "expired" : false
+}

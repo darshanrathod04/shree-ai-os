@@ -1,8 +1,11 @@
 package com.shreeai.os.platform.sdk;
 
+import com.shreeai.os.platform.runtime.api.Runtime;
+import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
+import com.shreeai.os.platform.runtime.execution.ExecutionResult;
+import com.shreeai.os.platform.runtime.execution.ExecutionSession;
 import com.shreeai.os.platform.sdk.exceptions.SDKException;
 import com.shreeai.os.platform.sdk.exceptions.ValidationException;
-import com.shreeai.os.platform.runtime.api.Runtime;
 
 import java.util.Objects;
 
@@ -55,17 +58,35 @@ public final class ShreeClient {
         }
 
         try {
-            // The response is built from the request
-            // In this SDK foundation, we compose a deterministic response
-            // based on the configured runtime and request
-            double confidence = 0.85;
-            boolean reasoningAvailable = true;
-            String answer = "Processed: " + request.message();
+            // Create ExecutionRequest from SDKRequest
+            ExecutionRequest executionRequest = ExecutionRequest.builder()
+                    .requestId(request.sessionId())
+                    .requestType("CHAT")
+                    .payload(request.message())
+                    .build();
 
+            // Submit to Runtime if available
+            ExecutionResult executionResult;
+            if (runtime != null) {
+                ExecutionSession session = runtime.submit(executionRequest);
+                // Use the actual execution result from the Runtime session
+                executionResult = session.result();
+                if (executionResult == null) {
+                    throw new SDKException("Runtime returned a session without an execution result");
+                }
+            } else {
+                // Fallback only if Runtime is not available (should not happen with new ShreeBuilder)
+                executionResult = ExecutionResult.success(
+                        executionRequest.requestId(),
+                        "Processed: " + request.message()
+                );
+            }
+
+            // Convert ExecutionResult to SDKResponse
             return SDKResponse.builder()
-                    .answer(answer)
-                    .confidence(confidence)
-                    .reasoningAvailable(reasoningAvailable)
+                    .answer(executionResult.output().orElse("No output"))
+                    .confidence(executionResult.isSuccess() ? 1.0 : 0.0)
+                    .reasoningAvailable(executionResult.isSuccess())
                     .metadata("sdk-version:" + configuration.version())
                     .build();
         } catch (SDKException e) {

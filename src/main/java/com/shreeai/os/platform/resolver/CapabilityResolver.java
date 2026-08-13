@@ -255,22 +255,13 @@ public class CapabilityResolver {
      * Log resolver output in the standardized format.
      */
     private void logResolution(CapabilityResolution resolution, List<CapabilityResolution.Candidate> candidates) {
-        if (!log.isInfoEnabled()) return;
+        if (!log.isDebugEnabled()) return;
 
-        log.info("[RESOLVER] ========================================================");
-        log.info("[RESOLVER] Intent: {}", resolution.getMatchedIntent());
-        log.info("[RESOLVER] Candidates: {}", candidates.size());
-        for (CapabilityResolution.Candidate c : candidates) {
-            log.info("[RESOLVER]   - {} (score={})", c.getCapability().getName(),
-                    String.format("%.0f%%", c.getScore() * 100));
-        }
-        log.info("[RESOLVER] Selected: {}",
-                resolution.isResolved() ? resolution.getSelectedCapability().getName() : "null");
-        log.info("[RESOLVER] Resolution Strategy: {}", resolution.getStrategy());
-        log.info("[RESOLVER] Confidence: {}",
-                String.format("%.0f%%", resolution.getConfidence() * 100));
-        log.info("[RESOLVER] Reason: {}", resolution.getReason());
-        log.info("[RESOLVER] Processing Time: {}μs", resolution.getProcessingTimeNanos() / 1000);
-        log.info("[RESOLVER] ========================================================");
+        log.debug("[RESOLVER] Intent: {} | Selected: {} | Strategy: {} | Confidence: {}% | Time: {}μs",
+                resolution.getMatchedIntent(),
+                resolution.isResolved() ? resolution.getSelectedCapability().getName() : "null",
+                resolution.getStrategy(),
+                String.format("%.0f", resolution.getConfidence() * 100),
+                resolution.getProcessingTimeNanos() / 1000);
     }
 }

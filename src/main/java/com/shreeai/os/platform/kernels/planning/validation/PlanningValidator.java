@@ -51,8 +51,8 @@ import java.util.Map;
  */
 public final class PlanningValidator {
 
-    private PlanningValidator() {
-        // Utility class — no instantiation
+    public PlanningValidator() {
+        // Public constructor for service-layer instantiation
     }
 
     // -----------------------------------------------------------------------

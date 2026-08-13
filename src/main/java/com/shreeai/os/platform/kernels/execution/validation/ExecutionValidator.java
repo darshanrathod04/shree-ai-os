@@ -42,8 +42,8 @@ public final class ExecutionValidator {
     /**
      * Private constructor to prevent instantiation.
      */
-    private ExecutionValidator() {
-        throw new UnsupportedOperationException("ExecutionValidator is a static utility class and cannot be instantiated");
+    public ExecutionValidator() {
+        // Public constructor for service-layer instantiation
     }
 
     /**

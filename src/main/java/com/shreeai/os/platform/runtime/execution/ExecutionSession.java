@@ -23,6 +23,7 @@ public final class ExecutionSession {
     private final String sessionId;
     private final String requestId;
     private final SessionStatus status;
+    private final ExecutionResult result;
     private final Instant createdAt;
 
     /**
@@ -41,6 +42,7 @@ public final class ExecutionSession {
         this.sessionId = builder.sessionId;
         this.requestId = builder.requestId;
         this.status = builder.status;
+        this.result = builder.result;
         this.createdAt = builder.createdAt;
     }
 
@@ -72,6 +74,15 @@ public final class ExecutionSession {
     }
 
     /**
+     * Returns the execution result associated with this session, if any.
+     *
+     * @return the execution result, or null if not yet completed
+     */
+    public ExecutionResult result() {
+        return result;
+    }
+
+    /**
      * Returns the timestamp when this session was created.
      *
      * @return the creation timestamp
@@ -97,6 +108,7 @@ public final class ExecutionSession {
         private String sessionId;
         private String requestId;
         private SessionStatus status = SessionStatus.PENDING;
+        private ExecutionResult result;
         private Instant createdAt;
 
         private Builder() {
@@ -132,6 +144,17 @@ public final class ExecutionSession {
          */
         public Builder status(SessionStatus status) {
             this.status = status;
+            return this;
+        }
+
+        /**
+         * Sets the execution result associated with this session.
+         *
+         * @param result the execution result
+         * @return this builder
+         */
+        public Builder result(ExecutionResult result) {
+            this.result = result;
             return this;
         }
 

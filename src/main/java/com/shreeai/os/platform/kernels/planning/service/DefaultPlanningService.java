@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.shreeai.os.platform.kernels.planning.api.PlanningService;
 import com.shreeai.os.platform.kernels.planning.error.GoalPlanningException;
 import com.shreeai.os.platform.kernels.planning.error.PlanValidationException;
 import com.shreeai.os.platform.kernels.planning.error.PlanningError;
@@ -64,7 +65,7 @@ import com.shreeai.os.platform.kernels.planning.validation.PlanningValidator;
  *
  * @since 1.0
  */
-public final class DefaultPlanningService {
+public final class DefaultPlanningService implements PlanningService {
 
     private final PlanningValidator validator;
     private final PlanningProcessingEngine processingEngine;
@@ -126,18 +127,33 @@ public final class DefaultPlanningService {
      * @throws GoalPlanningException if goal planning processing fails
      * @throws PlanningException if validation fails
      */
-    public List<Goal> processGoalPlanning(PlanningObjective objective) {
-        Objects.requireNonNull(objective, "PlanningObjective must not be null");
+    @Override
+    public String createPlan(PlanningService.PlanningRequest planningRequest) {
+        Objects.requireNonNull(planningRequest, "PlanningRequest must not be null");
 
-        // Validate objective
-        PlanningValidationResult validationResult = validator.validatePlanningObjective(objective);
+        // Validate request
+        PlanningValidationResult validationResult = validator.validatePlanningObjective(
+                new PlanningObjective(
+                        new com.shreeai.os.platform.kernels.planning.model.PlanningId(planningRequest.objectiveId()),
+                        planningRequest.objectiveId(),
+                        planningRequest.planningScope().name(),
+                        java.util.Map.of()
+                )
+        );
         if (!validationResult.isValid()) {
             throw createValidationException(validationResult, PlanningErrorCode.GOAL_PLANNING_ERROR);
         }
 
         try {
             // Delegate to processing engine
-            return processingEngine.processGoalPlanning(objective);
+            return processingEngine.processGoalPlanning(
+                    new PlanningObjective(
+                            new com.shreeai.os.platform.kernels.planning.model.PlanningId(planningRequest.objectiveId()),
+                            planningRequest.objectiveId(),
+                            planningRequest.planningScope().name(),
+                            java.util.Map.of()
+                    )
+            ).toString();
         } catch (PlanningException e) {
             // Re-throw PlanningException as-is
             throw e;
@@ -149,6 +165,12 @@ public final class DefaultPlanningService {
                     e
             ), e);
         }
+    }
+
+    @Override
+    public String refinePlan(PlanningService.PlanRefinementRequest planRefinementRequest) {
+        Objects.requireNonNull(planRefinementRequest, "PlanRefinementRequest must not be null");
+        return planRefinementRequest.planId();
     }
 
     /**
@@ -350,18 +372,19 @@ public final class DefaultPlanningService {
      * @throws PlanValidationException if plan validation processing fails
      * @throws PlanningException if validation fails
      */
-    public Object processPlanValidation(ValidationCriteria criteria) {
-        Objects.requireNonNull(criteria, "ValidationCriteria must not be null");
+    @Override
+    public String validatePlan(PlanningService.PlanValidationRequest planValidationRequest) {
+        Objects.requireNonNull(planValidationRequest, "PlanValidationRequest must not be null");
 
-        // Validate criteria
-        PlanningValidationResult validationResult = validator.validateValidationCriteria(criteria);
+        // Validate request
+        PlanningValidationResult validationResult = validator.validateValidationCriteria(planValidationRequest.validationCriteria());
         if (!validationResult.isValid()) {
             throw createValidationException(validationResult, PlanningErrorCode.VALIDATION_ERROR);
         }
 
         try {
             // Delegate to processing engine
-            return processingEngine.processPlanValidation(criteria);
+            return processingEngine.processPlanValidation(planValidationRequest.validationCriteria()).toString();
         } catch (PlanningException e) {
             // Re-throw PlanningException as-is
             throw e;

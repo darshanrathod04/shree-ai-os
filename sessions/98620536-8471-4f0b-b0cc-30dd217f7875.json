@@ -1,0 +1,85 @@
+{
+  "sessionId" : "98620536-8471-4f0b-b0cc-30dd217f7875",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1786593247.326438000,
+    "lastUpdated" : 1786593247.326438000,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "remainingQuestions" : 0,
+    "currentQuestion" : null,
+    "totalQuestions" : 0,
+    "inProgress" : false
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1786593247.326438000,
+  "lastAccessedAt" : 1786593323.761388300,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "test message",
+    "timestamp" : 1786593247.333440100,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello! I'm glad to see you reaching out for guidance on testing your code effectively with **JUnit** in a Java environment. Testing is an essential skill that can significantly enhance the quality of your software, making it more robust and reliable. Here are some steps we can take together:\n\n1. Understand what `Test Driven Development` (TDD) entails — where you write tests before code to ensure they fail initially but gradually pass as features get implemented. This encourages writing only necessary code. For resources, I recommend the book \"**Clean Code in Practice - TDD with TestNG and Spring Boot**\" by Durga Yadav for a thorough understanding of TDD principles applied within Java testing frameworks like JUnit.\n\n2. Familiarize yourself with **JUnit 5 API documentation**, which provides comprehensive information on writing tests — from simple assertions to parameterized tests that can run the same test case multiple times over different inputs. The official website is a great starting point: [https://junit.org/](https://junit.org/).\n\n3. Practice by creating example projects using **Mockito** or similar frameworks for mocking objects and dependencies in your unit tests, allowing you to focus on the code under test without worrying about external factors like database states. You can find tutorials at [https://www.vogella.com/tutorials/Mockito](https://www.vogella.com/tutorials/Mockito).\n\n4. Learn best practices for naming tests, using a structure such as `ClassName_MethodName_InputCondition` to describe what the test does and why it's failing when expected outcomes don’t match your code implementation. This clarity helps in understanding which parts of the system require attention or improvement during development.\n\n5. Explore **Test Design Techniques**, such as equivalence partitioning where you divide inputs into valid/invalid partitions and boundary value analysis to test edge cases that often cause errors at application interfaces but are not covered by typical testing scenarios. These techniques can be learned from the book \"Effective Test Result Analysis\" available online for purchase or through a library lending service, which provides practical examples of these strategies in action.\n\n6. Finally, consider joining **online coding communities** like CodeSignal (https://codesignal.com) and HackerRank (https://www.hackerrank.com/) where you can practice test-driven scenarios against real problems faced by professionals, allowing for hands-on experience in testing your Java code with JUnit assertions under various conditions.\n\nRemember that mastering these skills takes time and consistent effort; patience is key to becoming proficient at writing effective tests! Take your time.",
+    "timestamp" : 1786593323.761388300,
+    "intent" : null
+  } ],
+  "summary" : "USER: test message\nAI: \uD83D\uDE0A Hello! I'm glad to see you reaching out for gui...\n",
+  "messageCount" : 2,
+  "firstMessage" : "test message",
+  "expired" : false
+}

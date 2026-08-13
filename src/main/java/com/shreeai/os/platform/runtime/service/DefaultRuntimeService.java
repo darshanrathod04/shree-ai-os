@@ -5,7 +5,9 @@ import com.shreeai.os.platform.runtime.RuntimeState;
 import com.shreeai.os.platform.runtime.api.Runtime;
 import com.shreeai.os.platform.runtime.config.RuntimeConfiguration;
 import com.shreeai.os.platform.runtime.contracts.RuntimeContract;
+import com.shreeai.os.platform.runtime.execution.ExecutionContext;
 import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
+import com.shreeai.os.platform.runtime.execution.ExecutionResult;
 import com.shreeai.os.platform.runtime.execution.ExecutionSession;
 import com.shreeai.os.platform.runtime.internal.DefaultRuntime;
 import com.shreeai.os.platform.runtime.lifecycle.RuntimeLifecycle;
@@ -36,6 +38,13 @@ import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeRankingService;
 import com.shreeai.os.platform.kernels.knowledge.service.DefaultKnowledgeService;
 import com.shreeai.os.platform.kernels.cognitive.engine.DefaultReasoningEngine;
 import com.shreeai.os.platform.kernels.inference.engine.DefaultInferenceEngine;
+import com.shreeai.os.platform.kernels.chief.service.DefaultChiefService;
+import com.shreeai.os.platform.kernels.chief.validation.ChiefValidator;
+import com.shreeai.os.platform.kernels.execution.engine.DefaultExecutionProcessingEngine;
+import com.shreeai.os.platform.kernels.execution.service.DefaultExecutionService;
+import com.shreeai.os.platform.kernels.execution.validation.ExecutionValidator;
+import com.shreeai.os.platform.kernels.factory.DefaultKernelFactory;
+import com.shreeai.os.platform.kernels.factory.KernelFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +74,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     private final RuntimeContract contract;
     private final List<ExecutionStage> stages;
     private RuntimeLifecycle lifecycle;
-    private com.shreeai.os.platform.runtime.execution.ExecutionPipeline pipeline;
+    private com.shreeai.os.platform.runtime.pipeline.ExecutionPipeline pipeline;
     
     /**
      * Constructs a new DefaultRuntimeService with the given configuration and contract.
@@ -134,16 +143,35 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         // Initialize inference services for real inference kernel integration
         DefaultInferenceEngine inferenceEngine = new DefaultInferenceEngine();
 
+        // Initialize planning services for real planning kernel integration
+        com.shreeai.os.platform.kernels.planning.validation.PlanningValidator planningValidator =
+                new com.shreeai.os.platform.kernels.planning.validation.PlanningValidator();
+        com.shreeai.os.platform.kernels.planning.engine.DefaultPlanningProcessingEngine planningProcessingEngine =
+                new com.shreeai.os.platform.kernels.planning.engine.DefaultPlanningProcessingEngine();
+        com.shreeai.os.platform.kernels.planning.service.DefaultPlanningService planningService =
+                new com.shreeai.os.platform.kernels.planning.service.DefaultPlanningService(planningValidator, planningProcessingEngine);
+
+        // Initialize execution services for real execution kernel integration
+        ExecutionValidator executionValidator = new ExecutionValidator();
+        DefaultExecutionProcessingEngine executionProcessingEngine = new DefaultExecutionProcessingEngine();
+        DefaultExecutionService executionService = new DefaultExecutionService(executionValidator, executionProcessingEngine);
+
+        // Initialize chief services for real chief kernel integration
+        ChiefValidator chiefValidator = new ChiefValidator();
+        com.shreeai.os.platform.kernels.chief.engine.DefaultChiefProcessingEngine chiefProcessingEngine =
+                new com.shreeai.os.platform.kernels.chief.engine.DefaultChiefProcessingEngine();
+        DefaultChiefService chiefService = new DefaultChiefService(chiefValidator, chiefProcessingEngine);
+
         stages.add(new IdentityStage());
         stages.add(new ContextStage());
         stages.add(new MemoryRecallStage(memoryQueryService, memorySearchService, memoryRankingService));
         stages.add(new KnowledgeStage(knowledgeQueryService, knowledgeSearchService, knowledgeRankingService));
         stages.add(new ReasoningStage(reasoningEngine));
         stages.add(new InferenceStage(inferenceEngine));
-        stages.add(new PlanningStage());
-        stages.add(new ActionExecutionStage());
+        stages.add(new PlanningStage(planningService));
+        stages.add(new ActionExecutionStage(executionService));
         stages.add(new MemoryStoreStage(memoryService));
-        stages.add(new ChiefReviewStage());
+        stages.add(new ChiefReviewStage(chiefService));
     }
 
     @Override
@@ -207,17 +235,86 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     }
 
     @Override
-    public ExecutionSession submit(ExecutionRequest request) {
+    public com.shreeai.os.platform.runtime.execution.ExecutionSession submit(com.shreeai.os.platform.runtime.execution.ExecutionRequest request) {
         if (lifecycle == null || !lifecycle.isAcceptingRequests()) {
             throw new IllegalStateException(
                     "Runtime is not accepting requests. State: " + getState());
         }
-        // Use the canonical execution pipeline
-        return pipeline != null ? 
-            com.shreeai.os.platform.runtime.execution.ExecutionSession.builder()
-                .requestId(request.requestId())
-                .build() : 
-            null;
+
+        if (request == null) {
+            throw new IllegalArgumentException("ExecutionRequest must not be null");
+        }
+
+        try {
+            // Create execution session
+            com.shreeai.os.platform.runtime.execution.ExecutionSession session = 
+                com.shreeai.os.platform.runtime.execution.ExecutionSession.builder()
+                    .requestId(request.requestId())
+                    .status(com.shreeai.os.platform.runtime.execution.ExecutionSession.SessionStatus.ACTIVE)
+                    .build();
+
+            // Create execution context
+            ExecutionContext context = ExecutionContext.builder()
+                    .session(session)
+                    .configuration(configuration)
+                    .contract(contract)
+                    .build();
+
+            // Execute the canonical pipeline exactly once
+            com.shreeai.os.platform.runtime.pipeline.PipelineResult pipelineResult = null;
+            if (pipeline != null) {
+                // Convert runtime.execution.ExecutionRequest to execution.ExecutionRequest for PipelineContext
+                com.shreeai.os.platform.execution.ExecutionRequest pipelineRequest = 
+                    com.shreeai.os.platform.execution.ExecutionRequest.builder()
+                        .requestId(request.requestId())
+                        .decisionId("sdk-chat-decision")
+                        .capabilityName("CHAT")
+                        .intent("CHAT_REQUEST")
+                        .userInput(request.payload())
+                        .build();
+                
+                // Store ExecutionContext in pipeline context attributes for stage access
+                com.shreeai.os.platform.runtime.pipeline.PipelineContext pipelineContext = 
+                    com.shreeai.os.platform.runtime.pipeline.PipelineContext.builder()
+                        .executionRequest(pipelineRequest)
+                        .addAttribute("executionContext", context)
+                        .addAttribute("executionSession", session)
+                        .build();
+                
+                // Execute the canonical pipeline via the pipeline contract
+                pipelineResult = pipeline.execute(pipelineContext);
+            }
+
+            // Convert PipelineResult to ExecutionResult
+            com.shreeai.os.platform.runtime.execution.ExecutionResult result;
+            if (pipelineResult != null && pipelineResult.isSuccess()) {
+                String output = pipelineResult.getMessages().isEmpty() 
+                        ? "Pipeline completed successfully" 
+                        : String.join("; ", pipelineResult.getMessages());
+                result = com.shreeai.os.platform.runtime.execution.ExecutionResult.success(
+                        request.requestId(), output);
+            } else {
+                String error = pipelineResult != null && pipelineResult.getMessages() != null
+                        ? String.join("; ", pipelineResult.getMessages())
+                        : "Pipeline execution failed";
+                result = com.shreeai.os.platform.runtime.execution.ExecutionResult.failure(
+                        request.requestId(), error);
+            }
+
+            // Return session with the actual execution result attached
+            return com.shreeai.os.platform.runtime.execution.ExecutionSession.builder()
+                    .sessionId(session.sessionId())
+                    .requestId(session.requestId())
+                    .status(result.isSuccess() 
+                            ? com.shreeai.os.platform.runtime.execution.ExecutionSession.SessionStatus.COMPLETED
+                            : com.shreeai.os.platform.runtime.execution.ExecutionSession.SessionStatus.FAILED)
+                    .result(result)
+                    .createdAt(session.createdAt())
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Execution failed: " + e.getMessage(), e);
+        }
     }
 
     @Override

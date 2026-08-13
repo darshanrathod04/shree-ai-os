@@ -50,9 +50,9 @@ public final class DefaultExecutionChain implements ExecutionChain {
     @Override
     public boolean hasNext(PipelineContext context, PipelineExecutionState state) {
         // Check if all stages have been completed
-        return currentIndex < stages.size() && 
-               !state.isTerminated() && 
-               !state.isShortCircuited() && 
+        return currentIndex < stages.size() &&
+               !state.isTerminated() &&
+               !state.isShortCircuited() &&
                !state.isFailed();
     }
 
@@ -79,18 +79,30 @@ public final class DefaultExecutionChain implements ExecutionChain {
         ExecutionStage currentStage = stages.get(currentIndex);
         String stageName = currentStage.getDescriptor().getStageName();
 
-        // Mark stage as started in state (Runtime records execution)
+        // Mark stage as started in state (Runtime records execution).
+        // This pushes a new frame onto the state's next-stage-invoked stack.
         state.markStageStarted(stageName);
 
         // Create the next chain with incremented index
         DefaultExecutionChain nextChain = new DefaultExecutionChain(stages, currentIndex + 1);
 
-        // Invoke the current stage, passing the next chain and state
-        // The stage will call nextChain.next() if it wants to continue
+        // Invoke the current stage, passing the next chain and state.
+        // The stage will call nextChain.next() if it wants to continue.
         PipelineResult result = currentStage.process(context, nextChain, state);
 
-        // Check if the stage short-circuited (returned without calling chain.next())
-        boolean nextStageWasInvoked = state.wasNextStageInvoked();
+        // Determine whether the stage continued to the next chain.
+        //
+        // The preferred signal is state.wasNextStageInvoked(), which stages
+        // may set by calling state.markNextStageInvoked(). However, real stages
+        // in the canonical pipeline (IdentityStage, ContextStage, etc.) only call
+        // chain.next() without setting this flag. For those stages, we detect
+        // continuation via the execution state:
+        //   - If more stages were visited beyond this one, the stage called chain.next().
+        //   - If the terminal stage called chain.next(), the chain exhausted the
+        //     stage list and marked the state as terminated.
+        boolean nextStageWasInvoked = state.wasNextStageInvoked()
+                || state.getVisitedStages().size() > currentIndex + 1
+                || state.isTerminated();
 
         if (!nextStageWasInvoked) {
             // Stage short-circuited - it returned without calling chain.next()
@@ -101,7 +113,12 @@ public final class DefaultExecutionChain implements ExecutionChain {
             state.markStageCompleted(stageName);
         }
 
-        // Return the result from THIS stage only
+        // Pop the current frame so the caller's frame flag is restored.
+        // This is essential for correct short-circuit and completion detection
+        // during recursive chain traversal.
+        state.popStageFrame();
+
+        // Return the result from THIS stage
         // The pipeline will call next() again if there are more stages
         return result;
     }

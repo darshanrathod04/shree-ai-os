@@ -1,0 +1,85 @@
+{
+  "sessionId" : "3b171ff8-e451-4fc2-b3b6-8534848920fd",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1786163940.819978500,
+    "lastUpdated" : 1786163940.819978500,
+    "completedLessonKeys" : [ ],
+    "totalCompletedLessons" : 0
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "currentQuestion" : null,
+    "totalQuestions" : 0,
+    "inProgress" : false,
+    "remainingQuestions" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1786163940.819978500,
+  "lastAccessedAt" : 1786164019.022326700,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I am learning Spring Boot",
+    "timestamp" : 1786163940.821977600,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A As you continue to learn **Spring Boot**, a powerful framework for developing standalone, cross-platform, web applications in Java, here's a structured roadmap that can help guide your journey towards gaining an internship experience with Spring. Remember, consistent practice and building small projects are key!\n\n### Step 1: Understanding the Basics of **Spring Boot**\nBegin by familiarizing yourself with core concepts such as Maven or Gradle for dependency management, Java EE (Enterprise Edition) basics including servlets, JSPs, etc., if needed. Use resources like [O'Reilly books](https://www.oreilly.com/library/view/spring-in-action/) and online tutorials on the Spring Boot website to get started with setting up your first project using **Spring Initializr** or directly in an IDE of your choice (e.g., IntelliJ, Eclipse).\n\n### Step 2: Developing a Small Project\nOnce you are comfortable with setup basics and dependency management, create a simple CRUD application that interacts with any type of database using Spring Data JPA - for example, an online store allowing users to add products. This will help reinforce concepts like entity mapping (using annotations), repository interfaces, service layer separation from your controller logic, etc., while gaining hands-on experience in a realistic scenario.\n\n### Step 3: Master Spring Boot Features and Best Practices\nDive deeper into advanced features of **Spring Boot** such as `@Configuration` classes for customizing application properties or profiles (using `@Profile`), exception handling mechanisms like `@ControllerAdvice`, internationalization, etc., along with best practices including aspect-oriented programming using AspectJ. Books like \"The Spring Framework in Action\" can provide valuable insights into these topics while online courses on platforms such as Coursera and Pluralsight will help solidify your understanding through practical examples and exercises.\n\n### Step 4: Building a Portfolio Website with **Spring Boot**\nNext, create an attractive portfolio website showcasing all the projects you've completed using **Spring Boot** as well as detailed descriptions of each project along with screenshots/videos demonstrating their functionality. Host your site on platforms like GitHub Pages or Netlify for accessibility and visibility to recruiters worldwide; this will not only improve your confidence but also serve as a testament to your hard work, dedication, and skills in **Spring Boot** development!\n\n### Step 5: Networking & Gaining Experience through Open-Source Contributions\nJoin local tech meetups or conferences related to Spring Framework/Java EE technology where you can network with professionals from the industry; this will help expand your knowledge while also providing feedback on areas that require improvement. Additionally, contribute patches (small fixes and improvements) regularly back into open-source **Spring Boot** projects - platforms like GitHub are perfect for discovering worthy contributors whose code you'd like to learn more about or improve upon!\n\n### Step 6: Applying & Interview Preparation\nNow that your portfolio website is up and running with multiple completed projects, start applying for internships by carefully researching potential companies/projects where **Spring Boot** knowledge would be valuable. Review common interview questions related to Spring Framework (e.g., MVC design pattern) along the way using resources such as [Stack Overflow](https://stackoverflow.com/questions/tagged/spring-boot?tab=active), and practice answering them concisely yet confidently during interviews!\n\nGood luck on your journey towards securing an internship experience with **Spring Boot**, Shree! Remember to stay curious and motivated throughout this process while maintaining a positive attitude. I'm here to assist you every step of the way as we grow together in our shared passion for learning & development through Spring Framework technologies. Take your time.",
+    "timestamp" : 1786164019.022326700,
+    "intent" : null
+  } ],
+  "messageCount" : 2,
+  "expired" : false,
+  "summary" : "USER: I am learning Spring Boot\nAI: \uD83D\uDE0A As you continue to learn **Spring Boot**, a pow...\n",
+  "firstMessage" : "I am learning Spring Boot"
+}

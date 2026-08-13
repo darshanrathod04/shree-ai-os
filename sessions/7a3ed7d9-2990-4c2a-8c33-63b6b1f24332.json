@@ -1,0 +1,85 @@
+{
+  "sessionId" : "7a3ed7d9-2990-4c2a-8c33-63b6b1f24332",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1786163891.476792500,
+    "lastUpdated" : 1786163891.476792500,
+    "completedLessonKeys" : [ ],
+    "totalCompletedLessons" : 0
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "currentQuestion" : null,
+    "totalQuestions" : 0,
+    "inProgress" : false,
+    "remainingQuestions" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1786163891.476792500,
+  "lastAccessedAt" : 1786163940.756953600,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "I am building Smart Campus Connect",
+    "timestamp" : 1786163891.478791800,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello! It's wonderful to hear about your initiative for **Smart Campus Connect**—that sounds like an innovative project with lots of potential impact on campus life! If you need assistance in creating a roadmap or learning plan, I can certainly help outline the key components. Here’s what we could include:\n\n1. Project Planning (Week 1-2)\n    - Define scope and objectives for **Smart Campus Connect** using markdown format like this: `### Scope\\n*Objective(s):*\\n` followed by bullet points of your goals.\\n`. You can continue to build out the plan with tasks such as assessing current campus infrastructure, identifying key technology partners.\n    - **Resources**: Check our database for articles on similar projects [here](https://www.darshanaiitech.com/smart-campus).\\n`. This will help you understand what has been done elsewhere and avoid common pitfalls.\\n`. \\n`### Research (Week 3-4)\\n*Objective(s):*\\nInvestigate the latest smart technologies suitable for campus environments, such as IoT devices or AI solutions. Use resources like our [Smart Tech Article Series](https://www.darshanaiitech.com/smarttech).\\n`. \\n`### Prototype Development (Week 5-8)\\n*Objective(s):*\\nDevelop a working prototype of your **Smart Campus Connect** system to demonstrate its functionality.\\n`. For this, refer to our [Prototyping Guide](https://www.darshanaiitech.com/prototyping).\\n`. \\n`### Presentation Preparation (Week 9-10)\\n*Objective(s):*\\nPrepare a compelling presentation of your project to showcase at the Internship fair.\\n`. Practice presentations with us using [Presentation Coaching Tools](https://www.darshanaiitech.com/presentcoach).\\n`. \\n`### Application Process (Week 11-12)\\n*Objective(s):*\\nSubmit your application for the Internship position at reputed institutions and universities.\\n`. Here are some [Application Tips](https://www.darshanaiitech.com/applicationtips).\\n`Remember, I'm here to help you every step of the way with any questions or guidance on your learning journey! Keep up the excellent work towards ach0ctivity and stay curious! Take your time.",
+    "timestamp" : 1786163940.756953600,
+    "intent" : null
+  } ],
+  "messageCount" : 2,
+  "expired" : false,
+  "summary" : "USER: I am building Smart Campus Connect\nAI: \uD83D\uDE0A Hello! It's wonderful to hear about your initia...\n",
+  "firstMessage" : "I am building Smart Campus Con..."
+}

@@ -60,9 +60,10 @@ public final class CapabilityScorer {
             return 0.0;
         }
 
-        double intentScore = scoreIntentMatch(capability, intent) * WEIGHT_INTENT_MATCH;
+        boolean supportsIntent = scoreIntentMatch(capability, intent) == SCORE_INTENT_MATCH;
+        double intentScore = supportsIntent ? SCORE_INTENT_MATCH * WEIGHT_INTENT_MATCH : 0.0;
         double priorityScore = scorePriority(capability) * WEIGHT_PRIORITY;
-        double contextScore = scoreContext(capability, intent, context) * WEIGHT_CONTEXT;
+        double contextScore = scoreContext(capability, intent, context, supportsIntent) * WEIGHT_CONTEXT;
         double healthScore = scoreHealth(capability) * WEIGHT_HEALTH;
         double availabilityScore = scoreAvailability(capability) * WEIGHT_AVAILABILITY;
 
@@ -95,11 +96,8 @@ public final class CapabilityScorer {
      * Currently provides basic context boost for matched intents.
      * Extensible for future context-aware scoring.
      */
-    static double scoreContext(Capability capability, String intent, CapabilityContext context) {
+    static double scoreContext(Capability capability, String intent, CapabilityContext context, boolean supportsIntent) {
         // Base context score: intent match indicator
-        boolean supportsIntent = capability.getSupportedIntents().stream()
-                .anyMatch(si -> si.equalsIgnoreCase(intent));
-
         if (!supportsIntent) {
             return 0.0;
         }
