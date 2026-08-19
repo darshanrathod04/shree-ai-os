@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.runtime.pipeline.stages;
 
+import com.shreeai.os.platform.kernels.cognitive.engine.GoalIntelligenceEngine;
 import com.shreeai.os.platform.legacy.execution.ExecutionRequest;
 import com.shreeai.os.platform.kernels.cognitive.engine.DefaultReasoningEngine;
 import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
@@ -366,5 +367,155 @@ public class CognitivePipelineWiringTest {
         assertEquals("COMPLETED", result.getStatus(), "Pipeline should complete");
         assertEquals(10, result.getCompletedStages().size(),
                 "All 10 stages should complete");
+    }
+
+    @Test
+    public void testPlanningStagePreservesGoalIntelligenceInformation() {
+        ReasoningStage reasoningStage =
+                new ReasoningStage(new DefaultReasoningEngine());
+
+        InferenceStage inferenceStage =
+                new InferenceStage(new DefaultInferenceEngine());
+
+        PlanningStage planningStage =
+                new PlanningStage(buildPlanningService());
+
+        List<ExecutionStage> stages =
+                List.of(
+                        reasoningStage,
+                        inferenceStage,
+                        planningStage
+                );
+
+        DefaultExecutionChain chain =
+                new DefaultExecutionChain(stages);
+
+        PipelineContext context =
+                buildContext();
+
+        PipelineExecutionState state =
+                new PipelineExecutionState(stages);
+
+        PipelineResult result =
+                chain.next(context, state);
+
+        assertTrue(
+                result.isSuccess(),
+                "Reasoning → Inference → Goal Intelligence → Planning must succeed"
+        );
+
+        /*
+         * Goal Intelligence must actually execute.
+         */
+        assertEquals(
+                Boolean.TRUE,
+                state.getMetadata().get("goalIntelligenceCompleted"),
+                "Goal Intelligence must complete before Planning"
+        );
+
+        /*
+         * A real GoalAnalysis must be preserved in pipeline state.
+         */
+        Object goalAnalysisObject =
+                state.getMetadata().get("goalAnalysis");
+
+        assertNotNull(
+                goalAnalysisObject,
+                "GoalAnalysis must be preserved in pipeline state"
+        );
+
+        assertTrue(
+                goalAnalysisObject instanceof GoalIntelligenceEngine.GoalAnalysis,
+                "goalAnalysis must contain the actual GoalAnalysis result"
+        );
+
+        GoalIntelligenceEngine.GoalAnalysis goalAnalysis =
+                (GoalIntelligenceEngine.GoalAnalysis) goalAnalysisObject;
+
+        /*
+         * Goal Intelligence must produce an identifiable analysis.
+         */
+        assertNotNull(
+                goalAnalysis.analysisId(),
+                "GoalAnalysis must have an analysis ID"
+        );
+
+        assertFalse(
+                goalAnalysis.analysisId().isBlank(),
+                "GoalAnalysis analysis ID must not be blank"
+        );
+
+        /*
+         * PlanningObjective must preserve Goal Intelligence metadata.
+         */
+        PlanningObjective objective =
+                (PlanningObjective)
+                        state.getMetadata().get("planningObjective");
+
+        assertNotNull(
+                objective,
+                "PlanningObjective must be present"
+        );
+
+        Map<String, String> metadata =
+                objective.metadata();
+
+        assertEquals(
+                "GoalIntelligenceEngine",
+                metadata.get("goalIntelligenceSource"),
+                "PlanningObjective must identify Goal Intelligence provenance"
+        );
+
+        assertEquals(
+                goalAnalysis.analysisId(),
+                metadata.get("goalAnalysisId"),
+                "PlanningObjective must preserve the actual GoalAnalysis ID"
+        );
+
+        assertEquals(
+                goalAnalysis.status().name(),
+                metadata.get("goalStatus"),
+                "Goal status must survive into Planning"
+        );
+
+        assertEquals(
+                goalAnalysis.priority().name(),
+                metadata.get("goalPriority"),
+                "Goal priority must survive into Planning"
+        );
+
+        assertEquals(
+                goalAnalysis.feasibility().name(),
+                metadata.get("goalFeasibility"),
+                "Goal feasibility must survive into Planning"
+        );
+
+        assertEquals(
+                String.valueOf(goalAnalysis.confidence()),
+                metadata.get("goalConfidence"),
+                "Goal confidence must survive into Planning"
+        );
+
+        /*
+         * Planning itself must still complete.
+         */
+        assertEquals(
+                Boolean.TRUE,
+                state.getMetadata().get("planningCompleted"),
+                "Planning must complete after Goal Intelligence"
+        );
+
+        String planId =
+                (String) state.getMetadata().get("planId");
+
+        assertNotNull(
+                planId,
+                "Real planId must be produced"
+        );
+
+        assertFalse(
+                planId.isBlank(),
+                "Real planId must not be blank"
+        );
     }
 }
