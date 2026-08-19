@@ -1,6 +1,10 @@
 package com.shreeai.os.platform.runtime.pipeline.stages;
 
+import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
 import com.shreeai.os.platform.kernels.planning.api.PlanningService;
+import com.shreeai.os.platform.kernels.planning.api.PlanningTypes;
+import com.shreeai.os.platform.kernels.planning.model.PlanningConstraints;
+import com.shreeai.os.platform.kernels.planning.model.PlanningId;
 import com.shreeai.os.platform.kernels.planning.model.PlanningObjective;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
@@ -8,6 +12,9 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
 import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
 import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * PlanningStage - Creates execution plan from reasoning.
@@ -58,61 +65,83 @@ public final class PlanningStage implements ExecutionStage {
     public PipelineResult process(PipelineContext context, ExecutionChain chain, PipelineExecutionState state) {
         try {
             // Retrieve reasoning information from previous stage
-            String reasoningId = (String) state.getMetadata().get("reasoningId");
-            String requestId = context.getExecutionRequest() != null 
-                    ? context.getExecutionRequest().getRequestId() 
+            ReasoningResult reasoningResult = (ReasoningResult) state.getMetadata().get("reasoningResult");
+            String reasoningId = reasoningResult != null
+                    ? reasoningResult.reasoningId()
+                    : (String) state.getMetadata().get("reasoningId");
+            String requestId = context.getExecutionRequest() != null
+                    ? context.getExecutionRequest().getRequestId()
                     : "unknown";
+            String requestText = context.getExecutionRequest() != null
+                    ? context.getExecutionRequest().getUserInput()
+                    : "";
 
             if (planningService == null) {
-                // Fallback to simulated behavior if service not injected
-                String planId = "plan-" + requestId;
-                int planSteps = 3;
-                state.addMetadata("planId", planId);
-                state.addMetadata("planSteps", planSteps);
-                state.addMetadata("planningCompleted", true);
-                state.addMessage("Planning completed (simulated): " + planSteps + " steps for reasoning " + reasoningId);
-                return chain.next(context, state);
+                state.markFailure("Planning failed: planningService is not configured");
+                return PipelineResult.builder()
+                        .success(false)
+                        .status("PLANNING_FAILED")
+                        .addMessage("Planning stage failed: planningService is not configured")
+                        .build();
             }
 
-            // Real planning execution via PlanningService
-            com.shreeai.os.platform.kernels.planning.model.PlanningId planningId =
-                    new com.shreeai.os.platform.kernels.planning.model.PlanningId("plan-" + requestId);
-            com.shreeai.os.platform.kernels.planning.model.PlanningObjective objective =
-                    new com.shreeai.os.platform.kernels.planning.model.PlanningObjective(
-                            planningId,
-                            "Plan for request: " + requestId,
-                            "EXECUTION_PLANNING",
-                            java.util.Map.of("reasoningId", reasoningId, "requestId", requestId)
-                    );
+            // Build the PlanningObjective carrying request/reasoning information
+            Map<String, String> objectiveMetadata = new LinkedHashMap<>();
+            objectiveMetadata.put("requestId", requestId);
+            objectiveMetadata.put("requestText", requestText);
+            objectiveMetadata.put("reasoningId", reasoningId != null ? reasoningId : "");
+            if (reasoningResult != null) {
+                objectiveMetadata.put("reasoningConclusion", reasoningResult.conclusion());
+                objectiveMetadata.put("reasoningType", reasoningResult.reasoningType());
+                objectiveMetadata.put("reasoningScope", reasoningResult.scope());
+                objectiveMetadata.put("reasoningSteps", String.valueOf(reasoningResult.reasoningSteps()));
+                objectiveMetadata.put("reasoningConfidence", String.valueOf(reasoningResult.confidence()));
+            }
 
-            // Use PlanningService interface method createPlan
-            java.util.Map<String, String> emptyStringMap = java.util.Collections.emptyMap();
-            PlanningService.PlanningRequest planningRequest = new PlanningService.PlanningRequest(
-                    "plan-" + requestId,
-                    com.shreeai.os.platform.kernels.planning.api.PlanningTypes.PlanningScope.STANDARD,
-                    new com.shreeai.os.platform.kernels.planning.model.PlanningConstraints(
-                            emptyStringMap,
-                            emptyStringMap,
-                            emptyStringMap,
-                            emptyStringMap
-                    )
+            // The description is a meaningful, evidence-grounded objective derived from the
+            // request/reasoning context — NOT the plan UUID. The planning ID remains separate.
+            String objectiveDescription = "Analyze the supplied project evidence and determine "
+                    + "evidence-supported project analysis steps.";
+            PlanningObjective objective = new PlanningObjective(
+                    new PlanningId("plan-" + requestId),
+                    objectiveDescription,
+                    "EXECUTION_PLANNING",
+                    objectiveMetadata
             );
-            String planId = planningService.createPlan(planningRequest);
-            int planSteps = 3; // Default plan steps
 
-            // Store planning information in state
+            // Pass request/reasoning information through the existing PlanningRequest
+            // constraints metadata so the planning flow receives the relevant context
+            Map<String, String> constraintMetadata = new LinkedHashMap<>(objectiveMetadata);
+            PlanningConstraints constraints = new PlanningConstraints(
+                    Map.of(),
+                    Map.of(),
+                    Map.of(),
+                    constraintMetadata
+            );
+            PlanningService.PlanningRequest planningRequest = new PlanningService.PlanningRequest(
+                    objective.planningId().value(),
+                    PlanningTypes.PlanningScope.STANDARD,
+                    constraints
+            );
+
+            String planId = planningService.createPlan(planningRequest);
+
+            // Store planning information in state (only real statistics from PlanningService)
             state.addMetadata("planId", planId);
-            state.addMetadata("planSteps", planSteps);
+            state.addMetadata("planningObjective", objective);
             state.addMetadata("planningCompleted", true);
-            state.addMessage("Planning completed: " + planSteps + " goals for reasoning " + reasoningId);
+            state.addMessage("Planning completed: plan " + planId + " for reasoning " + reasoningId);
 
             // Continue to next stage
             return chain.next(context, state);
 
         } catch (Exception e) {
-            // Log warning but continue pipeline execution
-            state.addMessage("Planning stage warning: " + e.getMessage());
-            return chain.next(context, state);
+            state.markFailure("Planning failed: " + e.getMessage());
+            return PipelineResult.builder()
+                    .success(false)
+                    .status("PLANNING_FAILED")
+                    .addMessage("Planning stage failed: " + e.getMessage())
+                    .build();
         }
     }
 

@@ -131,13 +131,19 @@ public final class DefaultPlanningService implements PlanningService {
     public String createPlan(PlanningService.PlanningRequest planningRequest) {
         Objects.requireNonNull(planningRequest, "PlanningRequest must not be null");
 
+        // Preserve the semantic metadata produced by PlanningStage (requestId, requestText,
+        // reasoningId, reasoningConclusion, etc.) instead of replacing it with empty metadata
+        Map<String, String> objectiveMetadata = planningRequest.constraints() != null
+                ? planningRequest.constraints().metadata()
+                : java.util.Map.of();
+
         // Validate request
         PlanningValidationResult validationResult = validator.validatePlanningObjective(
                 new PlanningObjective(
                         new com.shreeai.os.platform.kernels.planning.model.PlanningId(planningRequest.objectiveId()),
                         planningRequest.objectiveId(),
                         planningRequest.planningScope().name(),
-                        java.util.Map.of()
+                        objectiveMetadata
                 )
         );
         if (!validationResult.isValid()) {
@@ -145,13 +151,13 @@ public final class DefaultPlanningService implements PlanningService {
         }
 
         try {
-            // Delegate to processing engine
+            // Delegate to processing engine, preserving the semantic metadata
             return processingEngine.processGoalPlanning(
                     new PlanningObjective(
                             new com.shreeai.os.platform.kernels.planning.model.PlanningId(planningRequest.objectiveId()),
                             planningRequest.objectiveId(),
                             planningRequest.planningScope().name(),
-                            java.util.Map.of()
+                            objectiveMetadata
                     )
             ).toString();
         } catch (PlanningException e) {

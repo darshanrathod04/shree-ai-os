@@ -69,9 +69,9 @@ public final class ReasoningStage implements ExecutionStage {
                     ? context.getExecutionRequest().getRequestId() 
                     : "unknown";
 
-            // Get request text
+            // Get request text from the real user payload
             String requestText = context.getExecutionRequest() != null 
-                    ? context.getExecutionRequest().toString() 
+                    ? context.getExecutionRequest().getUserInput() 
                     : "";
 
             // Get ranked memories from state
@@ -91,10 +91,14 @@ public final class ReasoningStage implements ExecutionStage {
             // Run the reasoning engine
             ReasoningResult result = reasoningEngine.reason(requestText, rankedMemories, rankedKnowledge);
 
-            // Store reasoning information in state
+            // Store the full ReasoningResult in state so downstream stages
+            // consume the actual reasoning output without information loss
+            state.addMetadata("reasoningResult", result);
             state.addMetadata("reasoningId", result.reasoningId());
+            state.addMetadata("reasoningSummary", result.summary());
             state.addMetadata("reasoningConfidence", result.confidence());
             state.addMetadata("reasoningFindings", result.findings());
+            state.addMetadata("reasoningEvidence", result.evidence());
             state.addMetadata("reasoningAlternatives", result.alternatives());
             state.addMetadata("reasoningRisk", result.risks());
             state.addMetadata("reasoningConclusion", result.conclusion());

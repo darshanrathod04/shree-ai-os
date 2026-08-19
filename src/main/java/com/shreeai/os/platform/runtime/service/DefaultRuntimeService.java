@@ -1,17 +1,14 @@
 package com.shreeai.os.platform.runtime.service;
 
+import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
+import com.shreeai.os.platform.legacy.execution.ExecutionMetadata;
 import com.shreeai.os.platform.runtime.AbstractRuntimeService;
 import com.shreeai.os.platform.runtime.RuntimeState;
 import com.shreeai.os.platform.runtime.api.Runtime;
 import com.shreeai.os.platform.runtime.config.RuntimeConfiguration;
 import com.shreeai.os.platform.runtime.contracts.RuntimeContract;
 import com.shreeai.os.platform.runtime.execution.ExecutionContext;
-import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
-import com.shreeai.os.platform.runtime.execution.ExecutionResult;
-import com.shreeai.os.platform.runtime.execution.ExecutionSession;
-import com.shreeai.os.platform.runtime.internal.DefaultRuntime;
 import com.shreeai.os.platform.runtime.lifecycle.RuntimeLifecycle;
-import com.shreeai.os.platform.runtime.lifecycle.RuntimeLifecycleListener;
 import com.shreeai.os.platform.runtime.pipeline.DefaultExecutionPipeline;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.stages.ChiefReviewStage;
@@ -26,7 +23,6 @@ import com.shreeai.os.platform.runtime.pipeline.stages.PlanningStage;
 import com.shreeai.os.platform.runtime.pipeline.stages.ReasoningStage;
 import com.shreeai.os.platform.kernels.memory.api.MemoryQueryService;
 import com.shreeai.os.platform.kernels.memory.api.MemorySearchService;
-import com.shreeai.os.platform.kernels.memory.api.MemoryService;
 import com.shreeai.os.platform.kernels.memory.engine.DefaultMemoryProcessingEngine;
 import com.shreeai.os.platform.kernels.memory.engine.MemoryRankingService;
 import com.shreeai.os.platform.kernels.memory.service.DefaultMemoryService;
@@ -43,8 +39,6 @@ import com.shreeai.os.platform.kernels.chief.validation.ChiefValidator;
 import com.shreeai.os.platform.kernels.execution.engine.DefaultExecutionProcessingEngine;
 import com.shreeai.os.platform.kernels.execution.service.DefaultExecutionService;
 import com.shreeai.os.platform.kernels.execution.validation.ExecutionValidator;
-import com.shreeai.os.platform.kernels.factory.DefaultKernelFactory;
-import com.shreeai.os.platform.kernels.factory.KernelFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -263,14 +257,23 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             // Execute the canonical pipeline exactly once
             com.shreeai.os.platform.runtime.pipeline.PipelineResult pipelineResult = null;
             if (pipeline != null) {
-                // Convert runtime.execution.ExecutionRequest to execution.ExecutionRequest for PipelineContext
-                com.shreeai.os.platform.execution.ExecutionRequest pipelineRequest = 
-                    com.shreeai.os.platform.execution.ExecutionRequest.builder()
+                // Convert runtime.execution.ExecutionRequest to execution.ExecutionRequest for PipelineContext,
+                // preserving context and metadata so downstream stages receive the full payload
+                ExecutionMetadata pipelineMetadata =
+                    ExecutionMetadata.builder()
+                        .executionSource("SDK")
+                        .sessionId(request.requestId())
+                        .customValues(request.metadata())
+                        .build();
+
+                com.shreeai.os.platform.legacy.execution.ExecutionRequest pipelineRequest =
+                    com.shreeai.os.platform.legacy.execution.ExecutionRequest.builder()
                         .requestId(request.requestId())
                         .decisionId("sdk-chat-decision")
                         .capabilityName("CHAT")
                         .intent("CHAT_REQUEST")
                         .userInput(request.payload())
+                        .metadata(pipelineMetadata)
                         .build();
                 
                 // Store ExecutionContext in pipeline context attributes for stage access
@@ -279,20 +282,28 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                         .executionRequest(pipelineRequest)
                         .addAttribute("executionContext", context)
                         .addAttribute("executionSession", session)
+                        .addAttribute("requestContext", request.context())
+                        .addAttribute("requestMetadata", request.metadata())
                         .build();
                 
                 // Execute the canonical pipeline via the pipeline contract
                 pipelineResult = pipeline.execute(pipelineContext);
             }
 
-            // Convert PipelineResult to ExecutionResult
+            // Convert PipelineResult to ExecutionResult, preserving any structured
+            // intelligence context supplied with the request so rich data survives
+            // the runtime → SDK boundary without being flattened into strings.
             com.shreeai.os.platform.runtime.execution.ExecutionResult result;
             if (pipelineResult != null && pipelineResult.isSuccess()) {
                 String output = pipelineResult.getMessages().isEmpty() 
                         ? "Pipeline completed successfully" 
                         : String.join("; ", pipelineResult.getMessages());
-                result = com.shreeai.os.platform.runtime.execution.ExecutionResult.success(
-                        request.requestId(), output);
+                result = com.shreeai.os.platform.runtime.execution.ExecutionResult.builder()
+                        .requestId(request.requestId())
+                        .success(true)
+                        .output(output)
+                        .structuredPayload(buildStructuredPayload(request))
+                        .build();
             } else {
                 String error = pipelineResult != null && pipelineResult.getMessages() != null
                         ? String.join("; ", pipelineResult.getMessages())
@@ -315,6 +326,28 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         } catch (Exception e) {
             throw new RuntimeException("Execution failed: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Builds the structured payload map for an execution result.
+     *
+     * <p>Extracts the {@link IntelligenceContext} carried in the request metadata
+     * (placed there by the SDK) and exposes it under the reserved key so the SDK
+     * can return it to the developer application without information loss.</p>
+     *
+     * @param request the execution request
+     * @return the structured payload map (never null, may be empty)
+     */
+    private java.util.Map<String, Object> buildStructuredPayload(
+            com.shreeai.os.platform.runtime.execution.ExecutionRequest request) {
+        if (request == null || request.metadata() == null) {
+            return java.util.Map.of();
+        }
+        Object contextValue = request.metadata().get("intelligenceContext");
+        if (contextValue instanceof IntelligenceContext intelligenceContext) {
+            return java.util.Map.of("intelligenceContext", intelligenceContext);
+        }
+        return java.util.Map.of();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.shreeai.os.platform.runtime.execution;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -24,6 +25,7 @@ public final class ExecutionResult {
     private final String output;
     private final String errorMessage;
     private final Instant completedAt;
+    private final Map<String, Object> structuredPayload;
 
     private ExecutionResult(Builder builder) {
         this.requestId = builder.requestId;
@@ -31,6 +33,7 @@ public final class ExecutionResult {
         this.output = builder.output;
         this.errorMessage = builder.errorMessage;
         this.completedAt = builder.completedAt;
+        this.structuredPayload = builder.structuredPayload;
     }
 
     /**
@@ -76,6 +79,20 @@ public final class ExecutionResult {
      */
     public Instant completedAt() {
         return completedAt;
+    }
+
+    /**
+     * Returns the structured payload attached to this execution result.
+     *
+     * <p>The structured payload is an additive, backward-compatible extension that
+     * carries rich structured data (e.g. an {@code IntelligenceContext}) alongside
+     * the legacy flat {@code output} string. It is empty when no structured data
+     * was supplied.</p>
+     *
+     * @return the structured payload map (never null, may be empty)
+     */
+    public Map<String, Object> structuredPayload() {
+        return structuredPayload;
     }
 
     /**
@@ -127,6 +144,7 @@ public final class ExecutionResult {
         private String output;
         private String errorMessage;
         private Instant completedAt;
+        private Map<String, Object> structuredPayload = Map.of();
 
         private Builder() {
         }
@@ -183,6 +201,19 @@ public final class ExecutionResult {
          */
         public Builder completedAt(Instant completedAt) {
             this.completedAt = completedAt;
+            return this;
+        }
+
+        /**
+         * Sets the structured payload map (defensively copied).
+         *
+         * @param structuredPayload the structured payload
+         * @return this builder
+         */
+        public Builder structuredPayload(Map<String, Object> structuredPayload) {
+            this.structuredPayload = structuredPayload != null
+                    ? Map.copyOf(structuredPayload)
+                    : Map.of();
             return this;
         }
 

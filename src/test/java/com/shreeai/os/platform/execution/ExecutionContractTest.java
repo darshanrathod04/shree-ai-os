@@ -1,9 +1,9 @@
 package com.shreeai.os.platform.execution;
 
-import com.shreeai.os.platform.context.ConversationSession;
-import com.shreeai.os.platform.cognition.CognitiveDecision;
-import com.shreeai.os.platform.execution.*;
-import com.shreeai.os.platform.production.ResolvedContext;
+import com.shreeai.os.platform.legacy.context.ConversationSession;
+import com.shreeai.os.platform.legacy.cognition.CognitiveDecision;
+import com.shreeai.os.platform.legacy.execution.*;
+import com.shreeai.os.platform.legacy.production.ResolvedContext;
 import org.junit.jupiter.api.Test;
 import com.shreeai.os.platform.validation.ValidationResult;
 import com.shreeai.os.platform.validation.ValidationStatus;

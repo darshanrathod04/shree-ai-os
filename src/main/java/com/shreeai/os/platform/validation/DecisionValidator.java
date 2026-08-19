@@ -1,8 +1,8 @@
 package com.shreeai.os.platform.validation;
 
-import com.shreeai.os.platform.cognition.Thought;
-import com.shreeai.os.platform.context.ConversationSession;
-import com.shreeai.os.platform.production.ResolvedContext;
+import com.shreeai.os.platform.legacy.cognition.Thought;
+import com.shreeai.os.platform.legacy.context.ConversationSession;
+import com.shreeai.os.platform.legacy.production.ResolvedContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;

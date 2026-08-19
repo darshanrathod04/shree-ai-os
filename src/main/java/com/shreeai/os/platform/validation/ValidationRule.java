@@ -1,9 +1,9 @@
 package com.shreeai.os.platform.validation;
 
-import com.shreeai.os.platform.capability.CapabilityRegistry;
-import com.shreeai.os.platform.cognition.Thought;
-import com.shreeai.os.platform.context.ConversationSession;
-import com.shreeai.os.platform.production.ResolvedContext;
+import com.shreeai.os.platform.legacy.capability.CapabilityRegistry;
+import com.shreeai.os.platform.legacy.cognition.Thought;
+import com.shreeai.os.platform.legacy.context.ConversationSession;
+import com.shreeai.os.platform.legacy.production.ResolvedContext;
 
 /**
  * Single validation rule interface.

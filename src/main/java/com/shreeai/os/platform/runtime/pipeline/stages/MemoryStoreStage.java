@@ -96,15 +96,22 @@ public final class MemoryStoreStage implements ExecutionStage {
                     executionId
             );
 
+            // Use a HashMap instead of Map.of() because executionId may be null
+            // when the upstream ActionExecutionStage failed gracefully and
+            // continued without setting an execution identifier.
+            // MemoryContent uses Map.copyOf() internally which rejects null values,
+            // so a non-null fallback is required.
+            String safeExecutionId = executionId != null ? executionId : "none";
+            java.util.Map<String, Object> contentMetadata = new java.util.HashMap<>();
+            contentMetadata.put("requestId", requestId);
+            contentMetadata.put("executionId", safeExecutionId);
+            contentMetadata.put("topics", extractTopics(requestText));
+            contentMetadata.put("concepts", extractConcepts(requestText));
+
             MemoryContent memoryContent = new MemoryContent(
                     memoryText,
                     null, // No embedding
-                    Map.of(
-                            "requestId", requestId,
-                            "executionId", executionId,
-                            "topics", extractTopics(requestText),
-                            "concepts", extractConcepts(requestText)
-                    ),
+                    contentMetadata,
                     Instant.now()
             );
 

@@ -1,6 +1,7 @@
 package com.shreeai.os.platform.sdk;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -17,6 +18,7 @@ public final class SDKResponse {
     private final double confidence;
     private final boolean reasoningAvailable;
     private final String metadata;
+    private final Map<String, Object> structuredPayload;
     private final Instant timestamp;
 
     private SDKResponse(Builder builder) {
@@ -24,6 +26,7 @@ public final class SDKResponse {
         this.confidence = builder.confidence;
         this.reasoningAvailable = builder.reasoningAvailable;
         this.metadata = builder.metadata;
+        this.structuredPayload = builder.structuredPayload;
         this.timestamp = builder.timestamp;
     }
 
@@ -31,6 +34,19 @@ public final class SDKResponse {
     public double confidence() { return confidence; }
     public boolean reasoningAvailable() { return reasoningAvailable; }
     public String metadata() { return metadata; }
+
+    /**
+     * Returns the structured payload attached to this SDK response.
+     *
+     * <p>The structured payload is an additive, backward-compatible extension that
+     * carries rich structured data (e.g. an {@code IntelligenceContext} with evidence,
+     * provenance, and project profile) alongside the legacy flat {@code answer} string.
+     * It is empty when no structured data was supplied.</p>
+     *
+     * @return the structured payload map (never null, may be empty)
+     */
+    public Map<String, Object> structuredPayload() { return structuredPayload; }
+
     public Instant timestamp() { return timestamp; }
 
     public static Builder builder() { return new Builder(); }
@@ -40,6 +56,7 @@ public final class SDKResponse {
         private double confidence = 0.0;
         private boolean reasoningAvailable = false;
         private String metadata = "";
+        private Map<String, Object> structuredPayload = Map.of();
         private Instant timestamp = Instant.now();
 
         private Builder() {}
@@ -64,6 +81,19 @@ public final class SDKResponse {
 
         public Builder metadata(String metadata) {
             this.metadata = Objects.requireNonNull(metadata, "metadata must not be null");
+            return this;
+        }
+
+        /**
+         * Sets the structured payload map (defensively copied).
+         *
+         * @param structuredPayload the structured payload
+         * @return this builder
+         */
+        public Builder structuredPayload(Map<String, Object> structuredPayload) {
+            this.structuredPayload = structuredPayload != null
+                    ? Map.copyOf(structuredPayload)
+                    : Map.of();
             return this;
         }
 

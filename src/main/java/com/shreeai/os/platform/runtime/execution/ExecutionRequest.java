@@ -1,6 +1,9 @@
 package com.shreeai.os.platform.runtime.execution;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -23,12 +26,18 @@ public final class ExecutionRequest {
     private final String requestId;
     private final String requestType;
     private final String payload;
+    private final String context;
+    private final Map<String, Object> metadata;
     private final Instant createdAt;
 
     private ExecutionRequest(Builder builder) {
         this.requestId = builder.requestId;
         this.requestType = builder.requestType;
         this.payload = builder.payload;
+        this.context = builder.context;
+        this.metadata = builder.metadata != null
+                ? Collections.unmodifiableMap(new HashMap<>(builder.metadata))
+                : Collections.emptyMap();
         this.createdAt = builder.createdAt;
     }
 
@@ -60,6 +69,24 @@ public final class ExecutionRequest {
     }
 
     /**
+     * Returns the context for this request.
+     *
+     * @return the context
+     */
+    public String context() {
+        return context;
+    }
+
+    /**
+     * Returns the metadata for this request.
+     *
+     * @return the metadata
+     */
+    public Map<String, Object> metadata() {
+        return metadata;
+    }
+
+    /**
      * Returns the timestamp when this request was created.
      *
      * @return the creation timestamp
@@ -85,6 +112,8 @@ public final class ExecutionRequest {
         private String requestId;
         private String requestType;
         private String payload;
+        private String context = "";
+        private Map<String, Object> metadata = new HashMap<>();
         private Instant createdAt;
 
         private Builder() {
@@ -120,6 +149,28 @@ public final class ExecutionRequest {
          */
         public Builder payload(String payload) {
             this.payload = payload;
+            return this;
+        }
+
+        /**
+         * Sets the context.
+         *
+         * @param context the context
+         * @return this builder
+         */
+        public Builder context(String context) {
+            this.context = context != null ? context : "";
+            return this;
+        }
+
+        /**
+         * Sets the metadata.
+         *
+         * @param metadata the metadata
+         * @return this builder
+         */
+        public Builder metadata(Map<String, Object> metadata) {
+            this.metadata = metadata != null ? new HashMap<>(metadata) : new HashMap<>();
             return this;
         }
 

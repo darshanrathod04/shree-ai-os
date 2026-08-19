@@ -1,13 +1,13 @@
 package com.shreeai.os.platform;
 
 import com.shreeai.os.ShreeAiOsApplication;
-import com.shreeai.os.platform.autonomy.GoalManager;
-import com.shreeai.os.platform.brain.IntentEngine;
-import com.shreeai.os.platform.context.ConversationManager;
-import com.shreeai.os.platform.context.LessonEngine;
-import com.shreeai.os.platform.context.LessonState;
-import com.shreeai.os.platform.memory.UserProfile;
-import com.shreeai.os.platform.personality.PersonalityEngine;
+import com.shreeai.os.platform.legacy.autonomy.GoalManager;
+import com.shreeai.os.platform.legacy.brain.IntentEngine;
+import com.shreeai.os.platform.legacy.context.ConversationManager;
+import com.shreeai.os.platform.legacy.context.LessonEngine;
+import com.shreeai.os.platform.legacy.context.LessonState;
+import com.shreeai.os.platform.legacy.memory.UserProfile;
+import com.shreeai.os.platform.legacy.personality.PersonalityEngine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

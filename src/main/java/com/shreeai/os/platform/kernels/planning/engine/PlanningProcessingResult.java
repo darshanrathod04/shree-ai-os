@@ -33,14 +33,17 @@ import com.shreeai.os.platform.kernels.planning.model.Task;
  *
  * <p><b>Constitutional Authority:</b> EIO-PLAN-106, EIO-ARCH-001</p>
  *
- * @param successful     whether the processing succeeded
- * @param processedAt    the timestamp when processing occurred
- * @param metadata       additional processing metadata
- * @param objective      the planning objective (may be {@code null})
- * @param goals          the list of generated goals (may be {@code null})
- * @param tasks          the list of generated tasks (may be {@code null})
- * @param schedule       the generated schedule (may be {@code null})
- * @param priorities     the list of generated priorities (may be {@code null})
+ * <p><b>Fields:</b></p>
+ * <ul>
+ *   <li><b>successful</b> — whether processing succeeded.</li>
+ *   <li><b>processedAt</b> — timestamp when processing occurred.</li>
+ *   <li><b>metadata</b> — additional processing metadata.</li>
+ *   <li><b>objective</b> — planning objective, if available.</li>
+ *   <li><b>goals</b> — generated goals, if available.</li>
+ *   <li><b>tasks</b> — generated tasks, if available.</li>
+ *   <li><b>schedule</b> — generated schedule, if available.</li>
+ *   <li><b>priorities</b> — generated priorities, if available.</li>
+ * </ul>
  */
 public final class PlanningProcessingResult {
 

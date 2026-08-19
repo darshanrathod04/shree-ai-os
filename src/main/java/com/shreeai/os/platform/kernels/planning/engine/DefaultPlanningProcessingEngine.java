@@ -82,21 +82,24 @@ public final class DefaultPlanningProcessingEngine implements PlanningProcessing
      */
     @Override
     public List<Goal> processGoalPlanning(PlanningObjective objective) {
-        Objects.requireNonNull(objective, "PlanningObjective must not be null");
-
-        // Deterministic transformation: create goals from objective
-        List<Goal> goals = new ArrayList<>();
-        
-        // Create a single goal representing the objective
-        Goal goal = new Goal(
-                new PlanningId("goal-" + objective.planningId().value()),
+        Objects.requireNonNull(
                 objective,
-                new GoalConstraints(Map.of(), Map.of(), Map.of(), Map.of()),
-                Map.of("source", "objective")
+                "PlanningObjective must not be null"
         );
-        goals.add(goal);
 
-        return goals;
+        PlanningIntelligenceEngine intelligenceEngine =
+                new PlanningIntelligenceEngine();
+
+        PlanningIntelligenceEngine.PlanningAnalysis analysis =
+                intelligenceEngine.analyze(
+                        objective
+                );
+
+        return analysis.goal() == null
+                ? List.of()
+                : List.of(
+                analysis.goal()
+        );
     }
 
     /**
@@ -124,26 +127,19 @@ public final class DefaultPlanningProcessingEngine implements PlanningProcessing
      */
     @Override
     public List<Task> processTaskPlanning(List<Goal> goals) {
-        Objects.requireNonNull(goals, "Goals must not be null");
+        Objects.requireNonNull(
+                goals,
+                "Goals must not be null"
+        );
 
-        // Deterministic transformation: create tasks from goals
-        List<Task> tasks = new ArrayList<>();
-        int taskIndex = 1;
+        PlanningIntelligenceEngine intelligenceEngine =
+                new PlanningIntelligenceEngine();
 
-        for (Goal goal : goals) {
-            // Create a task for each goal
-            Task task = new Task(
-                    new PlanningId("task-" + taskIndex),
-                    "Task for goal: " + goal.planningId().value(),
-                    new TaskRequirements(Map.of(), Map.of(), Map.of(), Map.of()),
-                    new Priority("MEDIUM", "HIGH", "HIGH", Map.of()),
-                    Map.of("sourceGoal", goal.planningId().value())
-            );
-            tasks.add(task);
-            taskIndex++;
-        }
-
-        return tasks;
+        return intelligenceEngine
+                .analyzeGoals(
+                        goals
+                )
+                .tasks();
     }
 
     /**
@@ -171,17 +167,16 @@ public final class DefaultPlanningProcessingEngine implements PlanningProcessing
      */
     @Override
     public Schedule processScheduling(List<Task> tasks) {
-        Objects.requireNonNull(tasks, "Tasks must not be null");
-
-        // Deterministic transformation: create schedule from tasks
-        Map<String, String> metadata = new HashMap<>();
-        metadata.put("taskCount", String.valueOf(tasks.size()));
-
-        return new Schedule(
+        Objects.requireNonNull(
                 tasks,
-                new SchedulingConstraints(Map.of(), Map.of(), Map.of(), Map.of()),
-                List.of(),
-                metadata
+                "Tasks must not be null"
+        );
+
+        PlanningIntelligenceEngine intelligenceEngine =
+                new PlanningIntelligenceEngine();
+
+        return intelligenceEngine.schedule(
+                tasks
         );
     }
 
@@ -210,17 +205,17 @@ public final class DefaultPlanningProcessingEngine implements PlanningProcessing
      */
     @Override
     public List<Priority> processPrioritization(List<Task> tasks) {
-        Objects.requireNonNull(tasks, "Tasks must not be null");
+        Objects.requireNonNull(
+                tasks,
+                "Tasks must not be null"
+        );
 
-        // Deterministic transformation: create priorities from tasks
-        List<Priority> priorities = new ArrayList<>();
+        PlanningIntelligenceEngine intelligenceEngine =
+                new PlanningIntelligenceEngine();
 
-        for (Task task : tasks) {
-            // Use the task's existing priority
-            priorities.add(task.priority());
-        }
-
-        return priorities;
+        return intelligenceEngine.prioritize(
+                tasks
+        );
     }
 
     /**

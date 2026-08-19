@@ -1,9 +1,9 @@
 package com.shreeai.os.platform.runtime.pipeline;
 
-import com.shreeai.os.platform.cognition.CognitiveDecision;
-import com.shreeai.os.platform.execution.ExecutionRequest;
-import com.shreeai.os.platform.execution.ExecutionMetadata;
-import com.shreeai.os.platform.production.ResolvedContext;
+import com.shreeai.os.platform.legacy.cognition.CognitiveDecision;
+import com.shreeai.os.platform.legacy.execution.ExecutionRequest;
+import com.shreeai.os.platform.legacy.execution.ExecutionMetadata;
+import com.shreeai.os.platform.legacy.production.ResolvedContext;
 import com.shreeai.os.platform.validation.ValidationResult;
 
 import java.time.Instant;

@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.verification;
 
+import com.shreeai.os.platform.legacy.execution.ExecutionRequest;
 import com.shreeai.os.platform.runtime.api.Runtime;
 import com.shreeai.os.platform.runtime.execution.ExecutionSession;
 import com.shreeai.os.platform.runtime.pipeline.DefaultExecutionPipeline;
@@ -134,8 +135,8 @@ public class SDKToRuntimePipelineIntegrationTest {
         DefaultExecutionPipeline pipeline = (DefaultExecutionPipeline) runtime.pipeline();
 
         // Build a PipelineContext with a real execution request
-        com.shreeai.os.platform.execution.ExecutionRequest pipelineRequest =
-                com.shreeai.os.platform.execution.ExecutionRequest.builder()
+        ExecutionRequest pipelineRequest =
+                ExecutionRequest.builder()
                         .requestId("pipeline-test-1")
                         .decisionId("test-decision")
                         .capabilityName("CHAT")

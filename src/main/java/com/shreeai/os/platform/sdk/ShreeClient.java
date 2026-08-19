@@ -1,5 +1,7 @@
 package com.shreeai.os.platform.sdk;
 
+import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
+import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
 import com.shreeai.os.platform.runtime.api.Runtime;
 import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
 import com.shreeai.os.platform.runtime.execution.ExecutionResult;
@@ -7,6 +9,7 @@ import com.shreeai.os.platform.runtime.execution.ExecutionSession;
 import com.shreeai.os.platform.sdk.exceptions.SDKException;
 import com.shreeai.os.platform.sdk.exceptions.ValidationException;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -58,11 +61,24 @@ public final class ShreeClient {
         }
 
         try {
-            // Create ExecutionRequest from SDKRequest
+            // Build the structured IntelligenceContext from the SDK request,
+            // preserving project profile, evidence, intent, objective, constraints,
+            // session ID and user ID as first-class structured fields.
+            IntelligenceContext intelligenceContext = IntelligenceContextBuilder.fromSdkRequest(request);
+
+            // Create ExecutionRequest from SDKRequest, preserving context, metadata,
+            // and session/request ID so downstream stages receive the full payload.
+            // The structured intelligence context is carried in the metadata map
+            // under the reserved key so it survives the runtime bridge.
+            var requestMetadata = new java.util.HashMap<String, Object>(request.metadata());
+            requestMetadata.put("intelligenceContext", intelligenceContext);
+
             ExecutionRequest executionRequest = ExecutionRequest.builder()
                     .requestId(request.sessionId())
                     .requestType("CHAT")
                     .payload(request.message())
+                    .context(request.context())
+                    .metadata(requestMetadata)
                     .build();
 
             // Submit to Runtime if available
@@ -82,12 +98,14 @@ public final class ShreeClient {
                 );
             }
 
-            // Convert ExecutionResult to SDKResponse
+            // Convert ExecutionResult to SDKResponse, preserving any structured payload
+            // so rich intelligence context reaches the developer application.
             return SDKResponse.builder()
                     .answer(executionResult.output().orElse("No output"))
                     .confidence(executionResult.isSuccess() ? 1.0 : 0.0)
                     .reasoningAvailable(executionResult.isSuccess())
                     .metadata("sdk-version:" + configuration.version())
+                    .structuredPayload(executionResult.structuredPayload())
                     .build();
         } catch (SDKException e) {
             throw e;

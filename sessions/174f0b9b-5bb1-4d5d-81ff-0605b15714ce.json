@@ -1,0 +1,85 @@
+{
+  "sessionId" : "174f0b9b-5bb1-4d5d-81ff-0605b15714ce",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : null,
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : null,
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1786990712.549362800,
+    "lastUpdated" : 1786990712.549362800,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "remainingQuestions" : 0,
+    "totalQuestions" : 0,
+    "currentQuestion" : null,
+    "inProgress" : false
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1786990712.549362800,
+  "lastAccessedAt" : 1786990712.553363900,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "goal: Learn Python",
+    "timestamp" : 1786990712.551364600,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "Goal accepted. Shree is now working autonomously.",
+    "timestamp" : 1786990712.553363900,
+    "intent" : null
+  } ],
+  "messageCount" : 2,
+  "summary" : "USER: goal: Learn Python\nAI: Goal accepted. Shree is now working autonomously.\n",
+  "expired" : false,
+  "firstMessage" : "goal: Learn Python"
+}

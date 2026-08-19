@@ -1,8 +1,7 @@
 package com.shreeai.os.platform.runtime.pipeline;
 
-import com.shreeai.os.platform.runtime.execution.ExecutionPipeline;
-import com.shreeai.os.platform.runtime.execution.ExecutionResult;
-import com.shreeai.os.platform.runtime.execution.ExecutionContext;
+import com.shreeai.os.platform.legacy.execution.ExecutionRequest;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -106,8 +105,8 @@ public final class DefaultExecutionPipeline implements com.shreeai.os.platform.r
 
         try {
             // Convert runtime.execution.ExecutionRequest to execution.ExecutionRequest for PipelineContext
-            com.shreeai.os.platform.execution.ExecutionRequest pipelineRequest = 
-                com.shreeai.os.platform.execution.ExecutionRequest.builder()
+            ExecutionRequest pipelineRequest =
+                ExecutionRequest.builder()
                     .requestId(request.requestId())
                     .userInput(request.payload())
                     .build();

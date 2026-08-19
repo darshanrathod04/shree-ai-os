@@ -1,5 +1,7 @@
 package com.shreeai.os.platform.runtime.pipeline.stages;
 
+import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
+import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
@@ -44,10 +46,39 @@ public final class ContextStage implements ExecutionStage {
             String contextId = "ctx-" + System.currentTimeMillis();
             String contextType = "EXECUTION_CONTEXT";
 
+            // Build the structured IntelligenceContext from the request metadata.
+            // If the SDK provided an intelligence context, it is preserved intact.
+            // Otherwise a minimal context is constructed so downstream kernels
+            // always receive structured context instead of only a raw String.
+            IntelligenceContext intelligenceContext = null;
+            if (context.getExecutionRequest() != null
+                    && context.getExecutionRequest().getMetadata() != null) {
+                Object supplied = context.getExecutionRequest().getMetadata()
+                        .getCustomValue("intelligenceContext");
+                if (supplied instanceof IntelligenceContext ic) {
+                    intelligenceContext = ic;
+                }
+            }
+
+            if (intelligenceContext == null && context.getExecutionRequest() != null) {
+                // No structured context supplied; build a minimal one from the
+                // request so the pipeline always has structured context available.
+                intelligenceContext = IntelligenceContextBuilder.fromExecution(
+                        context.getExecutionRequest().getRequestId(),
+                        context.getExecutionRequest().getUserInput() != null
+                                ? context.getExecutionRequest().getUserInput()
+                                : "",
+                        java.util.Map.of()
+                );
+            }
+
             // Store context information in state
             state.addMetadata("contextId", contextId);
             state.addMetadata("contextType", contextType);
             state.addMetadata("contextBuilt", true);
+            if (intelligenceContext != null) {
+                state.addMetadata("intelligenceContext", intelligenceContext);
+            }
             state.addMessage("Context built: " + contextId + " for identity " + identityId);
 
             // Continue to next stage

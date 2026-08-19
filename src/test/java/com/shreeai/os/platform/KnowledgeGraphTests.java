@@ -1,7 +1,7 @@
 package com.shreeai.os.platform;
 
 import com.shreeai.os.ShreeAiOsApplication;
-import com.shreeai.os.platform.graph.*;
+import com.shreeai.os.platform.legacy.graph.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

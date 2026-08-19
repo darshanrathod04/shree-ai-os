@@ -6,10 +6,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import com.shreeai.os.platform.planning.AutonomousPlanningEngine;
-import com.shreeai.os.platform.planning.ExecutionPlan;
-import com.shreeai.os.platform.planning.ExecutionTask;
-import com.shreeai.os.platform.planning.PlanMilestone;
+import com.shreeai.os.platform.legacy.planning.AutonomousPlanningEngine;
+import com.shreeai.os.platform.legacy.planning.ExecutionPlan;
+import com.shreeai.os.platform.legacy.planning.ExecutionTask;
+import com.shreeai.os.platform.legacy.planning.PlanMilestone;
 
 import java.io.File;
 import java.util.List;

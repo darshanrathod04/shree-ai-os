@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+# Frontend projects
+/shree-ai-os-web/
+/shree-ai-os-website/
