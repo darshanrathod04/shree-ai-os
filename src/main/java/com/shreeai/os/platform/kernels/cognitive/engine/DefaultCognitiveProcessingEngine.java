@@ -63,6 +63,9 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
     private final LearningIntelligenceEngine learningIntelligenceEngine =
             new LearningIntelligenceEngine();
 
+    private final AdaptationIntelligenceEngine adaptationIntelligenceEngine =
+            new AdaptationIntelligenceEngine();
+
     /**
      * Processes a reasoning request.
      *
@@ -735,6 +738,9 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
         LearningIntelligenceEngine.LearningAnalysis learningAnalysis =
                 learningIntelligenceEngine.analyze(analysis);
 
+        AdaptationIntelligenceEngine.AdaptationAnalysis adaptationAnalysis =
+                adaptationIntelligenceEngine.analyze(learningAnalysis);
+
         /*
          * Preserve the existing CognitiveProcessingResult contract while
          * exposing structured reflection intelligence through metadata.
@@ -746,6 +752,8 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
                 "operation",
                 "reflection"
         );
+
+
 
         metadata.put(
                 "learningIntelligenceVersion",
@@ -820,6 +828,91 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
         metadata.put(
                 "learningAnalysis",
                 learningAnalysis
+        );
+
+        metadata.put(
+                "adaptationIntelligenceVersion",
+                "1.0"
+        );
+
+        metadata.put(
+                "adaptationType",
+                adaptationAnalysis.adaptationType().name()
+        );
+
+        metadata.put(
+                "adaptationPriority",
+                adaptationAnalysis.priority().name()
+        );
+
+        metadata.put(
+                "adaptationConfidence",
+                adaptationAnalysis.confidence()
+        );
+
+        metadata.put(
+                "adaptationConfidenceBand",
+                adaptationAnalysis.confidenceBand()
+        );
+
+        metadata.put(
+                "adaptationSafeToPropose",
+                adaptationAnalysis.safeToPropose()
+        );
+
+        metadata.put(
+                "detectedAdaptationPatterns",
+                adaptationAnalysis.detectedPatterns()
+        );
+
+        metadata.put(
+                "proposedAdaptationChanges",
+                adaptationAnalysis.proposedChanges()
+        );
+
+        metadata.put(
+                "adaptationAffectedLayers",
+                adaptationAnalysis.affectedLayers()
+        );
+
+        metadata.put(
+                "adaptationRationale",
+                adaptationAnalysis.rationale()
+        );
+
+        metadata.put(
+                "adaptationConstraints",
+                adaptationAnalysis.constraints()
+        );
+
+        metadata.put(
+                "adaptationSafetyConditions",
+                adaptationAnalysis.safetyConditions()
+        );
+
+        metadata.put(
+                "adaptationRollbackGuidance",
+                adaptationAnalysis.rollbackGuidance()
+        );
+
+        metadata.put(
+                "adaptationFutureGuidance",
+                adaptationAnalysis.futureGuidance()
+        );
+
+        metadata.put(
+                "adaptationSignals",
+                adaptationAnalysis.adaptationSignals()
+        );
+
+        metadata.put(
+                "adaptationAnalysisMetadata",
+                adaptationAnalysis.metadata()
+        );
+
+        metadata.put(
+                "adaptationAnalysis",
+                adaptationAnalysis
         );
 
         metadata.put(
@@ -924,6 +1017,11 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
         result.put(
                 "status",
                 "reflectionCompleted"
+        );
+
+        result.put(
+                "adaptation",
+                adaptationAnalysis
         );
 
         result.put(
