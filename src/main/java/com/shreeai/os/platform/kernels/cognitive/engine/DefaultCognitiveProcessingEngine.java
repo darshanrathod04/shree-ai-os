@@ -66,6 +66,9 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
     private final AdaptationIntelligenceEngine adaptationIntelligenceEngine =
             new AdaptationIntelligenceEngine();
 
+    private final ReplanningIntelligenceEngine replanningIntelligenceEngine =
+            new ReplanningIntelligenceEngine();
+
     /**
      * Processes a reasoning request.
      *
@@ -741,6 +744,9 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
         AdaptationIntelligenceEngine.AdaptationAnalysis adaptationAnalysis =
                 adaptationIntelligenceEngine.analyze(learningAnalysis);
 
+        ReplanningIntelligenceEngine.ReplanningAnalysis replanningAnalysis =
+                replanningIntelligenceEngine.analyze(adaptationAnalysis);
+
         /*
          * Preserve the existing CognitiveProcessingResult contract while
          * exposing structured reflection intelligence through metadata.
@@ -1005,6 +1011,86 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
                 analysis
         );
 
+        metadata.put(
+                "replanningIntelligenceVersion",
+                "1.0"
+        );
+
+        metadata.put(
+                "replanningRequired",
+                replanningAnalysis.replanningRequired()
+        );
+
+        metadata.put(
+                "replanningPriority",
+                replanningAnalysis.priority().name()
+        );
+
+        metadata.put(
+                "replanningConfidence",
+                replanningAnalysis.confidence()
+        );
+
+        metadata.put(
+                "replanningConfidenceBand",
+                replanningAnalysis.confidenceBand()
+        );
+
+        metadata.put(
+                "safeToReplan",
+                replanningAnalysis.safeToReplan()
+        );
+
+        metadata.put(
+                "replanningTriggers",
+                replanningAnalysis.triggers()
+        );
+
+        metadata.put(
+                "proposedPlanChanges",
+                replanningAnalysis.proposedPlanChanges()
+        );
+
+        metadata.put(
+                "preservedPlanningConstraints",
+                replanningAnalysis.preservedConstraints()
+        );
+
+        metadata.put(
+                "replanningRequiredEvidence",
+                replanningAnalysis.requiredEvidence()
+        );
+
+        metadata.put(
+                "replanningRisks",
+                replanningAnalysis.risks()
+        );
+
+        metadata.put(
+                "replanningRollbackGuidance",
+                replanningAnalysis.rollbackGuidance()
+        );
+
+        metadata.put(
+                "nextPlanningGuidance",
+                replanningAnalysis.nextPlanningGuidance()
+        );
+
+        metadata.put(
+                "replanningSignals",
+                replanningAnalysis.replanningSignals()
+        );
+
+        metadata.put(
+                "replanningAnalysisMetadata",
+                replanningAnalysis.metadata()
+        );
+
+        metadata.put(
+                "replanningAnalysis",
+                replanningAnalysis
+        );
+
 
 
         /*
@@ -1022,6 +1108,11 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
         result.put(
                 "adaptation",
                 adaptationAnalysis
+        );
+
+        result.put(
+                "replanning",
+                replanningAnalysis
         );
 
         result.put(
