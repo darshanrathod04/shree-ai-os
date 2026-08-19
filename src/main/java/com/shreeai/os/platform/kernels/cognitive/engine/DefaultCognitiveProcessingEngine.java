@@ -2,6 +2,7 @@ package com.shreeai.os.platform.kernels.cognitive.engine;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.shreeai.os.platform.kernels.cognitive.model.CognitiveState;
@@ -58,6 +59,9 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
     private DefaultCognitiveProcessingEngine() {
         // Prevent instantiation
     }
+
+    private final LearningIntelligenceEngine learningIntelligenceEngine =
+            new LearningIntelligenceEngine();
 
     /**
      * Processes a reasoning request.
@@ -728,6 +732,9 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
                         state
                 );
 
+        LearningIntelligenceEngine.LearningAnalysis learningAnalysis =
+                learningIntelligenceEngine.analyze(analysis);
+
         /*
          * Preserve the existing CognitiveProcessingResult contract while
          * exposing structured reflection intelligence through metadata.
@@ -738,6 +745,81 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
         metadata.put(
                 "operation",
                 "reflection"
+        );
+
+        metadata.put(
+                "learningIntelligenceVersion",
+                "1.0"
+        );
+
+        metadata.put(
+                "learningType",
+                learningAnalysis.learningType().name()
+        );
+
+        metadata.put(
+                "learningPriority",
+                learningAnalysis.priority().name()
+        );
+
+        metadata.put(
+                "learningConfidence",
+                learningAnalysis.confidence()
+        );
+
+        metadata.put(
+                "learningConfidenceBand",
+                learningAnalysis.confidenceBand()
+        );
+
+        metadata.put(
+                "learningPatterns",
+                learningAnalysis.patterns()
+        );
+
+        metadata.put(
+                "successfulStrategies",
+                learningAnalysis.successfulStrategies()
+        );
+
+        metadata.put(
+                "failurePatterns",
+                learningAnalysis.failurePatterns()
+        );
+
+        metadata.put(
+                "knowledgeGaps",
+                learningAnalysis.knowledgeGaps()
+        );
+
+        metadata.put(
+                "behavioralSignals",
+                learningAnalysis.behavioralSignals()
+        );
+
+        metadata.put(
+                "adaptationRecommendations",
+                learningAnalysis.adaptationRecommendations()
+        );
+
+        metadata.put(
+                "futureDecisionGuidance",
+                learningAnalysis.futureDecisionGuidance()
+        );
+
+        metadata.put(
+                "learningSignals",
+                learningAnalysis.learningSignals()
+        );
+
+        metadata.put(
+                "learningAnalysisMetadata",
+                learningAnalysis.metadata()
+        );
+
+        metadata.put(
+                "learningAnalysis",
+                learningAnalysis
         );
 
         metadata.put(
@@ -830,6 +912,8 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
                 analysis
         );
 
+
+
         /*
          * Result payload intentionally contains the structured intelligence
          * rather than a generic "reflected" marker.
@@ -906,6 +990,52 @@ public final class DefaultCognitiveProcessingEngine implements CognitiveProcessi
                 "intelligence",
                 analysis.metadata()
         );
+
+        Map<String, Object> learningResult =
+                new LinkedHashMap<>();
+
+        learningResult.put("type",
+                learningAnalysis.learningType().name());
+
+        learningResult.put("priority",
+                learningAnalysis.priority().name());
+
+        learningResult.put("confidence",
+                learningAnalysis.confidence());
+
+        learningResult.put("confidenceBand",
+                learningAnalysis.confidenceBand());
+
+        learningResult.put("patterns",
+                learningAnalysis.patterns());
+
+        learningResult.put("successfulStrategies",
+                learningAnalysis.successfulStrategies());
+
+        learningResult.put("failurePatterns",
+                learningAnalysis.failurePatterns());
+
+        learningResult.put("knowledgeGaps",
+                learningAnalysis.knowledgeGaps());
+
+        learningResult.put("behavioralSignals",
+                learningAnalysis.behavioralSignals());
+
+        learningResult.put("adaptationRecommendations",
+                learningAnalysis.adaptationRecommendations());
+
+        learningResult.put("futureDecisionGuidance",
+                learningAnalysis.futureDecisionGuidance());
+
+        learningResult.put("learningSignals",
+                learningAnalysis.learningSignals());
+
+        learningResult.put("metadata",
+                learningAnalysis.metadata());
+
+        result.put("learning", Map.copyOf(learningResult));
+
+
 
         return new CognitiveProcessingResult(
                 true,
