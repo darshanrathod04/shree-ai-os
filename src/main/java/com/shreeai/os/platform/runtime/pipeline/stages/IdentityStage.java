@@ -1,77 +1,93 @@
 package com.shreeai.os.platform.runtime.pipeline.stages;
 
-import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
-import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
-import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
-import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
-import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
-import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
+import com.shreeai.os.platform.kernels.identity.api.IdentityType;
+import com.shreeai.os.platform.kernels.identity.model.IdentityContext;
+import com.shreeai.os.platform.kernels.identity.model.IdentityId;
+import com.shreeai.os.platform.runtime.pipeline.*;
+
+import java.time.Instant;
 
 /**
- * IdentityStage - Resolves and validates the agent identity.
+ * IdentityStage
  *
- * <p>This stage is responsible for:</p>
- * <ul>
- *   <li>Resolving the agent identity from the execution request</li>
- *   <li>Validating identity permissions and capabilities</li>
- *   <li>Setting identity context for downstream stages</li>
- * </ul>
- *
- * <p>This is part of the real kernel execution pipeline for Shree AI OS.</p>
- *
- * @author Shree AI OS Team
- * @version 1.0
- * @since Engineering Gate 3
+ * Resolves the canonical runtime identity for every execution request.
+ * No fabricated metadata. Downstream kernels receive IdentityContext.
  */
 public final class IdentityStage implements ExecutionStage {
 
-    private static final PipelineStageDescriptor DESCRIPTOR = PipelineStageDescriptor.builder()
-            .stageName("Identity")
-            .priority(1)
-            .enabled(true)
-            .version("1.0")
-            .description("Resolves and validates agent identity")
-            .build();
-
-    @Override
-    public PipelineResult process(PipelineContext context, ExecutionChain chain, PipelineExecutionState state) {
-        try {
-            String requestId = context.getExecutionRequest() != null 
-                    ? context.getExecutionRequest().getRequestId() 
-                    : "unknown";
-
-            // Simulate identity resolution
-            String identityId = "agent-" + requestId;
-            String identityType = "PRIMARY_AGENT";
-
-            // Update context with identity information
-            PipelineContext updatedContext = PipelineContext.builder()
-                    .pipelineId(context.getPipelineId())
-                    .executionRequest(context.getExecutionRequest())
-                    .decision(context.getDecision())
-                    .validationResult(context.getValidationResult())
-                    .executionMetadata(context.getExecutionMetadata())
-                    .resolvedContext(context.getResolvedContext())
-                    .addAttribute("identityId", identityId)
-                    .addAttribute("identityType", identityType)
-                    .addAttribute("identityResolved", true)
-                    .timestamp(context.getTimestamp())
+    private static final PipelineStageDescriptor DESCRIPTOR =
+            PipelineStageDescriptor.builder()
+                    .stageName("Identity")
+                    .priority(1)
+                    .enabled(true)
+                    .version("2.0")
+                    .description("Resolves canonical runtime identity")
                     .build();
 
-            // Store identity information in state
-            state.addMetadata("identityId", identityId);
-            state.addMetadata("identityType", identityType);
-            state.addMessage("Identity resolved: " + identityId + " (" + identityType + ")");
+    @Override
+    public PipelineResult process(
+            PipelineContext context,
+            ExecutionChain chain,
+            PipelineExecutionState state
+    ) {
 
-            // Continue to next stage with updated context
-            return chain.next(updatedContext, state);
+        try {
+
+            String requestId =
+                    context.getExecutionRequest() != null
+                            ? context.getExecutionRequest().getRequestId()
+                            : "UNKNOWN";
+
+            String sessionId =
+                    context.getExecutionRequest() != null &&
+                            context.getExecutionRequest().getSession() != null
+                            ? context.getExecutionRequest()
+                            .getSession()
+                            .getSessionId()
+                            .toString()
+                            : "RUNTIME";
+
+            IdentityContext identity =
+                    IdentityContext.builder()
+                            .identityId(new IdentityId("agent-" + requestId))
+                            .identityType(IdentityType.AGENT)
+                            .sessionId(sessionId)
+                            .applicationId("SHREE_RUNTIME")
+                            .workspaceId("DEFAULT")
+                            .authenticated(true)
+                            .resolvedAt(Instant.now())
+                            .build();
+
+            PipelineContext updated =
+                    PipelineContext.builder()
+                            .pipelineId(context.getPipelineId())
+                            .executionRequest(context.getExecutionRequest())
+                            .decision(context.getDecision())
+                            .validationResult(context.getValidationResult())
+                            .executionMetadata(context.getExecutionMetadata())
+                            .resolvedContext(context.getResolvedContext())
+                            .attributes(context.getAttributes())
+                            .addAttribute("identityContext", identity)
+                            .timestamp(context.getTimestamp())
+                            .build();
+
+            state.addMetadata("identityContext", identity);
+            state.addMetadata("identityId", identity.identityId().value());
+            state.addMetadata("identityType", identity.identityType().name());
+
+            state.addMessage(
+                    "Identity resolved → " + identity.identityId().value());
+
+            return chain.next(updated, state);
 
         } catch (Exception e) {
+
             state.markFailure("Identity resolution failed: " + e.getMessage());
+
             return PipelineResult.builder()
                     .success(false)
                     .status("IDENTITY_FAILED")
-                    .addMessage("Identity stage failed: " + e.getMessage())
+                    .addMessage(e.getMessage())
                     .build();
         }
     }
