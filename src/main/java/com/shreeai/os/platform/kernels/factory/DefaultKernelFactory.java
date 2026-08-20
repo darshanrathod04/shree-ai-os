@@ -1,67 +1,94 @@
 package com.shreeai.os.platform.kernels.factory;
 
-import com.shreeai.os.platform.kernels.planning.api.PlanningService;
-import com.shreeai.os.platform.kernels.execution.api.ExecutionService;
 import com.shreeai.os.platform.kernels.chief.api.ChiefService;
+import com.shreeai.os.platform.kernels.chief.engine.DefaultChiefProcessingEngine;
+import com.shreeai.os.platform.kernels.chief.service.DefaultChiefService;
+import com.shreeai.os.platform.kernels.chief.validation.ChiefValidator;
+import com.shreeai.os.platform.kernels.execution.api.ExecutionService;
+import com.shreeai.os.platform.kernels.execution.engine.DefaultExecutionProcessingEngine;
+import com.shreeai.os.platform.kernels.execution.service.DefaultExecutionService;
+import com.shreeai.os.platform.kernels.execution.validation.ExecutionValidator;
+import com.shreeai.os.platform.kernels.planning.api.PlanningService;
+import com.shreeai.os.platform.kernels.planning.engine.DefaultPlanningProcessingEngine;
+import com.shreeai.os.platform.kernels.planning.service.DefaultPlanningService;
+import com.shreeai.os.platform.kernels.planning.validation.PlanningValidator;
+
+import java.util.Objects;
 
 /**
- * <b>DefaultKernelFactory</b>
+ * Default composition root for all kernel services.
  *
- * <p>Default implementation of KernelFactory that creates kernel service instances
- * with their required dependencies (validators, engines, etc.).</p>
- *
- * <p>This factory lives in the Kernel layer and handles the construction details,
- * allowing the Runtime layer to obtain kernel services through the KernelFactory
- * interface without knowing the internal construction details.</p>
- *
- * <p><b>Architectural Responsibility:</b></p>
- * <ul>
- *   <li>Creates kernel service instances with proper dependencies</li>
- *   <li>Hides validator/engine construction from Runtime layer</li>
- *   <li>Maintains kernel layer encapsulation</li>
- * </ul>
- *
- * <p><b>Ownership:</b> Kernel Layer</p>
- * <p><b>Version:</b> 1.0</p>
- *
- * @author Shree AI OS Team
- * @since 1.0
+ * Thread-safe singleton kernel construction.
  */
 public final class DefaultKernelFactory implements KernelFactory {
 
-    /**
-     * Creates a new DefaultKernelFactory.
-     *
-     * <p>This factory is stateless and thread-safe.</p>
-     */
+    private final PlanningService planningService;
+    private final ExecutionService executionService;
+    private final ChiefService chiefService;
+
     public DefaultKernelFactory() {
+
+        // Planning
+        PlanningValidator planningValidator =
+                new PlanningValidator();
+
+        DefaultPlanningProcessingEngine planningEngine =
+                new DefaultPlanningProcessingEngine();
+
+        this.planningService =
+                new DefaultPlanningService(
+                        planningValidator,
+                        planningEngine
+                );
+
+        // Execution
+        ExecutionValidator executionValidator =
+                new ExecutionValidator();
+
+        DefaultExecutionProcessingEngine executionEngine =
+                new DefaultExecutionProcessingEngine();
+
+        this.executionService =
+                new DefaultExecutionService(
+                        executionValidator,
+                        executionEngine
+                );
+
+        // Chief
+        ChiefValidator chiefValidator =
+                new ChiefValidator();
+
+        DefaultChiefProcessingEngine chiefEngine =
+                new DefaultChiefProcessingEngine();
+
+        this.chiefService =
+                new DefaultChiefService(
+                        chiefValidator,
+                        chiefEngine
+                );
+
+        validateComposition();
+    }
+
+    private void validateComposition() {
+
+        Objects.requireNonNull(planningService);
+        Objects.requireNonNull(executionService);
+        Objects.requireNonNull(chiefService);
     }
 
     @Override
     public PlanningService createPlanningService() {
-        throw new UnsupportedOperationException(
-                "PlanningService construction requires a PlanningValidator instance, " +
-                "but PlanningValidator is a static utility class with no public constructor. " +
-                "PlanningStage contract does not support PlanningService injection."
-        );
+        return planningService;
     }
 
     @Override
     public ExecutionService createExecutionService() {
-        throw new UnsupportedOperationException(
-                "ExecutionService construction requires ExecutionValidator and " +
-                "DefaultExecutionProcessingEngine instances, but both are static utility " +
-                "classes with no public constructors. ActionExecutionStage contract does " +
-                "not support ExecutionService injection."
-        );
+        return executionService;
     }
 
     @Override
     public ChiefService createChiefService() {
-        throw new UnsupportedOperationException(
-                "ChiefService construction requires a ChiefValidator instance, " +
-                "but ChiefValidator is a static utility class with no public constructor. " +
-                "ChiefReviewStage contract does not support ChiefService injection."
-        );
+        return chiefService;
     }
 }
