@@ -34,11 +34,12 @@ import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeRankingService;
 import com.shreeai.os.platform.kernels.knowledge.service.DefaultKnowledgeService;
 import com.shreeai.os.platform.kernels.cognitive.engine.DefaultReasoningEngine;
 import com.shreeai.os.platform.kernels.inference.engine.DefaultInferenceEngine;
-import com.shreeai.os.platform.kernels.chief.service.DefaultChiefService;
-import com.shreeai.os.platform.kernels.chief.validation.ChiefValidator;
-import com.shreeai.os.platform.kernels.execution.engine.DefaultExecutionProcessingEngine;
-import com.shreeai.os.platform.kernels.execution.service.DefaultExecutionService;
-import com.shreeai.os.platform.kernels.execution.validation.ExecutionValidator;
+import com.shreeai.os.platform.kernels.factory.KernelFactory;
+import com.shreeai.os.platform.kernels.factory.DefaultKernelFactory;
+import com.shreeai.os.platform.kernels.planning.api.PlanningService;
+import com.shreeai.os.platform.kernels.execution.api.ExecutionService;
+import com.shreeai.os.platform.kernels.chief.api.ChiefService;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,12 +65,14 @@ import java.util.Objects;
  */
 public final class DefaultRuntimeService extends AbstractRuntimeService implements Runtime {
 
+
     private final RuntimeConfiguration configuration;
     private final RuntimeContract contract;
     private final List<ExecutionStage> stages;
     private RuntimeLifecycle lifecycle;
     private com.shreeai.os.platform.runtime.pipeline.ExecutionPipeline pipeline;
-    
+    private final KernelFactory kernelFactory;
+
     /**
      * Constructs a new DefaultRuntimeService with the given configuration and contract.
      *
@@ -80,7 +83,9 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
         this.contract = Objects.requireNonNull(contract, "contract must not be null");
         this.stages = new ArrayList<>();
-        
+
+        this.kernelFactory = new DefaultKernelFactory();
+
         // Initialize with real kernel execution stages
         initializeStages();
     }
@@ -92,10 +97,16 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
      * @param contract      the runtime contract (must not be null)
      * @param stages        the execution pipeline stages (must not be null)
      */
-    public DefaultRuntimeService(RuntimeConfiguration configuration, RuntimeContract contract, List<ExecutionStage> stages) {
+    public DefaultRuntimeService(
+            RuntimeConfiguration configuration,
+            RuntimeContract contract,
+            List<ExecutionStage> stages
+    ) {
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
         this.contract = Objects.requireNonNull(contract, "contract must not be null");
-        this.stages = new ArrayList<>(Objects.requireNonNull(stages, "stages must not be null"));
+        this.stages = new ArrayList<>(Objects.requireNonNull(stages));
+
+        this.kernelFactory = new DefaultKernelFactory();
     }
     
     /**
@@ -116,50 +127,90 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
      * </ol>
      */
     private void initializeStages() {
-        // Initialize real Memory Kernel services
+
+        // ==========================================================
+        // Memory Kernel
+        // ==========================================================
+
         MemoryValidator memoryValidator = new MemoryValidator();
-        DefaultMemoryProcessingEngine memoryProcessingEngine = new DefaultMemoryProcessingEngine();
-        DefaultMemoryService memoryService = new DefaultMemoryService(memoryValidator, memoryProcessingEngine);
+        DefaultMemoryProcessingEngine memoryProcessingEngine =
+                new DefaultMemoryProcessingEngine();
+
+        DefaultMemoryService memoryService =
+                new DefaultMemoryService(
+                        memoryValidator,
+                        memoryProcessingEngine
+                );
+
         MemoryQueryService memoryQueryService = memoryService;
         MemorySearchService memorySearchService = memoryService;
-        MemoryRankingService memoryRankingService = new MemoryRankingService();
+        MemoryRankingService memoryRankingService =
+                new MemoryRankingService();
 
-        // Initialize real Knowledge Kernel services
-        DefaultKnowledgeProcessingEngine knowledgeProcessingEngine = new DefaultKnowledgeProcessingEngine();
-        DefaultKnowledgeService knowledgeService = new DefaultKnowledgeService(knowledgeProcessingEngine);
+        // ==========================================================
+        // Knowledge Kernel
+        // ==========================================================
+
+        DefaultKnowledgeProcessingEngine knowledgeEngine =
+                new DefaultKnowledgeProcessingEngine();
+
+        DefaultKnowledgeService knowledgeService =
+                new DefaultKnowledgeService(knowledgeEngine);
+
         KnowledgeQueryService knowledgeQueryService = knowledgeService;
         KnowledgeSearchService knowledgeSearchService = knowledgeService;
-        KnowledgeRankingService knowledgeRankingService = new KnowledgeRankingService();
+        KnowledgeRankingService knowledgeRankingService =
+                new KnowledgeRankingService();
 
-        // Initialize cognitive services for real reasoning kernel integration
-        DefaultReasoningEngine reasoningEngine = new DefaultReasoningEngine();
+        // ==========================================================
+        // Cognitive Kernels
+        // ==========================================================
 
-        // Initialize inference services for real inference kernel integration
-        DefaultInferenceEngine inferenceEngine = new DefaultInferenceEngine();
+        DefaultReasoningEngine reasoningEngine =
+                new DefaultReasoningEngine();
 
-        // Initialize planning services for real planning kernel integration
-        com.shreeai.os.platform.kernels.planning.validation.PlanningValidator planningValidator =
-                new com.shreeai.os.platform.kernels.planning.validation.PlanningValidator();
-        com.shreeai.os.platform.kernels.planning.engine.DefaultPlanningProcessingEngine planningProcessingEngine =
-                new com.shreeai.os.platform.kernels.planning.engine.DefaultPlanningProcessingEngine();
-        com.shreeai.os.platform.kernels.planning.service.DefaultPlanningService planningService =
-                new com.shreeai.os.platform.kernels.planning.service.DefaultPlanningService(planningValidator, planningProcessingEngine);
+        DefaultInferenceEngine inferenceEngine =
+                new DefaultInferenceEngine();
 
-        // Initialize execution services for real execution kernel integration
-        ExecutionValidator executionValidator = new ExecutionValidator();
-        DefaultExecutionProcessingEngine executionProcessingEngine = new DefaultExecutionProcessingEngine();
-        DefaultExecutionService executionService = new DefaultExecutionService(executionValidator, executionProcessingEngine);
+        // ==========================================================
+        // Kernel Composition Root
+        // Runtime NEVER constructs Planning/Execution/Chief directly.
+        // ==========================================================
 
-        // Initialize chief services for real chief kernel integration
-        ChiefValidator chiefValidator = new ChiefValidator();
-        com.shreeai.os.platform.kernels.chief.engine.DefaultChiefProcessingEngine chiefProcessingEngine =
-                new com.shreeai.os.platform.kernels.chief.engine.DefaultChiefProcessingEngine();
-        DefaultChiefService chiefService = new DefaultChiefService(chiefValidator, chiefProcessingEngine);
+        PlanningService planningService =
+                kernelFactory.createPlanningService();
+
+        ExecutionService executionService =
+                kernelFactory.createExecutionService();
+
+        ChiefService chiefService =
+                kernelFactory.createChiefService();
+
+        // ==========================================================
+        // Canonical 10-Stage Runtime Pipeline
+        // ==========================================================
+
+        stages.clear();
 
         stages.add(new IdentityStage());
         stages.add(new ContextStage());
-        stages.add(new MemoryRecallStage(memoryQueryService, memorySearchService, memoryRankingService));
-        stages.add(new KnowledgeStage(knowledgeQueryService, knowledgeSearchService, knowledgeRankingService));
+
+        stages.add(
+                new MemoryRecallStage(
+                        memoryQueryService,
+                        memorySearchService,
+                        memoryRankingService
+                )
+        );
+
+        stages.add(
+                new KnowledgeStage(
+                        knowledgeQueryService,
+                        knowledgeSearchService,
+                        knowledgeRankingService
+                )
+        );
+
         stages.add(new ReasoningStage(reasoningEngine));
         stages.add(new InferenceStage(inferenceEngine));
         stages.add(new PlanningStage(planningService));
