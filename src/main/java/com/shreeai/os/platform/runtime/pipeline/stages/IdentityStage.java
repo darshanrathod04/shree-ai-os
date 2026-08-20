@@ -1,18 +1,15 @@
 package com.shreeai.os.platform.runtime.pipeline.stages;
 
-import com.shreeai.os.platform.kernels.identity.api.IdentityType;
+import com.shreeai.os.platform.kernels.identity.engine.DefaultIdentityProcessingEngine;
 import com.shreeai.os.platform.kernels.identity.model.IdentityContext;
-import com.shreeai.os.platform.kernels.identity.model.IdentityId;
-import com.shreeai.os.platform.runtime.pipeline.*;
+import com.shreeai.os.platform.kernels.identity.validation.IdentityValidator;
+import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
+import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
+import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
+import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
+import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
+import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
 
-import java.time.Instant;
-
-/**
- * IdentityStage
- *
- * Resolves the canonical runtime identity for every execution request.
- * No fabricated metadata. Downstream kernels receive IdentityContext.
- */
 public final class IdentityStage implements ExecutionStage {
 
     private static final PipelineStageDescriptor DESCRIPTOR =
@@ -20,9 +17,18 @@ public final class IdentityStage implements ExecutionStage {
                     .stageName("Identity")
                     .priority(1)
                     .enabled(true)
-                    .version("2.0")
-                    .description("Resolves canonical runtime identity")
+                    .version("3.0")
+                    .description("Canonical Identity Kernel entry point")
                     .build();
+
+    private final DefaultIdentityProcessingEngine processingEngine;
+
+    public IdentityStage() {
+        this.processingEngine =
+                new DefaultIdentityProcessingEngine(
+                        new IdentityValidator()
+                );
+    }
 
     @Override
     public PipelineResult process(
@@ -48,15 +54,12 @@ public final class IdentityStage implements ExecutionStage {
                             : "RUNTIME";
 
             IdentityContext identity =
-                    IdentityContext.builder()
-                            .identityId(new IdentityId("agent-" + requestId))
-                            .identityType(IdentityType.AGENT)
-                            .sessionId(sessionId)
-                            .applicationId("SHREE_RUNTIME")
-                            .workspaceId("DEFAULT")
-                            .authenticated(true)
-                            .resolvedAt(Instant.now())
-                            .build();
+                    processingEngine.resolve(
+                            requestId,
+                            sessionId,
+                            "SHREE_RUNTIME",
+                            "DEFAULT"
+                    );
 
             PipelineContext updated =
                     PipelineContext.builder()
@@ -74,9 +77,13 @@ public final class IdentityStage implements ExecutionStage {
             state.addMetadata("identityContext", identity);
             state.addMetadata("identityId", identity.identityId().value());
             state.addMetadata("identityType", identity.identityType().name());
+            state.addMetadata("applicationId", identity.applicationId());
+            state.addMetadata("workspaceId", identity.workspaceId());
 
             state.addMessage(
-                    "Identity resolved → " + identity.identityId().value());
+                    "Identity Kernel resolved → " +
+                            identity.identityId().value()
+            );
 
             return chain.next(updated, state);
 
