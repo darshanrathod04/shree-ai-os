@@ -5,6 +5,7 @@ import com.shreeai.os.platform.runtime.api.Runtime;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * <b>ShreeAI</b>
@@ -150,5 +151,19 @@ public final class ShreeAI {
      */
     public ExecutionSDK execution() {
         return execution;
+    }
+
+    /**
+     * Asynchronous chat.
+     */
+    public CompletableFuture<SDKResponse> chatAsync(String message) {
+        return client.chatAsync(message);
+    }
+
+    /**
+     * Asynchronous structured request.
+     */
+    public CompletableFuture<SDKResponse> chatAsync(SDKRequest request) {
+        return client.chatAsync(request);
     }
 }

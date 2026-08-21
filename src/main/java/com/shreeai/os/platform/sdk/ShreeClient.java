@@ -9,6 +9,7 @@ import com.shreeai.os.platform.runtime.execution.ExecutionSession;
 import com.shreeai.os.platform.sdk.exceptions.SDKException;
 import com.shreeai.os.platform.sdk.exceptions.ValidationException;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.Map;
 import java.util.Objects;
 
@@ -42,6 +43,22 @@ public final class ShreeClient {
                 .message(message)
                 .build();
         return chat(request);
+    }
+
+    /**
+     * Asynchronous chat execution.
+     *
+     * Executes the same canonical Runtime pipeline on a background thread.
+     */
+    public CompletableFuture<SDKResponse> chatAsync(String message) {
+        return CompletableFuture.supplyAsync(() -> chat(message));
+    }
+
+    /**
+     * Asynchronous structured request execution.
+     */
+    public CompletableFuture<SDKResponse> chatAsync(SDKRequest request) {
+        return CompletableFuture.supplyAsync(() -> chat(request));
     }
 
     /**

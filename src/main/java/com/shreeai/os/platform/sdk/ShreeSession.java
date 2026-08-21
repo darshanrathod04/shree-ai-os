@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public final class ShreeSession {
 
@@ -43,5 +44,19 @@ public final class ShreeSession {
                         .build();
 
         return client.chat(request);
+    }
+
+    /**
+     * Continue the conversation asynchronously.
+     */
+    public CompletableFuture<SDKResponse> chatAsync(String message) {
+
+        SDKRequest request = SDKRequest.builder()
+                .sessionId(sessionId)
+                .message(message)
+                .metadata(metadata)
+                .build();
+
+        return client.chatAsync(request);
     }
 }
