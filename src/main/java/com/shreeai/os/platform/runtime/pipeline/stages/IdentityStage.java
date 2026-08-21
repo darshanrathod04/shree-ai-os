@@ -1,15 +1,25 @@
 package com.shreeai.os.platform.runtime.pipeline.stages;
 
-import com.shreeai.os.platform.kernels.identity.engine.DefaultIdentityProcessingEngine;
+import com.shreeai.os.platform.kernels.identity.api.IdentityService;
 import com.shreeai.os.platform.kernels.identity.model.IdentityContext;
-import com.shreeai.os.platform.kernels.identity.validation.IdentityValidator;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
 import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
 import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
+import com.shreeai.os.platform.kernels.identity.engine.DefaultIdentityProcessingEngine;
+import com.shreeai.os.platform.kernels.identity.service.DefaultIdentityService;
+import com.shreeai.os.platform.kernels.identity.validation.IdentityValidator;
 
+import java.util.Objects;
+
+/**
+ * IdentityStage
+ *
+ * Runtime orchestration only.
+ * All identity resolution is delegated to the Identity Kernel.
+ */
 public final class IdentityStage implements ExecutionStage {
 
     private static final PipelineStageDescriptor DESCRIPTOR =
@@ -17,17 +27,35 @@ public final class IdentityStage implements ExecutionStage {
                     .stageName("Identity")
                     .priority(1)
                     .enabled(true)
-                    .version("3.0")
-                    .description("Canonical Identity Kernel entry point")
+                    .version("4.0")
+                    .description("Delegates identity resolution to Identity Kernel")
                     .build();
 
-    private final DefaultIdentityProcessingEngine processingEngine;
+    private final IdentityService identityService;
 
+
+    /**
+     * Runtime constructor (Dependency Injection)
+     */
+    public IdentityStage(IdentityService identityService) {
+        this.identityService = Objects.requireNonNull(
+                identityService,
+                "IdentityService must not be null"
+        );
+    }
+
+    /**
+     * Backward-compatible constructor for tests.
+     * Delegates to the canonical Identity Kernel.
+     */
     public IdentityStage() {
-        this.processingEngine =
-                new DefaultIdentityProcessingEngine(
-                        new IdentityValidator()
-                );
+        this(
+                new DefaultIdentityService(
+                        new DefaultIdentityProcessingEngine(
+                                new IdentityValidator()
+                        )
+                )
+        );
     }
 
     @Override
@@ -45,23 +73,31 @@ public final class IdentityStage implements ExecutionStage {
                             : "UNKNOWN";
 
             String sessionId =
-                    context.getExecutionRequest() != null &&
-                            context.getExecutionRequest().getSession() != null
+                    context.getExecutionRequest() != null
+                            && context.getExecutionRequest().getSession() != null
                             ? context.getExecutionRequest()
                             .getSession()
                             .getSessionId()
                             .toString()
                             : "RUNTIME";
 
+            // ==========================================================
+            // Delegate to Identity Kernel
+            // ==========================================================
+
             IdentityContext identity =
-                    processingEngine.resolve(
+                    identityService.resolveIdentity(
                             requestId,
                             sessionId,
                             "SHREE_RUNTIME",
                             "DEFAULT"
                     );
 
-            PipelineContext updated =
+            // ==========================================================
+            // Propagate canonical identity
+            // ==========================================================
+
+            PipelineContext updatedContext =
                     PipelineContext.builder()
                             .pipelineId(context.getPipelineId())
                             .executionRequest(context.getExecutionRequest())
@@ -85,11 +121,13 @@ public final class IdentityStage implements ExecutionStage {
                             identity.identityId().value()
             );
 
-            return chain.next(updated, state);
+            return chain.next(updatedContext, state);
 
         } catch (Exception e) {
 
-            state.markFailure("Identity resolution failed: " + e.getMessage());
+            state.markFailure(
+                    "Identity resolution failed: " + e.getMessage()
+            );
 
             return PipelineResult.builder()
                     .success(false)

@@ -39,7 +39,7 @@ import com.shreeai.os.platform.kernels.factory.DefaultKernelFactory;
 import com.shreeai.os.platform.kernels.planning.api.PlanningService;
 import com.shreeai.os.platform.kernels.execution.api.ExecutionService;
 import com.shreeai.os.platform.kernels.chief.api.ChiefService;
-
+import com.shreeai.os.platform.kernels.identity.api.IdentityService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -172,6 +172,9 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         DefaultInferenceEngine inferenceEngine =
                 new DefaultInferenceEngine();
 
+
+        IdentityService identityService =
+                kernelFactory.createIdentityService();
         // ==========================================================
         // Kernel Composition Root
         // Runtime NEVER constructs Planning/Execution/Chief directly.
@@ -192,7 +195,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
         stages.clear();
 
-        stages.add(new IdentityStage());
+        stages.add(new IdentityStage(identityService));
         stages.add(new ContextStage());
 
         stages.add(

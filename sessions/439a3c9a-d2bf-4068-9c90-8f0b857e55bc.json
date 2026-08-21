@@ -1,0 +1,85 @@
+{
+  "sessionId" : "439a3c9a-d2bf-4068-9c90-8f0b857e55bc",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1787286929.171904500,
+    "lastUpdated" : 1787286929.171904500,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "remainingQuestions" : 0,
+    "completed" : false,
+    "inProgress" : false,
+    "currentQuestion" : null,
+    "totalQuestions" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1787286929.171904500,
+  "lastAccessedAt" : 1787286935.394161500,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "test message",
+    "timestamp" : 1787286929.174909800,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hey there! It sounds like you're looking to understand how to get started with something new. If you want to get comfortable with a particular topic or skill, we can definitely create a learning plan together. Just let me know what you're interested in, and we can outline some steps and resources to get you on the right path. How does that sound? Take your time.",
+    "timestamp" : 1787286935.394161500,
+    "intent" : null
+  } ],
+  "messageCount" : 2,
+  "firstMessage" : "test message",
+  "summary" : "USER: test message\nAI: \uD83D\uDE0A Hey there! It sounds like you're looking to und...\n",
+  "expired" : false
+}
