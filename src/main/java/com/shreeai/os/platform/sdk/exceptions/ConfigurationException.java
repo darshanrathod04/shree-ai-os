@@ -1,20 +1,29 @@
 package com.shreeai.os.platform.sdk.exceptions;
 
+import com.shreeai.os.platform.sdk.SDKErrorCode;
+import com.shreeai.os.platform.sdk.SDKException;
+
 /**
- * <b>ConfigurationException</b>
- *
- * <p>Thrown when SDK configuration is invalid.</p>
- *
- * <p><b>Ownership:</b> SDK</p>
- * <p><b>Version:</b> 1.0.0-V1</p>
+ * SDK configuration failure.
  */
-public class ConfigurationException extends SDKException {
+public final class ConfigurationException extends SDKException {
 
     public ConfigurationException(String message) {
-        super(message);
+        super(
+                SDKErrorCode.VALIDATION_ERROR,
+                "Configuration",
+                null,
+                message
+        );
     }
 
     public ConfigurationException(String message, Throwable cause) {
-        super(message, cause);
+        super(
+                SDKErrorCode.VALIDATION_ERROR,
+                "Configuration",
+                null,
+                message,
+                cause
+        );
     }
 }

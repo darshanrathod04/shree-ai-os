@@ -1,20 +1,29 @@
 package com.shreeai.os.platform.sdk.exceptions;
 
+import com.shreeai.os.platform.sdk.SDKErrorCode;
+import com.shreeai.os.platform.sdk.SDKException;
+
 /**
- * <b>ValidationException</b>
- *
- * <p>Thrown when SDK request validation fails.</p>
- *
- * <p><b>Ownership:</b> SDK</p>
- * <p><b>Version:</b> 1.0.0-V1</p>
+ * SDK validation failure.
  */
-public class ValidationException extends SDKException {
+public final class ValidationException extends SDKException {
 
     public ValidationException(String message) {
-        super(message);
+        super(
+                SDKErrorCode.VALIDATION_ERROR,
+                "Validation",
+                null,
+                message
+        );
     }
 
     public ValidationException(String message, Throwable cause) {
-        super(message, cause);
+        super(
+                SDKErrorCode.VALIDATION_ERROR,
+                "Validation",
+                null,
+                message,
+                cause
+        );
     }
 }

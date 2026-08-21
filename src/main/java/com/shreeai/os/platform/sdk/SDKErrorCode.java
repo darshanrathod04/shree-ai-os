@@ -1,0 +1,22 @@
+package com.shreeai.os.platform.sdk;
+
+/**
+ * Canonical SDK error codes.
+ */
+public enum SDKErrorCode {
+
+    IDENTITY_FAILED,
+    CONTEXT_FAILED,
+    MEMORY_FAILED,
+    KNOWLEDGE_FAILED,
+    REASONING_FAILED,
+    INFERENCE_FAILED,
+    PLANNING_FAILED,
+    EXECUTION_FAILED,
+    MEMORY_STORE_FAILED,
+    CHIEF_REVIEW_FAILED,
+
+    VALIDATION_ERROR,
+    RUNTIME_ERROR,
+    UNKNOWN
+}

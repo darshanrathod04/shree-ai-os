@@ -5,15 +5,13 @@ import com.shreeai.os.platform.sdk.SDKRequest;
 import com.shreeai.os.platform.sdk.SDKResponse;
 import com.shreeai.os.platform.sdk.ShreeAI;
 import com.shreeai.os.platform.sdk.ShreeClient;
-import com.shreeai.os.platform.sdk.exceptions.ConfigurationException;
-import com.shreeai.os.platform.sdk.exceptions.SDKException;
 import com.shreeai.os.platform.sdk.exceptions.ValidationException;
 import com.shreeai.os.platform.sdk.version.SDKVersion;
+import com.shreeai.os.platform.sdk.SDKException;
+
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
-
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
