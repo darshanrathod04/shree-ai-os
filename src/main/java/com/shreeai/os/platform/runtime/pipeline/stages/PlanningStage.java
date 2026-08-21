@@ -15,11 +15,17 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
 import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
 import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
+import com.shreeai.os.platform.sdk.events.EventType;
+import com.shreeai.os.platform.sdk.events.RuntimeEvent;
+import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
+
+import java.time.Instant;
+import java.util.Map;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+
 
 /**
  * PlanningStage - Converts upstream cognitive intelligence into an
@@ -608,12 +614,25 @@ public final class PlanningStage implements ExecutionStage {
              * -------------------------------------------------------------
              */
 
-            return chain.next(
+            publishPlanningEvent(
                     context,
-                    state
+                    requestId,
+                    planId,
+                    1
             );
 
+            return chain.next(context, state);
+
         } catch (Exception e) {
+
+            publishPlanningEvent(
+                    context,
+                    context.getExecutionRequest() != null
+                            ? context.getExecutionRequest().getRequestId()
+                            : "unknown",
+                    "FAILED",
+                    0
+            );
 
             state.markFailure(
                     "Planning failed: "
@@ -629,6 +648,32 @@ public final class PlanningStage implements ExecutionStage {
                     )
                     .build();
         }
+    }
+
+    private void publishPlanningEvent(
+            PipelineContext context,
+            String requestId,
+            String planId,
+            int stepCount
+    ) {
+        Object value = context.getAttribute("runtimeEventBus");
+
+        if (!(value instanceof RuntimeEventBus bus)) {
+            return;
+        }
+
+        bus.publish(
+                new RuntimeEvent(
+                        EventType.PLANNING_COMPLETED,
+                        requestId,
+                        "Planning",
+                        Instant.now(),
+                        Map.of(
+                                "planId", planId,
+                                "stepCount", stepCount
+                        )
+                )
+        );
     }
 
     /**
