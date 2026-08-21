@@ -10,6 +10,12 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
 import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
 import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
+import com.shreeai.os.platform.sdk.events.EventType;
+import com.shreeai.os.platform.sdk.events.RuntimeEvent;
+import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
+
+import java.time.Instant;
+import java.util.Map;
 
 import java.util.List;
 
@@ -63,8 +69,6 @@ public final class ReasoningStage implements ExecutionStage {
     public PipelineResult process(PipelineContext context, ExecutionChain chain, PipelineExecutionState state) {
         try {
             // Retrieve memory and knowledge information from previous stages
-            String knowledgeId = (String) state.getMetadata().get("knowledgeId");
-            String memoryId = (String) state.getMetadata().get("memoryId");
             String requestId = context.getExecutionRequest() != null 
                     ? context.getExecutionRequest().getRequestId() 
                     : "unknown";
@@ -108,11 +112,26 @@ public final class ReasoningStage implements ExecutionStage {
             state.addMetadata("reasoningCompleted", true);
             state.addMessage("Reasoning completed: " + result.conclusion());
 
-            // Continue to next stage
+            publishReasoningEvent(
+                    context,
+                    requestId,
+                    "COGNITIVE"
+            );
+
             return chain.next(context, state);
 
         } catch (Exception e) {
+
+            publishReasoningEvent(
+                    context,
+                    context.getExecutionRequest() != null
+                            ? context.getExecutionRequest().getRequestId()
+                            : "unknown",
+                    "FAILED"
+            );
+
             state.markFailure("Reasoning failed: " + e.getMessage());
+
             return PipelineResult.builder()
                     .success(false)
                     .status("REASONING_FAILED")
@@ -124,5 +143,29 @@ public final class ReasoningStage implements ExecutionStage {
     @Override
     public PipelineStageDescriptor getDescriptor() {
         return DESCRIPTOR;
+    }
+
+    private void publishReasoningEvent(
+            PipelineContext context,
+            String requestId,
+            String reasoningMode
+    ) {
+        Object value = context.getAttribute("runtimeEventBus");
+
+        if (!(value instanceof RuntimeEventBus bus)) {
+            return;
+        }
+
+        bus.publish(
+                new RuntimeEvent(
+                        EventType.REASONING_COMPLETED,
+                        requestId,
+                        "Reasoning",
+                        Instant.now(),
+                        Map.of(
+                                "reasoningMode", reasoningMode
+                        )
+                )
+        );
     }
 }
