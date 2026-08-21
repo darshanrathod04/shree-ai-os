@@ -1,36 +1,36 @@
 {
   "projects" : [ {
-    "id" : "a4ce7a02-6a46-445c-a2bc-74616e8d46b9",
+    "id" : "4cad3306-d6c0-4ba0-b86f-f569520299a8",
     "name" : "Shree AI",
     "description" : null,
     "status" : "PLANNING",
-    "createdAt" : 1787290405.397731000,
-    "updatedAt" : 1787290405.400186000,
+    "createdAt" : 1787291693.416302600,
+    "updatedAt" : 1787291693.419542500,
     "tasks" : [ {
-      "id" : "052f4570-0e61-4ce7-ae43-7c5004eb63fd",
+      "id" : "62bcbe67-36cf-419f-9a8a-8d0d6ec53bda",
       "title" : "Task 1",
       "description" : null,
       "status" : "DONE",
       "priority" : "MEDIUM",
-      "createdAt" : 1787290405.398902300,
-      "completedAt" : 1787290405.400186000
+      "createdAt" : 1787291693.417515200,
+      "completedAt" : 1787291693.419542500
     }, {
-      "id" : "8ba0f69e-62e3-4979-bcfb-0c1e5dbb2fac",
+      "id" : "20cceb56-ed7b-49a8-a1ef-1e3aa7912aea",
       "title" : "Task 2",
       "description" : null,
       "status" : "TODO",
       "priority" : "MEDIUM",
-      "createdAt" : 1787290405.400186000,
+      "createdAt" : 1787291693.418528500,
       "completedAt" : null
     } ],
     "milestones" : [ ],
     "decisions" : [ ],
     "risks" : [ ],
     "summary" : "Shree AI (50%) [PLANNING] | Tasks: 1/2 done",
-    "doneTaskCount" : 1,
     "todoTaskCount" : 1,
+    "doneTaskCount" : 1,
     "unresolvedRiskCount" : 0,
-    "inProgressTaskCount" : 0,
-    "progressPercentage" : 50.0
+    "progressPercentage" : 50.0,
+    "inProgressTaskCount" : 0
   } ]
 }

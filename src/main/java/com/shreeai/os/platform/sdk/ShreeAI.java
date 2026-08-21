@@ -25,12 +25,14 @@ import java.util.Objects;
  */
 public final class ShreeAI {
 
+    private final IdentitySDK identity;
     private final SDKConfiguration configuration;
     private final ShreeClient client;
 
     ShreeAI(SDKConfiguration configuration, Runtime runtime) {
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
         this.client = new ShreeClient(configuration, runtime);
+        this.identity = new IdentitySDK(client);
     }
 
     /**
@@ -105,5 +107,12 @@ public final class ShreeAI {
                 .build();
 
         return client.chat(request);
+    }
+
+    /**
+     * Identity Kernel SDK
+     */
+    public IdentitySDK identity() {
+        return identity;
     }
 }

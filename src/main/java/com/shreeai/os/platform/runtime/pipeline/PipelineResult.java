@@ -3,10 +3,7 @@ package com.shreeai.os.platform.runtime.pipeline;
 import com.shreeai.os.platform.legacy.execution.ExecutionMetadata;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Immutable pipeline result.
@@ -146,33 +143,30 @@ public final class PipelineResult {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof PipelineResult that)) return false;
 
-        PipelineResult that = (PipelineResult) o;
-
-        if (success != that.success) return false;
-        if (processingTime != that.processingTime) return false;
-        if (!resultId.equals(that.resultId)) return false;
-        if (!status.equals(that.status)) return false;
-        if (currentStage != null ? !currentStage.equals(that.currentStage) : that.currentStage != null) return false;
-        if (!completedStages.equals(that.completedStages)) return false;
-        if (!messages.equals(that.messages)) return false;
-        if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) return false;
-        return timestamp.equals(that.timestamp);
+        return success == that.success
+                && processingTime == that.processingTime
+                && Objects.equals(resultId, that.resultId)
+                && Objects.equals(status, that.status)
+                && Objects.equals(currentStage, that.currentStage)
+                && Objects.equals(completedStages, that.completedStages)
+                && Objects.equals(messages, that.messages)
+                && Objects.equals(metadata, that.metadata);
     }
 
     @Override
     public int hashCode() {
-        int result = resultId.hashCode();
-        result = 31 * result + (success ? 1 : 0);
-        result = 31 * result + status.hashCode();
-        result = 31 * result + (currentStage != null ? currentStage.hashCode() : 0);
-        result = 31 * result + completedStages.hashCode();
-        result = 31 * result + (int) (processingTime ^ (processingTime >>> 32));
-        result = 31 * result + messages.hashCode();
-        result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
-        result = 31 * result + timestamp.hashCode();
-        return result;
+        return Objects.hash(
+                resultId,
+                success,
+                status,
+                currentStage,
+                completedStages,
+                processingTime,
+                messages,
+                metadata
+        );
     }
 
     /**
