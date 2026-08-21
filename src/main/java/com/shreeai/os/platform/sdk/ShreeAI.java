@@ -25,6 +25,7 @@ import java.util.Objects;
  */
 public final class ShreeAI {
 
+    private final MemorySDK memory;
     private final IdentitySDK identity;
     private final SDKConfiguration configuration;
     private final ShreeClient client;
@@ -33,6 +34,7 @@ public final class ShreeAI {
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
         this.client = new ShreeClient(configuration, runtime);
         this.identity = new IdentitySDK(client);
+        this.memory = new MemorySDK(client);
     }
 
     /**
@@ -114,5 +116,12 @@ public final class ShreeAI {
      */
     public IdentitySDK identity() {
         return identity;
+    }
+
+    /**
+     * Memory Kernel SDK.
+     */
+    public MemorySDK memory() {
+        return memory;
     }
 }
