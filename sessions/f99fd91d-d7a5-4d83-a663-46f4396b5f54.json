@@ -1,0 +1,85 @@
+{
+  "sessionId" : "f99fd91d-d7a5-4d83-a663-46f4396b5f54",
+  "userId" : "user1",
+  "context" : {
+    "lastIntent" : "GREETING",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1787288349.816319300,
+    "lastUpdated" : 1787288349.816319300,
+    "completedLessonKeys" : [ ],
+    "totalCompletedLessons" : 0
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "inProgress" : false,
+    "currentQuestion" : null,
+    "totalQuestions" : 0,
+    "remainingQuestions" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1787288349.816319300,
+  "lastAccessedAt" : 1787288349.823047700,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "Hello from Session B",
+    "timestamp" : 1787288349.819422900,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.",
+    "timestamp" : 1787288349.823047700,
+    "intent" : null
+  } ],
+  "summary" : "USER: Hello from Session B\nAI: \uD83D\uDE0A Hello \uD83D\uDC4B I am Shree. Take your time.\n",
+  "firstMessage" : "Hello from Session B",
+  "messageCount" : 2,
+  "expired" : false
+}

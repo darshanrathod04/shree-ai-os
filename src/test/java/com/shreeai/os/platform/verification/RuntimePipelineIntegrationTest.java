@@ -1,5 +1,11 @@
        package com.shreeai.os.platform.verification;
 
+       import com.shreeai.os.platform.kernels.factory.DefaultKernelFactory;
+
+       import com.shreeai.os.platform.kernels.identity.api.IdentityService;
+       import com.shreeai.os.platform.kernels.planning.api.PlanningService;
+       import com.shreeai.os.platform.kernels.execution.api.ExecutionService;
+       import com.shreeai.os.platform.kernels.chief.api.ChiefService;
 import com.shreeai.os.platform.runtime.config.RuntimeConfiguration;
 import com.shreeai.os.platform.runtime.contracts.RuntimeContract;
 import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
@@ -69,33 +75,92 @@ public class RuntimePipelineIntegrationTest {
     }
 
     private List<ExecutionStage> buildStages() {
+
         List<ExecutionStage> stageList = new ArrayList<>();
 
-        // Real Memory services
+        // ==========================================================
+        // Canonical Kernel Composition Root
+        // ==========================================================
+
+        DefaultKernelFactory kernelFactory = new DefaultKernelFactory();
+
+        IdentityService identityService =
+                kernelFactory.createIdentityService();
+
+        PlanningService planningService =
+                kernelFactory.createPlanningService();
+
+        ExecutionService executionService =
+                kernelFactory.createExecutionService();
+
+        ChiefService chiefService =
+                kernelFactory.createChiefService();
+
+        // ==========================================================
+        // Memory Kernel
+        // ==========================================================
+
         MemoryValidator memoryValidator = new MemoryValidator();
-        DefaultMemoryProcessingEngine memoryProcessingEngine = new DefaultMemoryProcessingEngine();
-        DefaultMemoryService memoryService = new DefaultMemoryService(memoryValidator, memoryProcessingEngine);
-        MemoryRankingService memoryRankingService = new MemoryRankingService();
 
-        // Real Knowledge services
-        DefaultKnowledgeProcessingEngine knowledgeProcessingEngine = new DefaultKnowledgeProcessingEngine();
-        DefaultKnowledgeService knowledgeService = new DefaultKnowledgeService(knowledgeProcessingEngine);
-        KnowledgeRankingService knowledgeRankingService = new KnowledgeRankingService();
+        DefaultMemoryProcessingEngine memoryProcessingEngine =
+                new DefaultMemoryProcessingEngine();
 
-        // Real engines
-        DefaultReasoningEngine reasoningEngine = new DefaultReasoningEngine();
-        DefaultInferenceEngine inferenceEngine = new DefaultInferenceEngine();
+        DefaultMemoryService memoryService =
+                new DefaultMemoryService(
+                        memoryValidator,
+                        memoryProcessingEngine
+                );
 
-        stageList.add(new IdentityStage());
+        MemoryRankingService memoryRankingService =
+                new MemoryRankingService();
+
+        // ==========================================================
+        // Knowledge Kernel
+        // ==========================================================
+
+        DefaultKnowledgeProcessingEngine knowledgeProcessingEngine =
+                new DefaultKnowledgeProcessingEngine();
+
+        DefaultKnowledgeService knowledgeService =
+                new DefaultKnowledgeService(
+                        knowledgeProcessingEngine
+                );
+
+        KnowledgeRankingService knowledgeRankingService =
+                new KnowledgeRankingService();
+
+        // ==========================================================
+        // Cognitive Engines
+        // ==========================================================
+
+        DefaultReasoningEngine reasoningEngine =
+                new DefaultReasoningEngine();
+
+        DefaultInferenceEngine inferenceEngine =
+                new DefaultInferenceEngine();
+
+        // ==========================================================
+        // Canonical 10-Stage Runtime Pipeline
+        // ==========================================================
+
+        stageList.add(new IdentityStage(identityService));
         stageList.add(new ContextStage());
-        stageList.add(new MemoryRecallStage(memoryService, memoryService, memoryRankingService));
-        stageList.add(new KnowledgeStage(knowledgeService, knowledgeService, knowledgeRankingService));
+        stageList.add(new MemoryRecallStage(
+                memoryService,
+                memoryService,
+                memoryRankingService
+        ));
+        stageList.add(new KnowledgeStage(
+                knowledgeService,
+                knowledgeService,
+                knowledgeRankingService
+        ));
         stageList.add(new ReasoningStage(reasoningEngine));
         stageList.add(new InferenceStage(inferenceEngine));
-        stageList.add(new PlanningStage());
-        stageList.add(new ActionExecutionStage());
+        stageList.add(new PlanningStage(planningService));
+        stageList.add(new ActionExecutionStage(executionService));
         stageList.add(new MemoryStoreStage(memoryService));
-        stageList.add(new ChiefReviewStage());
+        stageList.add(new ChiefReviewStage(chiefService));
 
         return stageList;
     }
@@ -187,5 +252,21 @@ public class RuntimePipelineIntegrationTest {
 
         // Shutdown
         runtime.shutdown();
+    }
+
+    @Test
+    public void testRuntimeUsesKernelFactoryComposition() {
+
+        DefaultKernelFactory factory = new DefaultKernelFactory();
+
+        assertNotNull(factory.createIdentityService());
+        assertNotNull(factory.createPlanningService());
+        assertNotNull(factory.createExecutionService());
+        assertNotNull(factory.createChiefService());
+
+        assertTrue(stages.get(0) instanceof IdentityStage);
+        assertTrue(stages.get(6) instanceof PlanningStage);
+        assertTrue(stages.get(7) instanceof ActionExecutionStage);
+        assertTrue(stages.get(9) instanceof ChiefReviewStage);
     }
 }
