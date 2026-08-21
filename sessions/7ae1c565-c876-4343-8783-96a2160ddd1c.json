@@ -1,0 +1,95 @@
+{
+  "sessionId" : "7ae1c565-c876-4343-8783-96a2160ddd1c",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "WHO_AM_I",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : "Darshan",
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedLessons" : 0,
+    "totalCompletedChapters" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1787288804.163688000,
+    "lastUpdated" : 1787288804.163688000,
+    "totalCompletedLessons" : 0,
+    "completedLessonKeys" : [ ]
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "remainingQuestions" : 0,
+    "currentQuestion" : null,
+    "totalQuestions" : 0,
+    "inProgress" : false
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1787288804.163688000,
+  "lastAccessedAt" : 1787288835.325406600,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "My name is Darshan",
+    "timestamp" : 1787288804.167195300,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A Hello Darshan, it's great to see you again! If you have any questions or need assistance with something, feel free to ask. Whether it's about study materials, project ideas, or just a friendly chat, I'm here to help. Remember, learning is a journey, and I'm here to guide you every step of the way. What can I do for you today?\n\n```markdown\n\n**Topic:** **Mathematics**\n\n**Project Idea:** **Math Problem Solving Challenge**\n\n**Resources:** [Math Problem Solving Tips](http://example.com/math-tips)\n\n```\n\n---\n\n```markdown\n\n**Topic:** **Science**\n\n**Project Idea:** **Astronomy Observation Log**\n\n**Resources:** [Astronomy for Beginners](http://example.com/astronomy-beginners)\n\n```\n\n```\n\n--- Take your time.",
+    "timestamp" : 1787288835.316583500,
+    "intent" : null
+  }, {
+    "role" : "USER",
+    "content" : "Who am I?",
+    "timestamp" : 1787288835.320209500,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "Your name is Darshan.",
+    "timestamp" : 1787288835.325406600,
+    "intent" : null
+  } ],
+  "summary" : "USER: My name is Darshan\nAI: \uD83D\uDE0A Hello Darshan, it's great to see you again! If ...\nUSER: Who am I?\nAI: Your name is Darshan.\n",
+  "messageCount" : 4,
+  "expired" : false,
+  "firstMessage" : "My name is Darshan"
+}

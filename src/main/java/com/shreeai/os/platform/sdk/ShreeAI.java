@@ -78,4 +78,18 @@ public final class ShreeAI {
     public ShreeClient client() {
         return client;
     }
+
+    /**
+     * Creates a persistent SDK conversation session.
+     */
+    public ShreeSession createSession() {
+        return ShreeSession.create(client);
+    }
+
+    /**
+     * Opens an existing session.
+     */
+    public ShreeSession openSession(String sessionId) {
+        return new ShreeSession(sessionId, client);
+    }
 }
