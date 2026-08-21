@@ -3,6 +3,7 @@ package com.shreeai.os.platform.kernels.factory;
 import com.shreeai.os.platform.kernels.planning.api.PlanningService;
 import com.shreeai.os.platform.kernels.execution.api.ExecutionService;
 import com.shreeai.os.platform.kernels.chief.api.ChiefService;
+import com.shreeai.os.platform.kernels.identity.api.IdentityService;
 
 /**
  * <b>KernelFactory</b>
@@ -35,6 +36,7 @@ public interface KernelFactory {
      */
     PlanningService createPlanningService();
 
+    IdentityService createIdentityService();
     /**
      * Creates an ExecutionService instance.
      *

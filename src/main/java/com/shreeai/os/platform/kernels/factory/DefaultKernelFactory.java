@@ -12,6 +12,10 @@ import com.shreeai.os.platform.kernels.planning.api.PlanningService;
 import com.shreeai.os.platform.kernels.planning.engine.DefaultPlanningProcessingEngine;
 import com.shreeai.os.platform.kernels.planning.service.DefaultPlanningService;
 import com.shreeai.os.platform.kernels.planning.validation.PlanningValidator;
+import com.shreeai.os.platform.kernels.identity.api.IdentityService;
+import com.shreeai.os.platform.kernels.identity.engine.DefaultIdentityProcessingEngine;
+import com.shreeai.os.platform.kernels.identity.service.DefaultIdentityService;
+import com.shreeai.os.platform.kernels.identity.validation.IdentityValidator;
 
 import java.util.Objects;
 
@@ -22,11 +26,22 @@ import java.util.Objects;
  */
 public final class DefaultKernelFactory implements KernelFactory {
 
+    private final IdentityService identityService;
     private final PlanningService planningService;
     private final ExecutionService executionService;
     private final ChiefService chiefService;
 
     public DefaultKernelFactory() {
+
+        // Identity Kernel
+        IdentityValidator identityValidator =
+                new IdentityValidator();
+
+        DefaultIdentityProcessingEngine identityEngine =
+                new DefaultIdentityProcessingEngine(identityValidator);
+
+        this.identityService =
+                new DefaultIdentityService(identityEngine);
 
         // Planning
         PlanningValidator planningValidator =
@@ -70,8 +85,14 @@ public final class DefaultKernelFactory implements KernelFactory {
         validateComposition();
     }
 
+    @Override
+    public IdentityService createIdentityService() {
+        return identityService;
+    }
+
     private void validateComposition() {
 
+        Objects.requireNonNull(identityService);
         Objects.requireNonNull(planningService);
         Objects.requireNonNull(executionService);
         Objects.requireNonNull(chiefService);

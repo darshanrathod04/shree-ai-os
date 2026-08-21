@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 
 /**
  * Capability Resolver — SHADOW MODE ONLY.
@@ -48,220 +49,298 @@ import java.util.Optional;
  * @see ResolutionStrategy
  */
 @Component
-public class CapabilityResolver {
+public final class CapabilityResolver {
 
-    private static final Logger log = LoggerFactory.getLogger(CapabilityResolver.class);
-    // Intent match contributes 0.40, so scored capabilities supporting the intent get >= 0.72
-    // Non-supporting capabilities get ~0.22 (priority + health + availability)
+    private static final Logger log =
+            LoggerFactory.getLogger(CapabilityResolver.class);
+
     private static final double DIRECT_MATCH_THRESHOLD = 0.65;
     private static final double PRIORITY_MATCH_THRESHOLD = 0.50;
-    // Below this threshold, no capability truly supports the intent
     private static final double MINIMUM_VALID_SCORE = 0.30;
 
     private final CapabilityRegistry registry;
 
-    /**
-     * Constructor injection only — no field injection, no mutable static state.
-     */
+    /** Immutable snapshot of registered capabilities */
+    private final List<Capability> cachedCapabilities;
+
+    /** Cached default Chat capability */
+    private final Capability defaultChatCapability;
+
     public CapabilityResolver(CapabilityRegistry registry) {
+
         this.registry = registry;
+
+        if (registry == null) {
+            this.cachedCapabilities = List.of();
+            this.defaultChatCapability = null;
+            return;
+        }
+
+        List<Capability> snapshot = List.copyOf(registry.listAll());
+        this.cachedCapabilities = snapshot;
+
+        Capability chat = null;
+
+        for (Capability capability : snapshot) {
+            if ("chat".equalsIgnoreCase(capability.getName())) {
+                chat = capability;
+                break;
+            }
+        }
+
+        this.defaultChatCapability = chat;
     }
 
     /**
-     * Resolve which capability should handle the given intent.
-     * <p>
-     * This is the main entry point. It evaluates all capabilities,
-     * scores them, and returns the best match as an immutable result.
-     * <p>
-     * Shadow mode only — never affects execution.
-     *
-     * @param intent  the detected intent from IntentEngine
-     * @param context the capability context (may be null)
-     * @return immutable CapabilityResolution with selected capability and metadata
+     * Resolve best capability.
      */
-    public CapabilityResolution resolve(String intent, CapabilityContext context) {
+    public CapabilityResolution resolve(
+            String intent,
+            CapabilityContext context
+    ) {
+
+        Objects.requireNonNull(
+                registry,
+                "CapabilityRegistry must not be null"
+        );
+
+
         long startTime = System.nanoTime();
 
-        // Validate input
         if (intent == null || intent.isBlank()) {
-            long elapsed = System.nanoTime() - startTime;
-            log.warn("[RESOLVER] Cannot resolve null/blank intent");
-            return createUnknownResolution(null, elapsed, "");
-        }
-
-        // Get all registered capabilities
-        List<Capability> allCapabilities = registry.listAll();
-        if (allCapabilities.isEmpty()) {
-            long elapsed = System.nanoTime() - startTime;
-            log.warn("[RESOLVER] No capabilities registered for intent: {}", intent);
-            return createUnknownResolution(null, elapsed, intent);
-        }
-
-        // Score all capabilities
-        List<CapabilityResolution.Candidate> scoredCandidates = new ArrayList<>();
-        for (Capability cap : allCapabilities) {
-            double score = CapabilityScorer.score(cap, intent, context);
-            String candidateReason = String.format(
-                    "score=%.2f, priority=%d, health=%s, enabled=%s",
-                    score, cap.getPriority(), cap.getHealthStatus(), cap.isEnabled()
+            return createUnknownResolution(
+                    null,
+                    System.nanoTime() - startTime,
+                    ""
             );
-            scoredCandidates.add(new CapabilityResolution.Candidate(cap, score, candidateReason));
         }
 
-        // Sort by score descending
-        scoredCandidates.sort(Comparator.naturalOrder());
+        if (cachedCapabilities.isEmpty()) {
+            return createUnknownResolution(
+                    null,
+                    System.nanoTime() - startTime,
+                    intent
+            );
+        }
 
-        // Select best candidate
-        CapabilityResolution.Candidate best = scoredCandidates.get(0);
+        List<CapabilityResolution.Candidate> candidates =
+                new ArrayList<>(cachedCapabilities.size());
 
-        // Determine resolution strategy and build result
-        long elapsed = System.nanoTime() - startTime;
-        CapabilityResolution resolution = buildResolution(best, scoredCandidates, intent, elapsed, context);
+        CapabilityResolution.Candidate best = null;
 
-        // Log resolution (observer only)
-        logResolution(resolution, scoredCandidates);
+        for (Capability capability : cachedCapabilities) {
+
+            double score =
+                    CapabilityScorer.score(capability, intent, context);
+
+            CapabilityResolution.Candidate candidate =
+                    new CapabilityResolution.Candidate(
+                            capability,
+                            score,
+                            null
+                    );
+
+            candidates.add(candidate);
+
+            if (best == null || score > best.getScore()) {
+                best = candidate;
+            }
+        }
+
+        candidates.sort(Comparator.naturalOrder());
+        best = candidates.get(0);
+
+        CapabilityResolution resolution =
+                buildResolution(
+                        best,
+                        candidates,
+                        intent,
+                        System.nanoTime() - startTime
+                );
+
+        logResolution(resolution);
 
         return resolution;
     }
 
     /**
-     * Resolve with only intent (no context).
-     * Convenience method for simpler use cases.
+     * Convenience overload.
      */
     public CapabilityResolution resolve(String intent) {
         return resolve(intent, null);
     }
 
     /**
-     * Compare resolver result with actual production handler.
-     * Shadow mode — logs comparison but never changes behavior.
+     * Shadow comparison with production handler.
      */
-    public void compareWithProduction(String intent, CapabilityContext context, String actualHandlerName) {
+    public void compareWithProduction(
+            String intent,
+            CapabilityContext context,
+            String actualHandlerName
+    ) {
+
         CapabilityResolution resolution = resolve(intent, context);
-        String predictedHandler = resolution.isResolved()
-                ? resolution.getSelectedCapability().getName()
-                : "null";
 
-        boolean matches = predictedHandler.equalsIgnoreCase(actualHandlerName);
+        String predicted =
+                resolution.isResolved()
+                        ? resolution.getSelectedCapability().getName()
+                        : "null";
 
-        if (!matches) {
-            log.info("[RESOLVER COMPARE] MISMATCH | intent={} | predicted={} | actual={} | conf={} | strategy={}",
-                    intent, predictedHandler, actualHandlerName,
-                    String.format("%.0f%%", resolution.getConfidence() * 100),
-                    resolution.getStrategy());
+        if (!predicted.equalsIgnoreCase(actualHandlerName)) {
+
+            log.info(
+                    "[RESOLVER COMPARE] intent={} predicted={} actual={} strategy={}",
+                    intent,
+                    predicted,
+                    actualHandlerName,
+                    resolution.getStrategy()
+            );
         }
     }
 
-    // ── Private Helpers ──
+    // ---------------------------------------------------------------------
+    // Internal Resolution
+    // ---------------------------------------------------------------------
 
     private CapabilityResolution buildResolution(
             CapabilityResolution.Candidate best,
             List<CapabilityResolution.Candidate> candidates,
             String intent,
-            long processingTimeNanos,
-            CapabilityContext context) {
+            long processingTime
+    ) {
 
-        Capability bestCap = best.getCapability();
-        double bestScore = best.getScore();
-        ResolutionStrategy strategy;
-        String reason;
-        double confidence;
-        String resolvedCategory;
+        Capability capability = best.getCapability();
+        double score = best.getScore();
 
-        // Determine if this is a direct match (high score, intent supported)
-        boolean directIntentMatch = bestCap.getSupportedIntents().stream()
-                .anyMatch(si -> si.equalsIgnoreCase(intent));
+        boolean directMatch = false;
 
-        if (directIntentMatch && bestScore >= DIRECT_MATCH_THRESHOLD) {
-            strategy = ResolutionStrategy.DIRECT_MATCH;
-            confidence = Math.min(1.0, bestScore);
-            reason = String.format(
-                    "Capability '%s' directly supports intent '%s' with score %.0f%%",
-                    bestCap.getName(), intent, confidence * 100);
-        } else if (bestScore >= PRIORITY_MATCH_THRESHOLD) {
-            strategy = candidates.size() > 1
-                    ? ResolutionStrategy.PRIORITY_SELECTION
-                    : ResolutionStrategy.DIRECT_MATCH;
-            confidence = bestScore;
-            reason = String.format(
-                    "Capability '%s' selected with score %.0f%% over %d candidates",
-                    bestCap.getName(), confidence * 100, candidates.size());
-        } else if (bestScore >= MINIMUM_VALID_SCORE) {
-            strategy = ResolutionStrategy.FALLBACK;
-            confidence = bestScore;
-            reason = String.format(
-                    "Fallback to capability '%s' with score %.0f%% (no strong match)",
-                    bestCap.getName(), bestScore * 100);
-        } else {
-            // Very low scores across all capabilities — use default (Chat if available, or unknown)
-            Optional<Capability> defaultCap = registry.getByName("chat");
-            if (defaultCap.isPresent()) {
-                strategy = ResolutionStrategy.DEFAULT;
-                confidence = 0.3;
-                reason = "No matching capability; defaulting to Chat";
-                bestCap = defaultCap.get();
-            } else {
-                return createUnknownResolution(candidates, processingTimeNanos, intent);
+        for (String supported : capability.getSupportedIntents()) {
+            if (supported.equalsIgnoreCase(intent)) {
+                directMatch = true;
+                break;
             }
         }
 
-        resolvedCategory = deriveCategory(bestCap, intent);
+        ResolutionStrategy strategy;
+        String reason;
+        double confidence;
+
+        if (directMatch && score >= DIRECT_MATCH_THRESHOLD) {
+
+            strategy = ResolutionStrategy.DIRECT_MATCH;
+            confidence = Math.min(score, 1.0);
+
+            reason =
+                    "Direct capability match: "
+                            + capability.getName()
+                            + " -> "
+                            + intent;
+
+        } else if (score >= PRIORITY_MATCH_THRESHOLD) {
+
+            strategy =
+                    candidates.size() > 1
+                            ? ResolutionStrategy.PRIORITY_SELECTION
+                            : ResolutionStrategy.DIRECT_MATCH;
+
+            confidence = score;
+
+            reason =
+                    "Highest priority capability selected: "
+                            + capability.getName();
+
+        } else if (score >= MINIMUM_VALID_SCORE) {
+
+            strategy = ResolutionStrategy.FALLBACK;
+            confidence = score;
+
+            reason =
+                    "Fallback capability: "
+                            + capability.getName();
+
+        } else {
+
+            if (defaultChatCapability == null) {
+                return createUnknownResolution(
+                        candidates,
+                        processingTime,
+                        intent
+                );
+            }
+
+            capability = defaultChatCapability;
+            strategy = ResolutionStrategy.DEFAULT;
+            confidence = 0.30;
+            reason = "Default Chat capability";
+        }
 
         return new CapabilityResolution(
-                bestCap,
+                capability,
                 confidence,
                 reason,
                 strategy,
                 candidates,
-                processingTimeNanos,
+                processingTime,
                 intent,
-                resolvedCategory
+                deriveCategory(capability, intent)
         );
     }
 
     private CapabilityResolution createUnknownResolution(
             List<CapabilityResolution.Candidate> candidates,
-            long processingTimeNanos,
-            String intent) {
+            long processingTime,
+            String intent
+    ) {
 
         return new CapabilityResolution(
                 null,
                 0.0,
                 "No capability found for intent: " + intent,
                 ResolutionStrategy.UNKNOWN,
-                candidates != null ? candidates : List.of(),
-                processingTimeNanos,
+                candidates == null ? List.of() : candidates,
+                processingTime,
                 intent,
                 "UNKNOWN"
         );
     }
 
-    /**
-     * Derive a human-readable category from the capability name.
-     * Future-proof: can be extended with a mapping registry.
-     */
-    private String deriveCategory(Capability capability, String intent) {
-        if (capability == null) return "UNKNOWN";
+    private String deriveCategory(
+            Capability capability,
+            String intent
+    ) {
+
+        if (capability == null) {
+            return "UNKNOWN";
+        }
+
         return switch (capability.getName().toLowerCase()) {
+
             case "learning" -> "LEARNING";
+
             case "quiz" -> "QUIZ";
+
             case "roadmap" -> "PLANNING";
+
             case "chat" -> "CHAT";
+
             default -> intent;
         };
     }
 
-    /**
-     * Log resolver output in the standardized format.
-     */
-    private void logResolution(CapabilityResolution resolution, List<CapabilityResolution.Candidate> candidates) {
-        if (!log.isDebugEnabled()) return;
+    private void logResolution(CapabilityResolution resolution) {
 
-        log.debug("[RESOLVER] Intent: {} | Selected: {} | Strategy: {} | Confidence: {}% | Time: {}μs",
+        if (!log.isDebugEnabled()) {
+            return;
+        }
+
+        log.debug(
+                "[RESOLVER] intent={} selected={} strategy={} time={}us",
                 resolution.getMatchedIntent(),
-                resolution.isResolved() ? resolution.getSelectedCapability().getName() : "null",
+                resolution.isResolved()
+                        ? resolution.getSelectedCapability().getName()
+                        : "null",
                 resolution.getStrategy(),
-                String.format("%.0f", resolution.getConfidence() * 100),
-                resolution.getProcessingTimeNanos() / 1000);
+                resolution.getProcessingTimeNanos() / 1000
+        );
     }
 }
