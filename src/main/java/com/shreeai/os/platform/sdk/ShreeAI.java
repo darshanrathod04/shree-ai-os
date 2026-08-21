@@ -1,11 +1,13 @@
 package com.shreeai.os.platform.sdk;
 
+import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 import com.shreeai.os.platform.sdk.exceptions.ConfigurationException;
 import com.shreeai.os.platform.runtime.api.Runtime;
 import com.shreeai.os.platform.sdk.streaming.StreamingListener;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import com.shreeai.os.platform.sdk.events.EventManager;
 
 /**
  * <b>ShreeAI</b>
@@ -36,7 +38,11 @@ public final class ShreeAI {
 
     ShreeAI(SDKConfiguration configuration, Runtime runtime) {
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
-        this.client = new ShreeClient(configuration, runtime);
+        this.client = new ShreeClient(
+                configuration,
+                runtime,
+                new RuntimeEventBus()
+        );
         this.identity = new IdentitySDK(client);
         this.memory = new MemorySDK(client);
         this.knowledge = new KnowledgeSDK(client);
@@ -178,5 +184,9 @@ public final class ShreeAI {
             StreamingListener listener
     ) {
         client.chatStream(message, listener);
+    }
+
+    public EventManager events() {
+        return client.events();
     }
 }

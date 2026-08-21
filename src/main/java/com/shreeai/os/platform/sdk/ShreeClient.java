@@ -8,6 +8,8 @@ import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
 import com.shreeai.os.platform.runtime.execution.ExecutionResult;
 import com.shreeai.os.platform.runtime.execution.ExecutionSession;
 import com.shreeai.os.platform.sdk.exceptions.ValidationException;
+import com.shreeai.os.platform.sdk.events.EventManager;
+import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,13 +28,15 @@ public final class ShreeClient {
 
     private final SDKConfiguration configuration;
     private final Runtime runtime;
+    private final RuntimeEventBus eventBus;
 
-    ShreeClient(SDKConfiguration configuration, Runtime runtime) {
+    ShreeClient(SDKConfiguration configuration, Runtime runtime, RuntimeEventBus eventBus) {
         this.configuration = Objects.requireNonNull(
                 configuration,
                 "configuration must not be null"
         );
         this.runtime = runtime;
+        this.eventBus = Objects.requireNonNull(eventBus);
     }
 
     /* ==========================================================
@@ -239,5 +243,8 @@ public final class ShreeClient {
      */
     public Runtime runtime() {
         return runtime;
+    }
+    public EventManager events() {
+        return new EventManager(eventBus);
     }
 }

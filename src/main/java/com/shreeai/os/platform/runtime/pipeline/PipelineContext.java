@@ -7,10 +7,7 @@ import com.shreeai.os.platform.legacy.production.ResolvedContext;
 import com.shreeai.os.platform.validation.ValidationResult;
 
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Immutable pipeline context.
@@ -70,7 +67,7 @@ public final class PipelineContext {
         this.attributes = attributes != null
                 ? Collections.unmodifiableMap(new HashMap<>(attributes))
                 : Collections.emptyMap();
-        this.timestamp = timestamp;
+        this.timestamp = Objects.requireNonNull(timestamp, "timestamp must not be null");
     }
 
     // Getters
@@ -304,7 +301,7 @@ public final class PipelineContext {
          * @return this builder
          */
         public Builder timestamp(Instant timestamp) {
-            this.timestamp = timestamp;
+            this.timestamp = Objects.requireNonNull(timestamp);
             return this;
         }
 
