@@ -25,6 +25,7 @@ import java.util.Objects;
  */
 public final class ShreeAI {
 
+    private final ExecutionSDK execution;
     private final PlanningSDK planning;
     private final KnowledgeSDK knowledge;
     private final MemorySDK memory;
@@ -39,6 +40,7 @@ public final class ShreeAI {
         this.memory = new MemorySDK(client);
         this.knowledge = new KnowledgeSDK(client);
         this.planning = new PlanningSDK(client);
+        this.execution = new ExecutionSDK(client);
     }
 
     /**
@@ -141,5 +143,12 @@ public final class ShreeAI {
      */
     public PlanningSDK planning() {
         return planning;
+    }
+
+    /**
+     * Execution Kernel SDK.
+     */
+    public ExecutionSDK execution() {
+        return execution;
     }
 }
