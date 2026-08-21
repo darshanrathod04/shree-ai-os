@@ -70,6 +70,8 @@ public final class PipelineContext {
         this.timestamp = Objects.requireNonNull(timestamp, "timestamp must not be null");
     }
 
+
+
     // Getters
     public String getPipelineId() {
         return pipelineId;
@@ -165,31 +167,27 @@ public final class PipelineContext {
 
         PipelineContext that = (PipelineContext) o;
 
-        if (!pipelineId.equals(that.pipelineId)) return false;
-        if (executionRequest != null ? !executionRequest.equals(that.executionRequest) : that.executionRequest != null)
-            return false;
-        if (decision != null ? !decision.equals(that.decision) : that.decision != null) return false;
-        if (validationResult != null ? !validationResult.equals(that.validationResult) : that.validationResult != null)
-            return false;
-        if (executionMetadata != null ? !executionMetadata.equals(that.executionMetadata) : that.executionMetadata != null)
-            return false;
-        if (resolvedContext != null ? !resolvedContext.equals(that.resolvedContext) : that.resolvedContext != null)
-            return false;
-        if (!attributes.equals(that.attributes)) return false;
-        return timestamp.equals(that.timestamp);
+        if (!Objects.equals(pipelineId, that.pipelineId)) return false;
+        if (!Objects.equals(executionRequest, that.executionRequest)) return false;
+        if (!Objects.equals(decision, that.decision)) return false;
+        if (!Objects.equals(validationResult, that.validationResult)) return false;
+        if (!Objects.equals(executionMetadata, that.executionMetadata)) return false;
+        if (!Objects.equals(resolvedContext, that.resolvedContext)) return false;
+
+        return Objects.equals(attributes, that.attributes);
     }
 
     @Override
     public int hashCode() {
-        int result = pipelineId.hashCode();
-        result = 31 * result + (executionRequest != null ? executionRequest.hashCode() : 0);
-        result = 31 * result + (decision != null ? decision.hashCode() : 0);
-        result = 31 * result + (validationResult != null ? validationResult.hashCode() : 0);
-        result = 31 * result + (executionMetadata != null ? executionMetadata.hashCode() : 0);
-        result = 31 * result + (resolvedContext != null ? resolvedContext.hashCode() : 0);
-        result = 31 * result + attributes.hashCode();
-        result = 31 * result + timestamp.hashCode();
-        return result;
+        return Objects.hash(
+                pipelineId,
+                executionRequest,
+                decision,
+                validationResult,
+                executionMetadata,
+                resolvedContext,
+                attributes
+        );
     }
 
     /**
@@ -304,7 +302,6 @@ public final class PipelineContext {
             this.timestamp = Objects.requireNonNull(timestamp);
             return this;
         }
-
         /**
          * Build the PipelineContext instance.
          *

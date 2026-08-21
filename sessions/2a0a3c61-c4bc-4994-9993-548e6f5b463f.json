@@ -1,0 +1,85 @@
+{
+  "sessionId" : "2a0a3c61-c4bc-4994-9993-548e6f5b463f",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : null,
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : null,
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1787321791.351990000,
+    "lastUpdated" : 1787321791.351990000,
+    "completedLessonKeys" : [ ],
+    "totalCompletedLessons" : 0
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "remainingQuestions" : 0,
+    "totalQuestions" : 0,
+    "currentQuestion" : null,
+    "inProgress" : false
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1787321791.351990000,
+  "lastAccessedAt" : 1787321791.357990800,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "goal: Learn DSA",
+    "timestamp" : 1787321791.354990800,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "Goal accepted. Shree is now working autonomously.",
+    "timestamp" : 1787321791.357990800,
+    "intent" : null
+  } ],
+  "messageCount" : 2,
+  "summary" : "USER: goal: Learn DSA\nAI: Goal accepted. Shree is now working autonomously.\n",
+  "expired" : false,
+  "firstMessage" : "goal: Learn DSA"
+}

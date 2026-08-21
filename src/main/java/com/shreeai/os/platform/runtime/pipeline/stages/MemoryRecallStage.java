@@ -10,6 +10,12 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
 import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
 import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
+import com.shreeai.os.platform.sdk.events.EventType;
+import com.shreeai.os.platform.sdk.events.RuntimeEvent;
+import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
+
+import java.time.Instant;
+import java.util.Map;
 
 import java.util.List;
 
@@ -84,6 +90,7 @@ public final class MemoryRecallStage implements ExecutionStage {
                 state.addMetadata("memoriesRecalled", 0);
                 state.addMetadata("memoryRecalled", false);
                 state.addMessage("Memory recall skipped: services not available");
+                publishMemoryEvent(context, requestId, 0);
                 return chain.next(context, state);
             }
 
@@ -104,7 +111,9 @@ public final class MemoryRecallStage implements ExecutionStage {
 
             // Store memory information in state
             int memoriesRecalled = rankedMemories.size();
-            String memoryId = memoriesRecalled > 0 ? rankedMemories.get(0).metadata().memoryId().value() : "none";
+            String memoryId = memoriesRecalled > 0
+                    ? rankedMemories.get(0).metadata().memoryId().value()
+                    : "none";
 
             state.addMetadata("memoryId", memoryId);
             state.addMetadata("memoriesRecalled", memoriesRecalled);
@@ -112,7 +121,14 @@ public final class MemoryRecallStage implements ExecutionStage {
             state.addMetadata("rankedMemories", rankedMemories);
             state.addMessage("Memory recalled: " + memoriesRecalled + " memories for context " + contextId);
 
-            // Continue to next stage
+// Publish SDK runtime event
+            publishMemoryEvent(
+                    context,
+                    requestId,
+                    memoriesRecalled
+            );
+
+// Continue to next stage
             return chain.next(context, state);
 
         } catch (Exception e) {
@@ -128,5 +144,29 @@ public final class MemoryRecallStage implements ExecutionStage {
     @Override
     public PipelineStageDescriptor getDescriptor() {
         return DESCRIPTOR;
+    }
+
+    private void publishMemoryEvent(
+            PipelineContext context,
+            String requestId,
+            int memoriesFound
+    ) {
+        Object value = context.getAttribute("runtimeEventBus");
+
+        if (!(value instanceof RuntimeEventBus bus)) {
+            return;
+        }
+
+        bus.publish(
+                new RuntimeEvent(
+                        EventType.MEMORY_RECALL_COMPLETED,
+                        requestId,
+                        "MemoryRecall",
+                        Instant.now(),
+                        Map.of(
+                                "memoriesFound", memoriesFound
+                        )
+                )
+        );
     }
 }

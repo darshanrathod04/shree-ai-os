@@ -1,27 +1,27 @@
 {
   "relationships" : [ {
-    "id" : "41aa49a8-3fe3-408e-9bd3-2cf069a8353f",
-    "sourceId" : "b80a3201-bc6a-4370-813a-e711f604492d",
-    "targetId" : "29ef4d8a-6cd1-488d-a92f-8029e474c51c",
+    "id" : "cb7d7e77-7605-4d24-b79f-c659d08c26e0",
+    "sourceId" : "2ec74df3-63ae-4e89-a7aa-b1c5013a0c6b",
+    "targetId" : "979e89f1-90c6-493e-80e9-b72c1a53693b",
     "type" : "LEARNING",
     "properties" : { },
-    "createdAt" : 1787319328.804214400
+    "createdAt" : 1787324222.242965600
   } ],
   "entities" : [ {
-    "id" : "29ef4d8a-6cd1-488d-a92f-8029e474c51c",
+    "id" : "979e89f1-90c6-493e-80e9-b72c1a53693b",
     "type" : "LEARNING_TOPIC",
     "name" : "Java",
     "description" : null,
     "properties" : { },
-    "createdAt" : 1787319328.803214800,
-    "updatedAt" : 1787319328.803214800
+    "createdAt" : 1787324222.241965100,
+    "updatedAt" : 1787324222.241965100
   }, {
-    "id" : "b80a3201-bc6a-4370-813a-e711f604492d",
+    "id" : "2ec74df3-63ae-4e89-a7aa-b1c5013a0c6b",
     "type" : "USER",
     "name" : "Darshan",
     "description" : "Primary user",
     "properties" : { },
-    "createdAt" : 1787319328.802214900,
-    "updatedAt" : 1787319328.802214900
+    "createdAt" : 1787324222.241965100,
+    "updatedAt" : 1787324222.241965100
   } ]
 }

@@ -8,6 +8,7 @@ import com.shreeai.os.platform.runtime.api.Runtime;
 import com.shreeai.os.platform.runtime.config.RuntimeConfiguration;
 import com.shreeai.os.platform.runtime.contracts.RuntimeContract;
 import com.shreeai.os.platform.runtime.execution.ExecutionContext;
+import com.shreeai.os.platform.runtime.internal.DefaultRuntimeLifecycle;
 import com.shreeai.os.platform.runtime.lifecycle.RuntimeLifecycle;
 import com.shreeai.os.platform.runtime.pipeline.DefaultExecutionPipeline;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
@@ -40,7 +41,12 @@ import com.shreeai.os.platform.kernels.planning.api.PlanningService;
 import com.shreeai.os.platform.kernels.execution.api.ExecutionService;
 import com.shreeai.os.platform.kernels.chief.api.ChiefService;
 import com.shreeai.os.platform.kernels.identity.api.IdentityService;
+import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
+import com.shreeai.os.platform.sdk.events.RuntimeEvent;
+import com.shreeai.os.platform.sdk.events.EventType;
 
+import java.time.Instant;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -72,41 +78,65 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     private RuntimeLifecycle lifecycle;
     private com.shreeai.os.platform.runtime.pipeline.ExecutionPipeline pipeline;
     private final KernelFactory kernelFactory;
-
+    private final RuntimeEventBus eventBus;
     /**
      * Constructs a new DefaultRuntimeService with the given configuration and contract.
      *
      * @param configuration the runtime configuration (must not be null)
      * @param contract      the runtime contract (must not be null)
      */
-    public DefaultRuntimeService(RuntimeConfiguration configuration, RuntimeContract contract) {
-        this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
-        this.contract = Objects.requireNonNull(contract, "contract must not be null");
-        this.stages = new ArrayList<>();
-
-        this.kernelFactory = new DefaultKernelFactory();
-
-        // Initialize with real kernel execution stages
-        initializeStages();
+    /**
+     * Legacy constructor (Backward Compatibility)
+     */
+    public DefaultRuntimeService(
+            RuntimeConfiguration configuration,
+            RuntimeContract contract
+    ) {
+        this(
+                configuration,
+                contract,
+                List.of(),
+                new RuntimeEventBus()
+        );
     }
 
     /**
-     * Constructs a new DefaultRuntimeService with the given configuration, contract, and stages.
-     *
-     * @param configuration the runtime configuration (must not be null)
-     * @param contract      the runtime contract (must not be null)
-     * @param stages        the execution pipeline stages (must not be null)
+     * Canonical constructor
      */
     public DefaultRuntimeService(
             RuntimeConfiguration configuration,
             RuntimeContract contract,
             List<ExecutionStage> stages
     ) {
+        this(
+                configuration,
+                contract,
+                stages,
+                new RuntimeEventBus()
+        );
+    }
+
+    /**
+     * Full constructor with RuntimeEventBus
+     */
+    public DefaultRuntimeService(
+            RuntimeConfiguration configuration,
+            RuntimeContract contract,
+            List<ExecutionStage> stages,
+            RuntimeEventBus eventBus
+    ) {
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
         this.contract = Objects.requireNonNull(contract, "contract must not be null");
-        this.stages = new ArrayList<>(Objects.requireNonNull(stages));
+
+        this.stages = new ArrayList<>();
+        this.pipeline = new DefaultExecutionPipeline(stages);
+        this.lifecycle = new DefaultRuntimeLifecycle();
+
+        this.eventBus = Objects.requireNonNull(eventBus);
 
         this.kernelFactory = new DefaultKernelFactory();
+
+        initializeStages();
     }
     
     /**
@@ -292,6 +322,17 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         if (request == null) {
             throw new IllegalArgumentException("ExecutionRequest must not be null");
         }
+        eventBus.publish(
+                new RuntimeEvent(
+                        EventType.PIPELINE_STARTED,
+                        request.requestId(),
+                        "Pipeline",
+                        Instant.now(),
+                        Map.of(
+                                "requestType", request.requestType()
+                        )
+                )
+        );
 
         try {
             // Create execution session
@@ -338,8 +379,9 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                         .addAttribute("executionSession", session)
                         .addAttribute("requestContext", request.context())
                         .addAttribute("requestMetadata", request.metadata())
-                        .build();
-                
+                            .addAttribute("runtimeEventBus", eventBus)
+                            .build();
+
                 // Execute the canonical pipeline via the pipeline contract
                 pipelineResult = pipeline.execute(pipelineContext);
             }
@@ -366,6 +408,18 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                         request.requestId(), error);
             }
 
+            eventBus.publish(
+                    new RuntimeEvent(
+                            EventType.PIPELINE_COMPLETED,
+                            request.requestId(),
+                            "Pipeline",
+                            Instant.now(),
+                            Map.of(
+                                    "status", "SUCCESS"
+                            )
+                    )
+            );
+
             // Return session with the actual execution result attached
             return com.shreeai.os.platform.runtime.execution.ExecutionSession.builder()
                     .sessionId(session.sessionId())
@@ -377,7 +431,20 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                     .createdAt(session.createdAt())
                     .build();
 
+
+
         } catch (Exception e) {
+            eventBus.publish(
+                    new RuntimeEvent(
+                            EventType.PIPELINE_FAILED,
+                            request.requestId(),
+                            "Pipeline",
+                            Instant.now(),
+                            Map.of(
+                                    "reason", e.getMessage()
+                            )
+                    )
+            );
             throw new RuntimeException("Execution failed: " + e.getMessage(), e);
         }
     }

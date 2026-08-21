@@ -11,6 +11,12 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
 import com.shreeai.os.platform.kernels.identity.engine.DefaultIdentityProcessingEngine;
 import com.shreeai.os.platform.kernels.identity.service.DefaultIdentityService;
 import com.shreeai.os.platform.kernels.identity.validation.IdentityValidator;
+import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
+import com.shreeai.os.platform.sdk.events.RuntimeEvent;
+import com.shreeai.os.platform.sdk.events.EventType;
+
+import java.time.Instant;
+import java.util.Map;
 
 import java.util.Objects;
 
@@ -121,7 +127,10 @@ public final class IdentityStage implements ExecutionStage {
                             identity.identityId().value()
             );
 
+            publish(updatedContext, requestId, identity.identityId().value());
             return chain.next(updatedContext, state);
+
+
 
         } catch (Exception e) {
 
@@ -140,5 +149,31 @@ public final class IdentityStage implements ExecutionStage {
     @Override
     public PipelineStageDescriptor getDescriptor() {
         return DESCRIPTOR;
+    }
+
+    private void publish(
+            PipelineContext context,
+            String requestId,
+            String identityId
+    ) {
+
+        Object value = context.getAttribute("runtimeEventBus");
+
+        if (!(value instanceof RuntimeEventBus bus)) {
+            return;
+        }
+
+        bus.publish(
+                new RuntimeEvent(
+                        EventType.IDENTITY_COMPLETED,
+                        requestId,
+                        "Identity",
+                        Instant.now(),
+                        Map.of(
+                                "identityId", identityId,
+                                "identityType", "PRIMARY_AGENT"
+                        )
+                )
+        );
     }
 }
