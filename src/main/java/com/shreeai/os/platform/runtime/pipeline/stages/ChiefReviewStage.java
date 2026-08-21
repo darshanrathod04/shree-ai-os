@@ -9,6 +9,12 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
 import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
 import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
+import com.shreeai.os.platform.sdk.events.EventType;
+import com.shreeai.os.platform.sdk.events.RuntimeEvent;
+import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
+
+import java.time.Instant;
+import java.util.Map;
 
 /**
  * ChiefReviewStage - Final review and approval by Chief Kernel.
@@ -107,10 +113,23 @@ public final class ChiefReviewStage implements ExecutionStage {
             state.addMetadata("allStagesCompleted", allStagesCompleted);
             state.addMessage("Chief review completed: " + reviewDecision + " for request " + requestId);
 
-            // This is the final stage - continue to chain completion
+            publishChiefReviewEvent(
+                    context,
+                    requestId,
+                    "APPROVED"
+            );
+
             return chain.next(context, state);
 
         } catch (Exception e) {
+
+            publishChiefReviewEvent(
+                    context,
+                    context.getExecutionRequest() != null
+                            ? context.getExecutionRequest().getRequestId()
+                            : "unknown",
+                    "FAILED"
+            );
             // Log warning but continue pipeline execution
             state.addMessage("Chief review stage warning: " + e.getMessage());
             return chain.next(context, state);
@@ -120,5 +139,29 @@ public final class ChiefReviewStage implements ExecutionStage {
     @Override
     public PipelineStageDescriptor getDescriptor() {
         return DESCRIPTOR;
+    }
+
+    private void publishChiefReviewEvent(
+            PipelineContext context,
+            String requestId,
+            String decision
+    ) {
+        Object value = context.getAttribute("runtimeEventBus");
+
+        if (!(value instanceof RuntimeEventBus bus)) {
+            return;
+        }
+
+        bus.publish(
+                new RuntimeEvent(
+                        EventType.CHIEF_REVIEW_COMPLETED,
+                        requestId,
+                        "ChiefReview",
+                        Instant.now(),
+                        Map.of(
+                                "decision", decision
+                        )
+                )
+        );
     }
 }
