@@ -25,6 +25,7 @@ import java.util.Objects;
  */
 public final class ShreeAI {
 
+    private final KnowledgeSDK knowledge;
     private final MemorySDK memory;
     private final IdentitySDK identity;
     private final SDKConfiguration configuration;
@@ -35,6 +36,7 @@ public final class ShreeAI {
         this.client = new ShreeClient(configuration, runtime);
         this.identity = new IdentitySDK(client);
         this.memory = new MemorySDK(client);
+        this.knowledge = new KnowledgeSDK(client);
     }
 
     /**
@@ -123,5 +125,12 @@ public final class ShreeAI {
      */
     public MemorySDK memory() {
         return memory;
+    }
+
+    /**
+     * Knowledge Kernel SDK.
+     */
+    public KnowledgeSDK knowledge() {
+        return knowledge;
     }
 }
