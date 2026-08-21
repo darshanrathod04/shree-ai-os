@@ -1,0 +1,85 @@
+{
+  "sessionId" : "1d4697c4-113a-4fe2-9fe7-9bc7f2113653",
+  "userId" : null,
+  "context" : {
+    "lastIntent" : "DEFAULT",
+    "mode" : "CHAT",
+    "topic" : null,
+    "currentTopic" : null,
+    "workingMemory" : "",
+    "pendingAction" : null,
+    "state" : "IDLE",
+    "userName" : null,
+    "conversationSummary" : ""
+  },
+  "lessonState" : {
+    "activeTopic" : null,
+    "chapterNumber" : 0,
+    "currentObjective" : null,
+    "lessonName" : null,
+    "completedChapters" : [ ],
+    "pendingFollowups" : [ ],
+    "lessonTopicsCovered" : [ ]
+  },
+  "courseState" : {
+    "courseName" : null,
+    "currentChapterIndex" : 0,
+    "currentLessonIndex" : 0,
+    "completed" : false,
+    "completedLessons" : [ ],
+    "completedChapters" : [ ],
+    "startedAt" : null,
+    "lastAccess" : null,
+    "learningStatus" : "NOT_STARTED",
+    "totalCompletedChapters" : 0,
+    "totalCompletedLessons" : 0
+  },
+  "learningProfile" : {
+    "weakTopics" : [ ],
+    "strongTopics" : [ ],
+    "averageQuizScore" : 0.0,
+    "totalQuizScores" : 0,
+    "learningSpeed" : 1.0,
+    "sessionEngagementCount" : 0,
+    "preferredDifficulty" : "NORMAL",
+    "learningStyle" : "TEXTUAL",
+    "recommendedNextTopic" : "",
+    "createdAt" : 1787336190.272129700,
+    "lastUpdated" : 1787336190.272129700,
+    "completedLessonKeys" : [ ],
+    "totalCompletedLessons" : 0
+  },
+  "quizSession" : {
+    "quizTitle" : null,
+    "courseName" : null,
+    "chapterNumber" : 0,
+    "currentQuestionIndex" : 0,
+    "attempts" : [ ],
+    "status" : "NOT_STARTED",
+    "startedAt" : null,
+    "completedAt" : null,
+    "completed" : false,
+    "inProgress" : false,
+    "currentQuestion" : null,
+    "totalQuestions" : 0,
+    "remainingQuestions" : 0
+  },
+  "sessionUserName" : null,
+  "createdAt" : 1787336190.272129700,
+  "lastAccessedAt" : 1787336207.802031500,
+  "messageHistory" : [ {
+    "role" : "USER",
+    "content" : "test message",
+    "timestamp" : 1787336190.275130200,
+    "intent" : null
+  }, {
+    "role" : "AI",
+    "content" : "\uD83D\uDE0A As Shree, I'm here to assist you. It seems like you're testing the system, and I'm glad to see you're exploring how I respond to queries. If you have a real question or need academic support, feel free to ask, and I'll do my best to help!\n\n**Example Interaction:**\n\nUSER: Hello, I'm struggling with understanding the concept of photosynthesis.\n\n**Shree's Response:** Hello! I'm glad you reached out. Photosynthesis can be a complex topic, but I'm here to help clarify it for you. **Photosynthesis** is the process by which green plants, algae, and some bacteria convert light energy, usually from the sun, into chemical energy. Would you like a detailed explanation or a step-by-step guide on how this process works in plants? I can also recommend some resources like Khan Academy or CrashCourse Biology for a more in-depth understanding. Take your time.",
+    "timestamp" : 1787336207.802031500,
+    "intent" : null
+  } ],
+  "summary" : "USER: test message\nAI: \uD83D\uDE0A As Shree, I'm here to assist you. It seems like...\n",
+  "firstMessage" : "test message",
+  "messageCount" : 2,
+  "expired" : false
+}
