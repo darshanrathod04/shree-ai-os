@@ -10,6 +10,12 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
 import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
 import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
+import com.shreeai.os.platform.sdk.events.EventType;
+import com.shreeai.os.platform.sdk.events.RuntimeEvent;
+import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
+
+import java.time.Instant;
+import java.util.Map;
 
 import java.util.List;
 
@@ -87,6 +93,7 @@ public final class KnowledgeStage implements ExecutionStage {
                 state.addMetadata("rankedKnowledge", List.of());
                 state.addMetadata("knowledgeConfidence", 0.0);
                 state.addMessage("Knowledge retrieval skipped: services not available");
+                publishKnowledgeEvent(context, requestId, 0);
                 return chain.next(context, state);
             }
 
@@ -116,8 +123,12 @@ public final class KnowledgeStage implements ExecutionStage {
             state.addMetadata("rankedKnowledge", rankedKnowledge);
             state.addMetadata("knowledgeConfidence", knowledgeConfidence);
             state.addMessage("Knowledge retrieved: " + knowledgeCount + " items for memory " + memoryId);
+            publishKnowledgeEvent(
+                    context,
+                    requestId,
+                    knowledgeCount
+            );
 
-            // Continue to next stage
             return chain.next(context, state);
 
         } catch (Exception e) {
@@ -149,5 +160,30 @@ public final class KnowledgeStage implements ExecutionStage {
     @Override
     public PipelineStageDescriptor getDescriptor() {
         return DESCRIPTOR;
+    }
+
+    private void publishKnowledgeEvent(
+            PipelineContext context,
+            String requestId,
+            int knowledgeCount
+    ) {
+
+        Object value = context.getAttribute("runtimeEventBus");
+
+        if (!(value instanceof RuntimeEventBus bus)) {
+            return;
+        }
+
+        bus.publish(
+                new RuntimeEvent(
+                        EventType.KNOWLEDGE_COMPLETED,
+                        requestId,
+                        "Knowledge",
+                        Instant.now(),
+                        Map.of(
+                                "knowledgeResults", knowledgeCount
+                        )
+                )
+        );
     }
 }
