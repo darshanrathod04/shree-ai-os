@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import com.shreeai.os.platform.sdk.streaming.StreamingListener;
 
 public final class ShreeSession {
 
@@ -58,5 +59,25 @@ public final class ShreeSession {
                 .build();
 
         return client.chatAsync(request);
+    }
+
+    /**
+     * Streams a response while preserving the current session.
+     *
+     * @param message user message
+     * @param listener streaming callback
+     */
+    public void chatStream(
+            String message,
+            StreamingListener listener
+    ) {
+
+        SDKRequest request = SDKRequest.builder()
+                .sessionId(sessionId)
+                .message(message)
+                .metadata(metadata)
+                .build();
+
+        client.chatStream(request.message(), listener);
     }
 }

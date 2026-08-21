@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.sdk;
 
+import com.shreeai.os.platform.sdk.streaming.StreamingListener;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
 import com.shreeai.os.platform.runtime.api.Runtime;
@@ -161,6 +162,65 @@ public final class ShreeClient {
      */
     public CompletableFuture<SDKResponse> chatAsync(SDKRequest request) {
         return CompletableFuture.supplyAsync(() -> chat(request));
+    }
+
+    /**
+     * Streams a chat response using the canonical SDK streaming contract.
+     *
+     * <p>Current implementation streams the completed Runtime response in
+     * incremental chunks. The public API will remain unchanged when the
+     * Runtime later supports true token streaming.</p>
+     *
+     * @param message the user message
+     * @param listener streaming callback
+     */
+    public void chatStream(
+            String message,
+            StreamingListener listener
+    ) {
+
+        Objects.requireNonNull(listener, "StreamingListener must not be null");
+
+        CompletableFuture.runAsync(() -> {
+
+            try {
+
+                listener.onStart();
+
+                SDKResponse response = chat(message);
+
+                String answer = response.answer();
+
+                if (answer == null) {
+                    answer = "";
+                }
+
+                // Stream by words while preserving spaces
+                String[] words = answer.split("\\s+");
+
+                StringBuilder complete = new StringBuilder();
+
+                for (int i = 0; i < words.length; i++) {
+
+                    String chunk = words[i];
+
+                    if (i > 0) {
+                        chunk = " " + chunk;
+                    }
+
+                    complete.append(chunk);
+
+                    listener.onToken(chunk);
+                }
+
+                listener.onComplete(complete.toString());
+
+            } catch (Throwable throwable) {
+
+                listener.onError(throwable);
+            }
+
+        });
     }
 
     /* ==========================================================

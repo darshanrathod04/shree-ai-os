@@ -91,6 +91,7 @@ public final class DefaultConfigurationService implements ConfigurationService {
      */
     @Override
     public boolean register(ConfigurationEntry configuration) {
+
         if (configuration == null) {
             throw new IllegalArgumentException("ConfigurationEntry must not be null");
         }
@@ -108,9 +109,12 @@ public final class DefaultConfigurationService implements ConfigurationService {
             );
         }
 
-        // Step 2: Reject duplicate keys
+        // Step 2: Atomic duplicate protection
         ConfigurationKey key = configuration.key();
-        if (storage.containsKey(key)) {
+
+        ConfigurationEntry existing = storage.putIfAbsent(key, configuration);
+
+        if (existing != null) {
             throw new DuplicateConfigurationException(
                     new ConfigurationError(
                             ConfigurationErrorCode.CONFIGURATION_DUPLICATE,
@@ -121,10 +125,7 @@ public final class DefaultConfigurationService implements ConfigurationService {
             );
         }
 
-        // Step 3: Store entry
-        storage.put(key, configuration);
-
-        // Step 4: Return true
+        // Step 3: Success
         return true;
     }
 

@@ -2,7 +2,7 @@ package com.shreeai.os.platform.sdk;
 
 import com.shreeai.os.platform.sdk.exceptions.ConfigurationException;
 import com.shreeai.os.platform.runtime.api.Runtime;
-
+import com.shreeai.os.platform.sdk.streaming.StreamingListener;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -165,5 +165,18 @@ public final class ShreeAI {
      */
     public CompletableFuture<SDKResponse> chatAsync(SDKRequest request) {
         return client.chatAsync(request);
+    }
+
+    /**
+     * Streams a chat response.
+     *
+     * @param message user message
+     * @param listener streaming callback
+     */
+    public void chatStream(
+            String message,
+            StreamingListener listener
+    ) {
+        client.chatStream(message, listener);
     }
 }
