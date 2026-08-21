@@ -8,6 +8,12 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
 import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
 import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
+import com.shreeai.os.platform.sdk.events.EventType;
+import com.shreeai.os.platform.sdk.events.RuntimeEvent;
+import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
+
+import java.time.Instant;
+import java.util.Map;
 
 /**
  * ActionExecutionStage - Executes the planned actions.
@@ -112,10 +118,24 @@ public final class ActionExecutionStage implements ExecutionStage {
             state.addMetadata("executionCompleted", true);
             state.addMessage("Execution completed: " + executionId + " for plan " + planId);
 
-            // Continue to next stage
+            publishExecutionEvent(
+                    context,
+                    requestId,
+                    executionId,
+                    "SUCCESS"
+            );
+
             return chain.next(context, state);
 
         } catch (Exception e) {
+            publishExecutionEvent(
+                    context,
+                    context.getExecutionRequest() != null
+                            ? context.getExecutionRequest().getRequestId()
+                            : "unknown",
+                    "FAILED",
+                    "FAILED"
+            );
             // Log warning but continue pipeline execution
             state.addMessage("Execution stage warning: " + e.getMessage());
             return chain.next(context, state);
@@ -125,5 +145,31 @@ public final class ActionExecutionStage implements ExecutionStage {
     @Override
     public PipelineStageDescriptor getDescriptor() {
         return DESCRIPTOR;
+    }
+
+    private void publishExecutionEvent(
+            PipelineContext context,
+            String requestId,
+            String executionId,
+            String status
+    ) {
+        Object value = context.getAttribute("runtimeEventBus");
+
+        if (!(value instanceof RuntimeEventBus bus)) {
+            return;
+        }
+
+        bus.publish(
+                new RuntimeEvent(
+                        EventType.EXECUTION_COMPLETED,
+                        requestId,
+                        "Execution",
+                        Instant.now(),
+                        Map.of(
+                                "executionId", executionId,
+                                "status", status
+                        )
+                )
+        );
     }
 }
