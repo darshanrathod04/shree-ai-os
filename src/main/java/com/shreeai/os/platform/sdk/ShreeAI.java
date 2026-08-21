@@ -3,6 +3,7 @@ package com.shreeai.os.platform.sdk;
 import com.shreeai.os.platform.sdk.exceptions.ConfigurationException;
 import com.shreeai.os.platform.runtime.api.Runtime;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -91,5 +92,18 @@ public final class ShreeAI {
      */
     public ShreeSession openSession(String sessionId) {
         return new ShreeSession(sessionId, client);
+    }
+
+    public SDKResponse chat(
+            String message,
+            Map<String, Object> metadata
+    ) {
+
+        SDKRequest request = SDKRequest.builder()
+                .message(message)
+                .metadata(metadata)
+                .build();
+
+        return client.chat(request);
     }
 }

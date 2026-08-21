@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Immutable execution context helper.
@@ -175,29 +176,25 @@ public final class ExecutionContext {
         ExecutionContext that = (ExecutionContext) o;
 
         if (retryCount != that.retryCount) return false;
-        if (decision != null ? !decision.equals(that.decision) : that.decision != null) return false;
-        if (validationResult != null ? !validationResult.equals(that.validationResult) : that.validationResult != null)
-            return false;
-        if (executionRequest != null ? !executionRequest.equals(that.executionRequest) : that.executionRequest != null)
-            return false;
-        if (parentExecutionId != null ? !parentExecutionId.equals(that.parentExecutionId) : that.parentExecutionId != null)
-            return false;
-        if (!futureExecutionInfo.equals(that.futureExecutionInfo)) return false;
-        return timestamp.equals(that.timestamp);
+        if (!Objects.equals(decision, that.decision)) return false;
+        if (!Objects.equals(validationResult, that.validationResult)) return false;
+        if (!Objects.equals(executionRequest, that.executionRequest)) return false;
+        if (!Objects.equals(parentExecutionId, that.parentExecutionId)) return false;
+
+        return futureExecutionInfo.equals(that.futureExecutionInfo);
     }
 
     @Override
     public int hashCode() {
-        int result = decision != null ? decision.hashCode() : 0;
-        result = 31 * result + (validationResult != null ? validationResult.hashCode() : 0);
-        result = 31 * result + (executionRequest != null ? executionRequest.hashCode() : 0);
-        result = 31 * result + (parentExecutionId != null ? parentExecutionId.hashCode() : 0);
-        result = 31 * result + retryCount;
-        result = 31 * result + futureExecutionInfo.hashCode();
-        result = 31 * result + timestamp.hashCode();
-        return result;
+        return Objects.hash(
+                decision,
+                validationResult,
+                executionRequest,
+                parentExecutionId,
+                retryCount,
+                futureExecutionInfo
+        );
     }
-
     /**
      * Builder for ExecutionContext.
      */
