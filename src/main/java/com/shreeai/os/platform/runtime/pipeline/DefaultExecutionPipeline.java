@@ -1,6 +1,6 @@
 package com.shreeai.os.platform.runtime.pipeline;
 
-import com.shreeai.os.platform.legacy.execution.ExecutionRequest;
+import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;

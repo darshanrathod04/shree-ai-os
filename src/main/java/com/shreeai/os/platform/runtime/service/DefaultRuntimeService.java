@@ -2,6 +2,7 @@ package com.shreeai.os.platform.runtime.service;
 
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.legacy.execution.ExecutionMetadata;
+import com.shreeai.os.platform.runtime.execution.ExecutionResult;
 import com.shreeai.os.platform.runtime.AbstractRuntimeService;
 import com.shreeai.os.platform.runtime.RuntimeState;
 import com.shreeai.os.platform.runtime.api.Runtime;
@@ -12,6 +13,8 @@ import com.shreeai.os.platform.runtime.internal.DefaultRuntimeLifecycle;
 import com.shreeai.os.platform.runtime.lifecycle.RuntimeLifecycle;
 import com.shreeai.os.platform.runtime.pipeline.DefaultExecutionPipeline;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
+import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
+import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
 import com.shreeai.os.platform.runtime.pipeline.stages.ChiefReviewStage;
 import com.shreeai.os.platform.runtime.pipeline.stages.ContextStage;
 import com.shreeai.os.platform.runtime.pipeline.stages.ActionExecutionStage;
@@ -44,12 +47,12 @@ import com.shreeai.os.platform.kernels.identity.api.IdentityService;
 import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 import com.shreeai.os.platform.sdk.events.RuntimeEvent;
 import com.shreeai.os.platform.sdk.events.EventType;
+import com.shreeai.os.platform.kernels.response.engine.DefaultResponseSynthesizer;
+import com.shreeai.os.platform.kernels.response.service.ResponseSynthesisService;
+import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
 
 import java.time.Instant;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * <b>DefaultRuntimeService</b>
@@ -79,6 +82,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     private com.shreeai.os.platform.runtime.pipeline.ExecutionPipeline pipeline;
     private final KernelFactory kernelFactory;
     private final RuntimeEventBus eventBus;
+    private final ResponseSynthesisService responseSynthesisService;
     /**
      * Constructs a new DefaultRuntimeService with the given configuration and contract.
      *
@@ -135,6 +139,11 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         this.eventBus = Objects.requireNonNull(eventBus);
 
         this.kernelFactory = new DefaultKernelFactory();
+
+        this.responseSynthesisService =
+                new ResponseSynthesisService(
+                        new DefaultResponseSynthesizer()
+                );
 
         initializeStages();
     }
@@ -349,40 +358,23 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                     .contract(contract)
                     .build();
 
+
             // Execute the canonical pipeline exactly once
-            com.shreeai.os.platform.runtime.pipeline.PipelineResult pipelineResult = null;
+            com.shreeai.os.platform.runtime.pipeline.PipelineContext pipelineContext = null;
+            PipelineResult pipelineResult = null;
+
             if (pipeline != null) {
-                // Convert runtime.execution.ExecutionRequest to execution.ExecutionRequest for PipelineContext,
-                // preserving context and metadata so downstream stages receive the full payload
-                ExecutionMetadata pipelineMetadata =
-                    ExecutionMetadata.builder()
-                        .executionSource("SDK")
-                        .sessionId(request.requestId())
-                        .customValues(request.metadata())
-                        .build();
 
-                com.shreeai.os.platform.legacy.execution.ExecutionRequest pipelineRequest =
-                    com.shreeai.os.platform.legacy.execution.ExecutionRequest.builder()
-                        .requestId(request.requestId())
-                        .decisionId("sdk-chat-decision")
-                        .capabilityName("CHAT")
-                        .intent("CHAT_REQUEST")
-                        .userInput(request.payload())
-                        .metadata(pipelineMetadata)
-                        .build();
-                
-                // Store ExecutionContext in pipeline context attributes for stage access
-                com.shreeai.os.platform.runtime.pipeline.PipelineContext pipelineContext = 
-                    com.shreeai.os.platform.runtime.pipeline.PipelineContext.builder()
-                        .executionRequest(pipelineRequest)
-                        .addAttribute("executionContext", context)
-                        .addAttribute("executionSession", session)
-                        .addAttribute("requestContext", request.context())
-                        .addAttribute("requestMetadata", request.metadata())
-                            .addAttribute("runtimeEventBus", eventBus)
-                            .build();
+                pipelineContext =
+                        com.shreeai.os.platform.runtime.pipeline.PipelineContext.builder()
+                                .executionRequest(request)
+                                .addAttribute("executionContext", context)
+                                .addAttribute("executionSession", session)
+                                .addAttribute("requestContext", request.context())
+                                .addAttribute("requestMetadata", request.metadata())
+                                .addAttribute("runtimeEventBus", eventBus)
+                                .build();
 
-                // Execute the canonical pipeline via the pipeline contract
                 pipelineResult = pipeline.execute(pipelineContext);
             }
 
@@ -391,15 +383,23 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             // the runtime → SDK boundary without being flattened into strings.
             com.shreeai.os.platform.runtime.execution.ExecutionResult result;
             if (pipelineResult != null && pipelineResult.isSuccess()) {
-                String output = pipelineResult.getMessages().isEmpty() 
-                        ? "Pipeline completed successfully" 
-                        : String.join("; ", pipelineResult.getMessages());
-                result = com.shreeai.os.platform.runtime.execution.ExecutionResult.builder()
+
+                SynthesizedResponse response =
+                        responseSynthesisService.synthesize(
+                                pipelineContext,
+                                pipelineResult.getExecutionState()
+                        );
+
+                Map<String, Object> structured = new HashMap<>();
+                structured.put("response", response);
+
+                result = ExecutionResult.builder()
                         .requestId(request.requestId())
                         .success(true)
-                        .output(output)
-                        .structuredPayload(buildStructuredPayload(request))
+                        .output(response.answer())
+                        .structuredPayload(structured)
                         .build();
+
             } else {
                 String error = pipelineResult != null && pipelineResult.getMessages() != null
                         ? String.join("; ", pipelineResult.getMessages())

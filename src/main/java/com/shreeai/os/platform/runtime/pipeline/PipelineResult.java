@@ -31,6 +31,7 @@ public final class PipelineResult {
     private final List<String> messages;
     private final ExecutionMetadata metadata;
     private final Instant timestamp;
+    private final PipelineExecutionState executionState;
 
     /**
      * Create PipelineResult with builder.
@@ -38,6 +39,8 @@ public final class PipelineResult {
      * @return a new builder instance
      */
     public static Builder builder() {
+
+
         return new Builder();
     }
 
@@ -53,7 +56,8 @@ public final class PipelineResult {
             long processingTime,
             List<String> messages,
             ExecutionMetadata metadata,
-            Instant timestamp
+            Instant timestamp,
+            PipelineExecutionState executionState
     ) {
         this.resultId = resultId;
         this.success = success;
@@ -68,6 +72,7 @@ public final class PipelineResult {
                 : Collections.emptyList();
         this.metadata = metadata;
         this.timestamp = timestamp;
+        this.executionState = executionState;
     }
 
     // Getters
@@ -105,6 +110,10 @@ public final class PipelineResult {
 
     public Instant getTimestamp() {
         return timestamp;
+    }
+
+    public PipelineExecutionState getExecutionState() {
+        return executionState;
     }
 
     /**
@@ -182,6 +191,13 @@ public final class PipelineResult {
         private List<String> messages = new ArrayList<>();
         private ExecutionMetadata metadata;
         private Instant timestamp = Instant.now();
+        private PipelineExecutionState executionState;
+
+
+        public Builder executionState(PipelineExecutionState executionState) {
+            this.executionState = executionState;
+            return this;
+        }
 
         /**
          * Set the result ID (defaults to new UUID if not set).
@@ -311,8 +327,16 @@ public final class PipelineResult {
          */
         public PipelineResult build() {
             return new PipelineResult(
-                    resultId, success, status, currentStage, completedStages,
-                    processingTime, messages, metadata, timestamp
+                    resultId,
+                    success,
+                    status,
+                    currentStage,
+                    completedStages,
+                    processingTime,
+                    messages,
+                    metadata,
+                    timestamp,
+                    executionState
             );
         }
     }

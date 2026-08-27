@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.sdk;
 
+import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
 import com.shreeai.os.platform.sdk.streaming.StreamingListener;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
@@ -127,12 +128,22 @@ public final class ShreeClient {
             }
 
             // Success response
+            String answer = executionResult.output().orElse("");
+            double confidence = 1.0;
+
+            Map<String, Object> payload = executionResult.structuredPayload();
+
+            if (payload != null && payload.get("response") instanceof SynthesizedResponse response) {
+                answer = response.answer();
+                confidence = response.confidence();
+            }
+
             return SDKResponse.builder()
-                    .answer(executionResult.output().orElse(""))
-                    .confidence(1.0)
+                    .answer(answer)
+                    .confidence(confidence)
                     .reasoningAvailable(true)
                     .metadata("sdk-version:" + configuration.version())
-                    .structuredPayload(executionResult.structuredPayload())
+                    .structuredPayload(payload)
                     .build();
 
         } catch (SDKException e) {
