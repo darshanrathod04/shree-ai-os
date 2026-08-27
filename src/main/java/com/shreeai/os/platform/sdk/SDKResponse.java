@@ -109,4 +109,31 @@ public final class SDKResponse {
             return new SDKResponse(this);
         }
     }
+
+
+    public String getAnswer() {
+        return answer;
+    }
+
+    public double getConfidence() {
+        return confidence;
+    }
+
+    public boolean isReasoningAvailable() {
+        return reasoningAvailable;
+    }
+
+    public String getMetadata() {
+        return metadata;
+    }
+
+    public Map<String, Object> getStructuredPayload() {
+        return structuredPayload;
+    }
+
+    public Instant getTimestamp() {
+        return timestamp;
+    }
+
+
 }

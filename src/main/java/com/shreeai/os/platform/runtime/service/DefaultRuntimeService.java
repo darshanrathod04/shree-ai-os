@@ -50,6 +50,7 @@ import com.shreeai.os.platform.sdk.events.EventType;
 import com.shreeai.os.platform.kernels.response.engine.DefaultResponseSynthesizer;
 import com.shreeai.os.platform.kernels.response.service.ResponseSynthesisService;
 import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
+import com.shreeai.os.platform.runtime.routing.RuntimeIntentRouter;
 
 import java.time.Instant;
 import java.util.*;
@@ -83,6 +84,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     private final KernelFactory kernelFactory;
     private final RuntimeEventBus eventBus;
     private final ResponseSynthesisService responseSynthesisService;
+    private RuntimeIntentRouter intentRouter;
     /**
      * Constructs a new DefaultRuntimeService with the given configuration and contract.
      *
@@ -231,31 +233,59 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
         stages.clear();
 
-        stages.add(new IdentityStage(identityService));
-        stages.add(new ContextStage());
+        IdentityStage identityStage = new IdentityStage(identityService);
+        ContextStage contextStage = new ContextStage();
 
-        stages.add(
+        stages.add(identityStage);
+        stages.add(contextStage);
+
+        MemoryRecallStage memoryRecallStage =
                 new MemoryRecallStage(
                         memoryQueryService,
                         memorySearchService,
                         memoryRankingService
-                )
-        );
+                );
 
-        stages.add(
+        stages.add(memoryRecallStage);
+
+        KnowledgeStage knowledgeStage =
                 new KnowledgeStage(
                         knowledgeQueryService,
                         knowledgeSearchService,
                         knowledgeRankingService
-                )
-        );
+                );
+
+        stages.add(knowledgeStage);
 
         stages.add(new ReasoningStage(reasoningEngine));
         stages.add(new InferenceStage(inferenceEngine));
-        stages.add(new PlanningStage(planningService));
+
+        PlanningStage planningStage = new PlanningStage(planningService);
+        stages.add(planningStage);
+
         stages.add(new ActionExecutionStage(executionService));
-        stages.add(new MemoryStoreStage(memoryService));
+
+        MemoryStoreStage memoryStoreStage = new MemoryStoreStage(memoryService);
+        stages.add(memoryStoreStage);
+
         stages.add(new ChiefReviewStage(chiefService));
+
+        // ==========================================================
+        // Deterministic Intent Router
+        // Reuses the canonical kernel stage instances above; requests
+        // carrying a known metadata.operation execute only the owning
+        // kernel's stage chain, everything else keeps the canonical
+        // Chief orchestration pipeline.
+        // ==========================================================
+
+        this.intentRouter = new RuntimeIntentRouter(
+                identityStage,
+                contextStage,
+                knowledgeStage,
+                planningStage,
+                memoryRecallStage,
+                memoryStoreStage
+        );
     }
 
     @Override
@@ -356,11 +386,25 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                     .build();
 
 
+            // Resolve deterministic kernel routing for this request.
+            // Requests carrying a known metadata.operation execute only the
+            // owning kernel's stage chain; all other requests keep the
+            // canonical Chief orchestration pipeline.
+            RuntimeIntentRouter.ExecutionRoute route =
+                    intentRouter != null
+                            ? intentRouter.route(request).orElse(null)
+                            : null;
+
+            com.shreeai.os.platform.runtime.pipeline.ExecutionPipeline effectivePipeline = pipeline;
+            if (route != null) {
+                effectivePipeline = new DefaultExecutionPipeline(route.stages());
+            }
+
             // Execute the canonical pipeline exactly once
             com.shreeai.os.platform.runtime.pipeline.PipelineContext pipelineContext = null;
             PipelineResult pipelineResult = null;
 
-            if (pipeline != null) {
+            if (effectivePipeline != null) {
 
                 pipelineContext =
                         com.shreeai.os.platform.runtime.pipeline.PipelineContext.builder()
@@ -372,7 +416,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                                 .addAttribute("runtimeEventBus", eventBus)
                                 .build();
 
-                pipelineResult = pipeline.execute(pipelineContext);
+                pipelineResult = effectivePipeline.execute(pipelineContext);
             }
 
             // Convert PipelineResult to ExecutionResult, preserving any structured
@@ -391,6 +435,14 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
                 structured.put("response", response);
                 structured.putAll(buildStructuredPayload(request));
+
+                // Additive, backward-compatible routing evidence so callers can
+                // observe which kernel handled the request.
+                if (route != null) {
+                    structured.put("routedOperation", route.operation());
+                    structured.put("routedKernel", route.kernelName());
+                    structured.put("routedStages", route.stageNames());
+                }
 
                 Map<String, Object> payload = Map.copyOf(structured);
 

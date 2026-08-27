@@ -16,6 +16,8 @@ import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeRelationshipType;
 import com.shreeai.os.platform.kernels.knowledge.model.UpdateKnowledgeRequest;
 import com.shreeai.os.platform.kernels.knowledge.validation.KnowledgeValidator;
+import com.shreeai.os.platform.kernels.knowledge.engine.search.DefaultKnowledgeSearchEngine;
+import com.shreeai.os.platform.kernels.knowledge.engine.search.KnowledgeSearchEngine;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -84,7 +86,9 @@ public final class DefaultKnowledgeService implements
 
     private final KnowledgeProcessingEngine processingEngine;
 
+    private final KnowledgeSearchEngine searchEngine;
     private KnowledgeGraph knowledgeGraph;
+
     /**
      * Creates a new DefaultKnowledgeService with constructor injection.
      *
@@ -109,6 +113,7 @@ public final class DefaultKnowledgeService implements
                 "processingEngine must not be null"
         );
 
+        this.searchEngine = new DefaultKnowledgeSearchEngine();
         this.knowledgeGraph = KnowledgeGraph.empty();
     }
 
@@ -272,22 +277,8 @@ public final class DefaultKnowledgeService implements
     @Override
     public Object[] searchSemantic(String query) {
 
-        Objects.requireNonNull(query, "query must not be null");
-
-        String normalized = query.trim().toLowerCase();
-
-        if (normalized.isEmpty()) {
-            return new Object[0];
-        }
-
-        return knowledgeGraph.getNodes().stream()
-                .filter(Objects::nonNull)
-                .filter(node -> semanticScore(node, normalized) > 0)
-                .sorted((a, b) ->
-                        Double.compare(
-                                semanticScore(b, normalized),
-                                semanticScore(a, normalized)
-                        ))
+        return searchEngine
+                .semanticSearch(knowledgeGraph, query)
                 .toArray();
     }
 
@@ -440,11 +431,7 @@ public final class DefaultKnowledgeService implements
      */
     @Override
     public List<KnowledgeNode> search(String keyword) {
-        if (keyword == null || keyword.isBlank()) {
-            throw createValidationException("keyword must not be null or blank");
-        }
-        // TODO: Implement keyword search
-        return List.of();
+        return searchEngine.keywordSearch(knowledgeGraph, keyword);
     }
 
     /**
@@ -456,11 +443,7 @@ public final class DefaultKnowledgeService implements
      */
     @Override
     public List<KnowledgeNode> searchByTopic(String topic) {
-        if (topic == null || topic.isBlank()) {
-            throw createValidationException("topic must not be null or blank");
-        }
-        // TODO: Implement topic search
-        return List.of();
+        return searchEngine.topicSearch(knowledgeGraph, topic);
     }
 
     /**
@@ -488,11 +471,7 @@ public final class DefaultKnowledgeService implements
      */
     @Override
     public List<KnowledgeNode> searchByTags(Iterable<String> tags) {
-        if (tags == null) {
-            throw createValidationException("tags must not be null");
-        }
-        // TODO: Implement tag search
-        return List.of();
+        return searchEngine.tagSearch(knowledgeGraph, tags);
     }
 
     /**
@@ -505,13 +484,10 @@ public final class DefaultKnowledgeService implements
     @Override
     public List<KnowledgeNode> searchBySimilarity(String text) {
 
-        if (text == null || text.isBlank()) {
-            throw createValidationException("text must not be null or blank");
-        }
-
-        return Arrays.stream(searchSemantic(text))
-                .map(KnowledgeNode.class::cast)
-                .toList();
+        return searchEngine.semanticSearch(
+                knowledgeGraph,
+                text
+        );
     }
 
     // ========================================================================
