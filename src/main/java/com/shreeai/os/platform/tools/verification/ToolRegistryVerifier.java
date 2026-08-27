@@ -2,6 +2,7 @@ package com.shreeai.os.platform.tools.verification;
 
 import com.shreeai.os.platform.tools.api.Tool;
 import com.shreeai.os.platform.tools.engine.DefaultToolExecutor;
+import com.shreeai.os.platform.tools.impl.FileSystemTool;
 import com.shreeai.os.platform.tools.model.ToolRequest;
 import com.shreeai.os.platform.tools.model.ToolResponse;
 import com.shreeai.os.platform.tools.registry.DefaultToolRegistry;
@@ -19,11 +20,12 @@ public final class ToolRegistryVerifier {
         DefaultToolRegistry registry = new DefaultToolRegistry();
 
         registry.register(new EchoTool());
+        registry.register(new FileSystemTool());
 
         DefaultToolExecutor executor =
                 new DefaultToolExecutor(registry);
 
-        ToolResponse response =
+        ToolResponse echoResponse =
                 executor.execute(
                         new ToolRequest(
                                 "echo",
@@ -31,9 +33,21 @@ public final class ToolRegistryVerifier {
                         )
                 );
 
-        return response.success()
+        ToolResponse fileResponse =
+                executor.execute(
+                        new ToolRequest(
+                                "filesystem",
+                                Map.of(
+                                        "operation", "exists",
+                                        "path", "pom.xml"
+                                )
+                        )
+                );
+
+        return echoResponse.success()
+                && fileResponse.success()
                 && "Shree AI".equals(
-                response.data().get("echo")
+                echoResponse.data().get("echo")
         );
     }
 }
