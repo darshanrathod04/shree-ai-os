@@ -7,6 +7,7 @@ import com.shreeai.os.platform.tools.model.ToolRequest;
 import com.shreeai.os.platform.tools.model.ToolResponse;
 import com.shreeai.os.platform.tools.registry.DefaultToolRegistry;
 import com.shreeai.os.platform.tools.impl.EchoTool;
+import com.shreeai.os.platform.tools.impl.TerminalTool;
 
 import java.util.Map;
 
@@ -21,6 +22,7 @@ public final class ToolRegistryVerifier {
 
         registry.register(new EchoTool());
         registry.register(new FileSystemTool());
+        registry.register(new TerminalTool());
 
         DefaultToolExecutor executor =
                 new DefaultToolExecutor(registry);
@@ -44,8 +46,20 @@ public final class ToolRegistryVerifier {
                         )
                 );
 
+        ToolResponse terminalResponse =
+                executor.execute(
+                        new ToolRequest(
+                                "terminal",
+                                Map.of(
+                                        "command",
+                                        "echo Shree"
+                                )
+                        )
+                );
+
         return echoResponse.success()
                 && fileResponse.success()
+                && terminalResponse.success()
                 && "Shree AI".equals(
                 echoResponse.data().get("echo")
         );
