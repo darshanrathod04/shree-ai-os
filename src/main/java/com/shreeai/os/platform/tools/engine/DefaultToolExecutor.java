@@ -8,7 +8,11 @@ import com.shreeai.os.platform.tools.api.Tool;
 import com.shreeai.os.platform.tools.model.ToolRequest;
 import com.shreeai.os.platform.tools.model.ToolResponse;
 import com.shreeai.os.platform.tools.registry.ToolRegistry;
+import com.shreeai.os.platform.security.api.ApprovalService;
+import com.shreeai.os.platform.security.engine.InMemoryApprovalService;
+import com.shreeai.os.platform.security.model.ApprovalRequest;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -20,20 +24,24 @@ public final class DefaultToolExecutor implements ToolExecutor {
 
     private final ToolRegistry registry;
     private final PermissionManager permissionManager;
+    private final ApprovalService approvalService;
 
     public DefaultToolExecutor(ToolRegistry registry) {
         this(
                 registry,
-                new DefaultPermissionManager()
+                new DefaultPermissionManager(),
+                new InMemoryApprovalService()
         );
     }
 
     public DefaultToolExecutor(
             ToolRegistry registry,
-            PermissionManager permissionManager
+            PermissionManager permissionManager,
+            ApprovalService approvalService
     ) {
         this.registry = Objects.requireNonNull(registry);
         this.permissionManager = Objects.requireNonNull(permissionManager);
+        this.approvalService = Objects.requireNonNull(approvalService);
     }
 
     @Override
@@ -66,9 +74,27 @@ public final class DefaultToolExecutor implements ToolExecutor {
 
             case ALLOW -> tool.execute(request);
 
-            case ASK_USER -> ToolResponse.failure(
-                    "Permission required for tool: " + request.toolId()
-            );
+            case ASK_USER -> {
+
+                ApprovalRequest approval =
+                        approvalService.create(
+                                ApprovalRequest.pending(
+                                        request.toolId(),
+                                        operation,
+                                        request.arguments()
+                                )
+                        );
+
+                yield ToolResponse.success(
+                        "User approval required",
+                        Map.of(
+                                "approvalId", approval.requestId(),
+                                "status", approval.status().name(),
+                                "tool", approval.toolId(),
+                                "operation", approval.operation()
+                        )
+                );
+            }
 
             case DENY -> ToolResponse.failure(
                     "Permission denied for tool: " + request.toolId()

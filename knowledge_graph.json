@@ -1,27 +1,27 @@
 {
   "relationships" : [ {
-    "id" : "a4f77057-c9f1-4b7b-bd57-53ce6b5e0216",
-    "sourceId" : "46cfea59-59b3-4872-956d-bf6ede0d7dea",
-    "targetId" : "6c516cea-7557-4c69-ae03-4d82f88dd613",
+    "id" : "643c7ad2-555e-4659-8532-a2966fea0ae9",
+    "sourceId" : "c1ab24c6-4b51-4f1d-8214-27708a73b84e",
+    "targetId" : "c08ff734-d55b-4c7b-8e44-7e1f437de007",
     "type" : "LEARNING",
     "properties" : { },
-    "createdAt" : 1787855386.493654400
+    "createdAt" : 1787855845.949041300
   } ],
   "entities" : [ {
-    "id" : "6c516cea-7557-4c69-ae03-4d82f88dd613",
-    "type" : "LEARNING_TOPIC",
-    "name" : "Java",
-    "description" : null,
-    "properties" : { },
-    "createdAt" : 1787855386.492637100,
-    "updatedAt" : 1787855386.492637100
-  }, {
-    "id" : "46cfea59-59b3-4872-956d-bf6ede0d7dea",
+    "id" : "c1ab24c6-4b51-4f1d-8214-27708a73b84e",
     "type" : "USER",
     "name" : "Darshan",
     "description" : "Primary user",
     "properties" : { },
-    "createdAt" : 1787855386.491584700,
-    "updatedAt" : 1787855386.491584700
+    "createdAt" : 1787855845.946678400,
+    "updatedAt" : 1787855845.946678400
+  }, {
+    "id" : "c08ff734-d55b-4c7b-8e44-7e1f437de007",
+    "type" : "LEARNING_TOPIC",
+    "name" : "Java",
+    "description" : null,
+    "properties" : { },
+    "createdAt" : 1787855845.947921900,
+    "updatedAt" : 1787855845.947921900
   } ]
 }
