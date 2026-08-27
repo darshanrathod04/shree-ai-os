@@ -51,8 +51,8 @@ public final class ToolRegistryVerifier {
                         new ToolRequest(
                                 "terminal",
                                 Map.of(
-                                        "command",
-                                        "echo Shree"
+                                        "operation", "echo",
+                                        "command", "echo Shree"
                                 )
                         )
                 );
