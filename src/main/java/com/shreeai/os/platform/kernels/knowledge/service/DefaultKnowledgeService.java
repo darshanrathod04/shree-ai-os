@@ -18,6 +18,7 @@ import com.shreeai.os.platform.kernels.knowledge.model.UpdateKnowledgeRequest;
 import com.shreeai.os.platform.kernels.knowledge.validation.KnowledgeValidator;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -83,6 +84,7 @@ public final class DefaultKnowledgeService implements
 
     private final KnowledgeProcessingEngine processingEngine;
 
+    private KnowledgeGraph knowledgeGraph;
     /**
      * Creates a new DefaultKnowledgeService with constructor injection.
      *
@@ -99,8 +101,15 @@ public final class DefaultKnowledgeService implements
      *                         (must not be null)
      * @throws NullPointerException if {@code processingEngine} is null
      */
-    public DefaultKnowledgeService(KnowledgeProcessingEngine processingEngine) {
-        this.processingEngine = Objects.requireNonNull(processingEngine, "processingEngine must not be null");
+    public DefaultKnowledgeService(
+            KnowledgeProcessingEngine processingEngine
+    ) {
+        this.processingEngine = Objects.requireNonNull(
+                processingEngine,
+                "processingEngine must not be null"
+        );
+
+        this.knowledgeGraph = KnowledgeGraph.empty();
     }
 
     // ========================================================================
@@ -123,19 +132,28 @@ public final class DefaultKnowledgeService implements
      */
     @Override
     public String createKnowledge(Object entity) {
+
         if (!(entity instanceof CreateKnowledgeRequest request)) {
-            throw createValidationException("Entity must be a CreateKnowledgeRequest");
+            throw createValidationException(
+                    "Entity must be a CreateKnowledgeRequest"
+            );
         }
 
-        // Validate request
         var violations = KnowledgeValidator.validateCreateRequest(request);
+
         if (!violations.isEmpty()) {
             throw createValidationException(violations);
         }
 
-        // Build node and delegate to engine
         KnowledgeNode node = buildNode(request);
-        var result = processingEngine.processCreate(KnowledgeGraph.empty(), node);
+
+        var result = processingEngine.processCreate(
+                knowledgeGraph,
+                node
+        );
+
+        this.knowledgeGraph = result.getGraph();
+
         return node.getId().value();
     }
 
@@ -169,7 +187,13 @@ public final class DefaultKnowledgeService implements
 
         // Build updated node and delegate to engine
         KnowledgeNode updatedNode = buildUpdatedNode(id, request);
-        var result = processingEngine.processUpdate(KnowledgeGraph.empty(), updatedNode);
+        var result = processingEngine.processUpdate(
+                knowledgeGraph,
+                updatedNode
+        );
+
+        this.knowledgeGraph = result.getGraph();
+
         return result.isSuccessful();
     }
 
@@ -192,7 +216,13 @@ public final class DefaultKnowledgeService implements
         KnowledgeId id = parseKnowledgeId(knowledgeId);
 
         // Delegate to engine
-        var result = processingEngine.processDelete(KnowledgeGraph.empty(), id);
+        var result = processingEngine.processDelete(
+                knowledgeGraph,
+                id
+        );
+
+        this.knowledgeGraph = result.getGraph();
+
         return result.isSuccessful();
     }
 
@@ -240,12 +270,52 @@ public final class DefaultKnowledgeService implements
      * @throws KnowledgeValidationException if validation fails
      */
     @Override
-    public Object[] searchSemantic(String searchTerm) {
-        if (searchTerm == null || searchTerm.isBlank()) {
-            throw createValidationException("searchTerm must not be null or blank");
+    public Object[] searchSemantic(String query) {
+
+        Objects.requireNonNull(query, "query must not be null");
+
+        String normalized = query.trim().toLowerCase();
+
+        if (normalized.isEmpty()) {
+            return new Object[0];
         }
-        // TODO: Implement semantic search
-        return new Object[0];
+
+        return knowledgeGraph.getNodes().stream()
+                .filter(Objects::nonNull)
+                .filter(node -> semanticScore(node, normalized) > 0)
+                .sorted((a, b) ->
+                        Double.compare(
+                                semanticScore(b, normalized),
+                                semanticScore(a, normalized)
+                        ))
+                .toArray();
+    }
+
+    private double semanticScore(
+            KnowledgeNode node,
+            String query
+    ) {
+
+        double score = 0.0;
+
+        if (node.getLabel().toLowerCase().contains(query)) {
+            score += 5.0;
+        }
+
+        if (node.getDescription().toLowerCase().contains(query)) {
+            score += 3.0;
+        }
+
+        for (Object value : node.getMetadata().values()) {
+
+            if (value != null &&
+                    value.toString().toLowerCase().contains(query)) {
+
+                score += 1.0;
+            }
+        }
+
+        return score;
     }
 
     /**
@@ -434,11 +504,14 @@ public final class DefaultKnowledgeService implements
      */
     @Override
     public List<KnowledgeNode> searchBySimilarity(String text) {
+
         if (text == null || text.isBlank()) {
             throw createValidationException("text must not be null or blank");
         }
-        // TODO: Implement similarity search
-        return List.of();
+
+        return Arrays.stream(searchSemantic(text))
+                .map(KnowledgeNode.class::cast)
+                .toList();
     }
 
     // ========================================================================
