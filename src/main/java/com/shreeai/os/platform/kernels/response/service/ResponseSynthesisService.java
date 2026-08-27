@@ -1,6 +1,7 @@
 package com.shreeai.os.platform.kernels.response.service;
 
 import com.shreeai.os.platform.kernels.response.api.ResponseSynthesizer;
+import com.shreeai.os.platform.kernels.response.engine.DefaultResponseSynthesizer;
 import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
@@ -8,28 +9,22 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
 import java.util.Objects;
 
 /**
- * ResponseSynthesisService
+ * Constitutional Response Synthesis Service.
  *
- * Thin application service that delegates synthesis to the
- * configured ResponseSynthesizer.
- *
- * This preserves dependency inversion:
- *
- * Runtime
- *    ↓
- * Service
- *    ↓
- * ResponseSynthesizer
+ * This service is the only Runtime entry point for response generation.
+ * It never performs reasoning; it only converts validated pipeline state
+ * into a professional user-facing response.
  */
 public final class ResponseSynthesisService {
 
     private final ResponseSynthesizer synthesizer;
 
+    public ResponseSynthesisService() {
+        this(new DefaultResponseSynthesizer());
+    }
+
     public ResponseSynthesisService(ResponseSynthesizer synthesizer) {
-        this.synthesizer = Objects.requireNonNull(
-                synthesizer,
-                "ResponseSynthesizer cannot be null"
-        );
+        this.synthesizer = Objects.requireNonNull(synthesizer);
     }
 
     public SynthesizedResponse synthesize(

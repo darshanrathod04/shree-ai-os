@@ -140,10 +140,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
         this.kernelFactory = new DefaultKernelFactory();
 
-        this.responseSynthesisService =
-                new ResponseSynthesisService(
-                        new DefaultResponseSynthesizer()
-                );
+        this.responseSynthesisService = new ResponseSynthesisService();
 
         initializeStages();
     }
@@ -390,16 +387,18 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                                 pipelineResult.getExecutionState()
                         );
 
-                Map<String, Object> structured = new HashMap<>();
+                Map<String, Object> structured = new LinkedHashMap<>();
+
                 structured.put("response", response);
-                // Preserve the typed IntelligenceContext across the runtime boundary
                 structured.putAll(buildStructuredPayload(request));
+
+                Map<String, Object> payload = Map.copyOf(structured);
 
                 result = ExecutionResult.builder()
                         .requestId(request.requestId())
                         .success(true)
                         .output(response.answer())
-                        .structuredPayload(structured)
+                        .structuredPayload(payload)
                         .build();
 
             } else {
