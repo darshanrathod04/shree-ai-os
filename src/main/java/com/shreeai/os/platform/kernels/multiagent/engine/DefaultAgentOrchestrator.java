@@ -10,17 +10,22 @@ import java.util.*;
 /**
  * Constitutional implementation of AgentOrchestrator.
  *
- * Uses the existing MultiAgentService only.
- * No direct agent-to-agent execution is allowed.
+ * Responsibilities:
+ * - Discover suitable agents
+ * - Create one shared intelligence context
+ * - Delegate through MultiAgentService only
+ * - Never communicate directly with agents
  */
-public final class DefaultAgentOrchestrator implements AgentOrchestrator {
+public final class DefaultAgentOrchestrator
+        implements AgentOrchestrator {
 
     private final MultiAgentService multiAgentService;
 
     public DefaultAgentOrchestrator(
             MultiAgentService multiAgentService
     ) {
-        this.multiAgentService = Objects.requireNonNull(multiAgentService);
+        this.multiAgentService =
+                Objects.requireNonNull(multiAgentService);
     }
 
     @Override
@@ -29,20 +34,34 @@ public final class DefaultAgentOrchestrator implements AgentOrchestrator {
             Map<String, Object> context
     ) {
 
+        Map<String, Object> metadata =
+                context == null
+                        ? Map.of()
+                        : Map.copyOf(context);
+
         AgentRequest discoveryRequest =
                 new AgentRequest(
                         "chief",
                         "ORCHESTRATOR",
                         List.of(),
-                        context == null ? Map.of() : Map.copyOf(context)
+                        metadata
                 );
 
         List<AgentDescriptor> agents =
                 multiAgentService.discoverAgents(discoveryRequest);
 
+        AgentContext sharedContext =
+                createSharedContext(objective, metadata);
+
         List<AgentResponse> responses = new ArrayList<>();
 
         for (AgentDescriptor agent : agents) {
+
+            Map<String, Object> payload = new HashMap<>();
+
+            payload.put("objective", objective);
+            payload.put("agentContext", sharedContext);
+            payload.putAll(metadata);
 
             AgentCommunication communication =
                     new AgentCommunication(
@@ -50,10 +69,7 @@ public final class DefaultAgentOrchestrator implements AgentOrchestrator {
                             "chief",
                             agent.agentId(),
                             Instant.now(),
-                            Map.of(
-                                    "objective", objective,
-                                    "context", context == null ? Map.of() : context
-                            )
+                            payload
                     );
 
             AgentResponse response =
@@ -63,5 +79,39 @@ public final class DefaultAgentOrchestrator implements AgentOrchestrator {
         }
 
         return List.copyOf(responses);
+    }
+
+    /**
+     * Creates the shared intelligence package.
+     */
+    private AgentContext createSharedContext(
+            String objective,
+            Map<String, Object> metadata
+    ) {
+
+        List<String> memory =
+                asStringList(metadata.get("memory"));
+
+        List<String> knowledge =
+                asStringList(metadata.get("knowledge"));
+
+        return new AgentContext(
+                objective,
+                memory,
+                knowledge,
+                metadata
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> asStringList(Object value) {
+
+        if (value instanceof List<?> list) {
+            return list.stream()
+                    .map(String::valueOf)
+                    .toList();
+        }
+
+        return List.of();
     }
 }
