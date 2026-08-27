@@ -90,6 +90,26 @@ public final class ExecutionRequest {
         return value == null ? null : value.toString();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ExecutionRequest that)) {
+            return false;
+        }
+        return Objects.equals(requestId, that.requestId)
+                && Objects.equals(requestType, that.requestType)
+                && Objects.equals(payload, that.payload)
+                && Objects.equals(context, that.context)
+                && Objects.equals(metadata, that.metadata);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(requestId, requestType, payload, context, metadata);
+    }
+
     /* ==========================================================
        Builder
        ========================================================== */

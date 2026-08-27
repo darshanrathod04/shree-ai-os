@@ -176,7 +176,11 @@ class RuntimePipelineTest {
                 .build();
 
         assertEquals("pipe-123", context.getPipelineId());
-        assertSame(request, context.getExecutionRequest());
+        // R2 adapter converts the legacy request into the canonical contract;
+        // identity is intentionally not preserved, the mapped values are.
+        assertEquals(request.getUserInput(), context.getExecutionRequest().getPayload());
+        assertEquals(request.getIntent(), context.getExecutionRequest().getRequestType());
+        assertNotNull(context.getExecutionRequest().getRequestId());
         assertSame(decision, context.getDecision());
         assertNull(context.getValidationResult());
         assertSame(metadata, context.getExecutionMetadata());

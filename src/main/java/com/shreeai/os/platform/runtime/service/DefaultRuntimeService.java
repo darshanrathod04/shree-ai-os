@@ -392,6 +392,8 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
                 Map<String, Object> structured = new HashMap<>();
                 structured.put("response", response);
+                // Preserve the typed IntelligenceContext across the runtime boundary
+                structured.putAll(buildStructuredPayload(request));
 
                 result = ExecutionResult.builder()
                         .requestId(request.requestId())

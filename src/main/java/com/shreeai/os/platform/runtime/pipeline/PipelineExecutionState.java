@@ -458,6 +458,7 @@ public final class PipelineExecutionState {
                 .processingTime(duration)
                 .messages(messages)
                 .metadata(buildExecutionMetadata())
+                .executionState(this)
                 .timestamp(endTime != null ? endTime : Instant.now())
                 .build();
     }

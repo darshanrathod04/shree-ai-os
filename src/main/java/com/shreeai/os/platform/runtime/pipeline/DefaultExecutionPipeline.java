@@ -108,7 +108,7 @@ public final class DefaultExecutionPipeline implements com.shreeai.os.platform.r
             ExecutionRequest pipelineRequest =
                 ExecutionRequest.builder()
                     .requestId(request.requestId())
-                    .userInput(request.payload())
+                    .payload(request.payload())
                     .build();
             
             // Convert ExecutionRequest to PipelineContext

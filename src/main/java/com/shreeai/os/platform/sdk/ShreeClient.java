@@ -79,10 +79,15 @@ public final class ShreeClient {
                     new HashMap<>(request.metadata());
 
             metadata.put("intelligenceContext", intelligenceContext);
+            if (request.sessionId() != null && !request.sessionId().isBlank()) {
+                metadata.put("sessionId", request.sessionId());
+            }
 
             ExecutionRequest executionRequest =
                     ExecutionRequest.builder()
-                            .requestId(request.sessionId())
+                            .requestId(request.sessionId() != null && !request.sessionId().isBlank()
+                                    ? request.sessionId()
+                                    : java.util.UUID.randomUUID().toString())
                             .requestType("CHAT")
                             .payload(request.message())
                             .context(request.context())

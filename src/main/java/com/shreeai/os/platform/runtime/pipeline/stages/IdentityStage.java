@@ -81,10 +81,7 @@ public final class IdentityStage implements ExecutionStage {
             String sessionId =
                     context.getExecutionRequest() != null
                             && context.getExecutionRequest().getSession() != null
-                            ? context.getExecutionRequest()
-                            .getSession()
-                            .getSessionId()
-                            .toString()
+                            ? context.getExecutionRequest().getSession()
                             : "RUNTIME";
 
             // ==========================================================
@@ -123,7 +120,7 @@ public final class IdentityStage implements ExecutionStage {
             state.addMetadata("workspaceId", identity.workspaceId());
 
             state.addMessage(
-                    "Identity Kernel resolved → " +
+                    "Identity Kernel resolved â†’ " +
                             identity.identityId().value()
             );
 

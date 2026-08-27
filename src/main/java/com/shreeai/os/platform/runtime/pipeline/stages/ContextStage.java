@@ -54,7 +54,7 @@ public final class ContextStage implements ExecutionStage {
             if (context.getExecutionRequest() != null
                     && context.getExecutionRequest().getMetadata() != null) {
                 Object supplied = context.getExecutionRequest().getMetadata()
-                        .getCustomValue("intelligenceContext");
+                        .get("intelligenceContext");
                 if (supplied instanceof IntelligenceContext ic) {
                     intelligenceContext = ic;
                 }

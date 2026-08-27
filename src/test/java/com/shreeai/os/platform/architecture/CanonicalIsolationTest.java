@@ -1,4 +1,4 @@
-﻿package com.shreeai.os.platform.architecture;
+package com.shreeai.os.platform.architecture;
 
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +28,6 @@ class CanonicalIsolationTest {
             "import com.shreeai.os.platform.legacy.";
 
     private static final Set<String> ALLOWED = Set.of(
-            "platform/kernels/chief/validation/DecisionValidator.java",
             "platform/runtime/pipeline/PipelineContext.java",
             "platform/runtime/pipeline/PipelineExecutionState.java",
             "platform/runtime/pipeline/PipelineResult.java",

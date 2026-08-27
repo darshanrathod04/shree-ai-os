@@ -40,3 +40,6 @@ build/
 *.log
 *.zip
 hs_err_pid*
+
+sessions/
+mvn_gate.log

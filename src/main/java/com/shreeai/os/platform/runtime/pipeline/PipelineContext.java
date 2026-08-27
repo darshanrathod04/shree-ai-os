@@ -226,6 +226,45 @@ public final class PipelineContext {
         }
 
         /**
+         * Legacy compatibility adapter (gate R2 of
+         * docs/architecture/LEGACY_MIGRATION_REPORT.md).
+         *
+         * Converts the legacy execution request to the canonical ExecutionRequest:
+         * userInput maps to payload, intent maps to requestType, and decisionId /
+         * capabilityName are preserved as metadata. The Runtime remains the single
+         * source of truth; no logic is duplicated.
+         *
+         * @deprecated Remove in Phase 2 once all call sites build the canonical
+n         *             ExecutionRequest directly.
+         */
+        @Deprecated
+        public Builder executionRequest(
+                com.shreeai.os.platform.legacy.execution.ExecutionRequest legacyRequest) {
+            if (legacyRequest == null) {
+                this.executionRequest = null;
+                return this;
+            }
+            ExecutionRequest.Builder canonical = ExecutionRequest.builder()
+                    .requestId(legacyRequest.getRequestId() != null
+                            ? legacyRequest.getRequestId()
+                            : java.util.UUID.randomUUID().toString())
+                    .requestType(legacyRequest.getIntent() != null
+                            ? legacyRequest.getIntent()
+                            : "CHAT")
+                    .payload(legacyRequest.getUserInput() != null
+                            ? legacyRequest.getUserInput()
+                            : "");
+            if (legacyRequest.getDecisionId() != null) {
+                canonical.addMetadata("decisionId", legacyRequest.getDecisionId());
+            }
+            if (legacyRequest.getCapabilityName() != null) {
+                canonical.addMetadata("capabilityName", legacyRequest.getCapabilityName());
+            }
+            this.executionRequest = canonical.build();
+            return this;
+        }
+
+        /**
          * Set the cognitive decision.
          *
          * @param decision the cognitive decision
