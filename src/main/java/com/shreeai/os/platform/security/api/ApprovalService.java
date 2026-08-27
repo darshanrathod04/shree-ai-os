@@ -10,4 +10,8 @@ public interface ApprovalService {
 
     Optional<ApprovalRequest> find(String requestId);
 
+    ApprovalRequest approve(String requestId);
+
+    ApprovalRequest deny(String requestId);
+
 }
