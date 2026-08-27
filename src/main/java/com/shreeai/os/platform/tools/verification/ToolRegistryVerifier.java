@@ -2,13 +2,10 @@ package com.shreeai.os.platform.tools.verification;
 
 import com.shreeai.os.platform.tools.api.Tool;
 import com.shreeai.os.platform.tools.engine.DefaultToolExecutor;
-import com.shreeai.os.platform.tools.impl.FileSystemTool;
-import com.shreeai.os.platform.tools.impl.GitTool;
+import com.shreeai.os.platform.tools.impl.*;
 import com.shreeai.os.platform.tools.model.ToolRequest;
 import com.shreeai.os.platform.tools.model.ToolResponse;
 import com.shreeai.os.platform.tools.registry.DefaultToolRegistry;
-import com.shreeai.os.platform.tools.impl.EchoTool;
-import com.shreeai.os.platform.tools.impl.TerminalTool;
 
 import java.util.Map;
 
@@ -25,6 +22,7 @@ public final class ToolRegistryVerifier {
         registry.register(new FileSystemTool());
         registry.register(new TerminalTool());
         registry.register(new GitTool());
+        registry.register(new BrowserTool());
 
         DefaultToolExecutor executor =
                 new DefaultToolExecutor(registry);
@@ -70,10 +68,22 @@ public final class ToolRegistryVerifier {
                         )
                 );
 
+        ToolResponse browserResponse =
+                executor.execute(
+                        new ToolRequest(
+                                "browser",
+                                Map.of(
+                                        "url",
+                                        "https://example.com"
+                                )
+                        )
+                );
+
         return echoResponse.success()
                 && fileResponse.success()
                 && terminalResponse.success()
                 && gitResponse.success()
+                && browserResponse.success()
                 && "Shree AI".equals(
                 echoResponse.data().get("echo")
         );
