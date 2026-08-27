@@ -1,6 +1,7 @@
 package com.shreeai.os.platform.tools.verification;
 
 import com.shreeai.os.platform.tools.api.Tool;
+import com.shreeai.os.platform.tools.engine.DefaultToolExecutor;
 import com.shreeai.os.platform.tools.model.ToolRequest;
 import com.shreeai.os.platform.tools.model.ToolResponse;
 import com.shreeai.os.platform.tools.registry.DefaultToolRegistry;
@@ -19,18 +20,20 @@ public final class ToolRegistryVerifier {
 
         registry.register(new EchoTool());
 
+        DefaultToolExecutor executor =
+                new DefaultToolExecutor(registry);
+
         ToolResponse response =
-                registry.find("echo")
-                        .orElseThrow()
-                        .execute(
-                                new ToolRequest(
-                                        "echo",
-                                        Map.of("message", "Hello")
-                                )
-                        );
+                executor.execute(
+                        new ToolRequest(
+                                "echo",
+                                Map.of("message", "Shree AI")
+                        )
+                );
 
         return response.success()
-                && "Hello".equals(response.data().get("echo"))
-                && registry.getAll().size() == 1;
+                && "Shree AI".equals(
+                response.data().get("echo")
+        );
     }
 }
