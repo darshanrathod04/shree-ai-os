@@ -33,7 +33,6 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         Map<String, Object> metadata = state.getMetadata();
 
         List<ResponseSection> sections = new ArrayList<>();
-        List<String> evidence = new ArrayList<>();
 
         String summary = extractSummary(metadata);
         String conclusion = string(metadata.get("reasoningConclusion"));
@@ -42,33 +41,36 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         // Executive Summary
         sections.add(new ResponseSection(
                 "Executive Summary",
-                List.of(summary)
+                summary
         ));
 
-        // Findings
-        List<String> findings = new ArrayList<>();
+        // Key Findings
+        String findings = buildFindings(metadata);
 
-        addIfPresent(findings, metadata, "reasoningSummary");
-        addIfPresent(findings, metadata, "reasoningConclusion");
-        addIfPresent(findings, metadata, "planSummary");
-
-        if (!findings.isEmpty()) {
-            sections.add(new ResponseSection("Key Findings", findings));
+        if (!findings.isBlank()) {
+            sections.add(new ResponseSection(
+                    "Key Findings",
+                    findings
+            ));
         }
 
-        // Recommendations
+        // Recommendation
         if (!plan.isBlank()) {
             sections.add(new ResponseSection(
                     "Recommended Next Step",
-                    List.of(plan)
+                    plan
             ));
         }
 
         // Evidence
-        addIfPresent(evidence, metadata, "memoryId");
-        addIfPresent(evidence, metadata, "knowledgeId");
-        addIfPresent(evidence, metadata, "reasoningId");
-        addIfPresent(evidence, metadata, "planId");
+        String evidence = buildEvidence(metadata);
+
+        if (!evidence.isBlank()) {
+            sections.add(new ResponseSection(
+                    "Evidence",
+                    evidence
+            ));
+        }
 
         double confidence = confidence(metadata);
 
@@ -76,11 +78,9 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
 
         return new SynthesizedResponse(
                 answer,
-                summary,
-                ResponseStyle.ANALYSIS,
                 sections,
-                evidence,
                 confidence,
+                ResponseStyle.PROFESSIONAL,
                 Instant.now()
         );
     }
@@ -102,6 +102,45 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         return "The request was successfully processed through the Shree AI intelligence pipeline.";
     }
 
+    private String buildFindings(Map<String, Object> metadata) {
+
+        List<String> findings = new ArrayList<>();
+
+        addIfPresent(findings, metadata, "reasoningSummary");
+        addIfPresent(findings, metadata, "reasoningConclusion");
+        addIfPresent(findings, metadata, "planSummary");
+
+        return String.join("\n• ", prependBullet(findings));
+    }
+
+    private String buildEvidence(Map<String, Object> metadata) {
+
+        List<String> evidence = new ArrayList<>();
+
+        addIfPresent(evidence, metadata, "memoryId");
+        addIfPresent(evidence, metadata, "knowledgeId");
+        addIfPresent(evidence, metadata, "reasoningId");
+        addIfPresent(evidence, metadata, "planId");
+
+        return String.join("\n• ", prependBullet(evidence));
+    }
+
+    private List<String> prependBullet(List<String> values) {
+
+        if (values.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> result = new ArrayList<>();
+        result.add("• " + values.get(0));
+
+        for (int i = 1; i < values.size(); i++) {
+            result.add(values.get(i));
+        }
+
+        return result;
+    }
+
     private double confidence(Map<String, Object> metadata) {
 
         Object value = metadata.get("reasoningConfidence");
@@ -120,9 +159,7 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
             String plan
     ) {
 
-        StringBuilder builder = new StringBuilder();
-
-        builder.append(summary);
+        StringBuilder builder = new StringBuilder(summary);
 
         if (!conclusion.isBlank()) {
             builder.append("\n\nConclusion: ")

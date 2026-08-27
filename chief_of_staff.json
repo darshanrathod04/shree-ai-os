@@ -1,40 +1,22 @@
 {
   "insights" : [ {
-    "id" : "55c819ff-5cd8-4b63-b91a-b41914ec48b6",
-    "type" : "POSITIVE_PROGRESS",
-    "severity" : "LOW",
-    "priorityScore" : 10,
-    "message" : "Project 'Good Progress' is progressing (75%)",
-    "recommendation" : "Keep the momentum on Good Progress",
-    "resolved" : false,
-    "createdAt" : 1787850636.463565800
-  }, {
-    "id" : "196ea8a1-8ae3-4495-a35b-25fd90a118cf",
-    "type" : "PROJECT_RISK",
-    "severity" : "MEDIUM",
-    "priorityScore" : 85,
-    "message" : "Project 'Risky Project' has 1 unresolved risks: Critical bug",
-    "recommendation" : "Resolve Critical bug to unblock progress on Risky Project",
-    "resolved" : false,
-    "createdAt" : 1787850636.463565800
-  }, {
-    "id" : "cd8fbbef-644a-4ae1-a1c9-af0d435fda80",
+    "id" : "388ad957-74bf-4a5d-ad6d-d61d8d684fd8",
     "type" : "LEARNING_GAP",
     "severity" : "MEDIUM",
     "priorityScore" : 70,
     "message" : "1 learning topics tracked: Java",
     "recommendation" : "Review your learning progress and continue with the next topic",
     "resolved" : false,
-    "createdAt" : 1787850636.463565800
+    "createdAt" : 1787851331.344585000
   } ],
   "currentRecommendation" : {
-    "id" : "196ea8a1-8ae3-4495-a35b-25fd90a118cf",
-    "type" : "PROJECT_RISK",
+    "id" : "388ad957-74bf-4a5d-ad6d-d61d8d684fd8",
+    "type" : "LEARNING_GAP",
     "severity" : "MEDIUM",
-    "priorityScore" : 85,
-    "message" : "Project 'Risky Project' has 1 unresolved risks: Critical bug",
-    "recommendation" : "Resolve Critical bug to unblock progress on Risky Project",
+    "priorityScore" : 70,
+    "message" : "1 learning topics tracked: Java",
+    "recommendation" : "Review your learning progress and continue with the next topic",
     "resolved" : false,
-    "createdAt" : 1787850636.463565800
+    "createdAt" : 1787851331.344585000
   }
 }
