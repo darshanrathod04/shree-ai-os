@@ -36,3 +36,7 @@ build/
 # Frontend projects
 /shree-ai-os-web/
 /shree-ai-os-website/
+# Phase 0 constitutional hygiene
+*.log
+*.zip
+hs_err_pid*
