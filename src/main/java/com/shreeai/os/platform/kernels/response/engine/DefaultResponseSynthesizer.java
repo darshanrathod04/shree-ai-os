@@ -8,6 +8,7 @@ import com.shreeai.os.platform.kernels.response.model.ResponseStyle;
 import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -365,7 +366,87 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
             PipelineContext context,
             Map<String, Object> metadata
     ) {
-        return synthesizeDefault(metadata);
+
+        String title = firstNonBlank(
+                string(metadata.get("knowledgeTitle")),
+                requestText(context)
+        );
+
+        String summary = string(metadata.get("knowledgeSummary"));
+
+        @SuppressWarnings("unchecked")
+        List<KnowledgeNode> results =
+                metadata.get("knowledgeResults") instanceof List<?>
+                        ? (List<KnowledgeNode>) metadata.get("knowledgeResults")
+                        : List.of();
+
+        List<ResponseSection> sections = new ArrayList<>();
+        Map<String, Object> structured = new LinkedHashMap<>();
+
+        StringBuilder answer = new StringBuilder();
+
+        answer.append("# ").append(title).append("\n\n");
+
+        if (!summary.isBlank()) {
+            answer.append("## Summary\n\n")
+                    .append(summary)
+                    .append("\n\n");
+
+            sections.add(new ResponseSection("Summary", summary));
+        }
+
+        if (!results.isEmpty()) {
+
+            answer.append("## Key Knowledge\n\n");
+
+            StringBuilder keyPoints = new StringBuilder();
+
+            for (KnowledgeNode node : results) {
+
+                answer.append("- **")
+                        .append(node.getLabel())
+                        .append("**");
+
+                if (node.getDescription() != null &&
+                        !node.getDescription().isBlank()) {
+
+                    answer.append(": ")
+                            .append(node.getDescription());
+                }
+
+                answer.append("\n");
+
+                keyPoints.append("• ")
+                        .append(node.getLabel());
+
+                if (node.getDescription() != null &&
+                        !node.getDescription().isBlank()) {
+
+                    keyPoints.append(" — ")
+                            .append(node.getDescription());
+                }
+
+                keyPoints.append("\n");
+            }
+
+            sections.add(new ResponseSection(
+                    "Key Knowledge",
+                    keyPoints.toString().stripTrailing()
+            ));
+
+            structured.put("knowledgeCount", results.size());
+        }
+
+        structured.put("knowledgeTitle", title);
+
+        return new SynthesizedResponse(
+                answer.toString().trim(),
+                sections,
+                0.95,
+                ResponseStyle.PROFESSIONAL,
+                Instant.now(),
+                structured
+        );
     }
 
     private SynthesizedResponse synthesizeChat(
