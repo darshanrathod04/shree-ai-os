@@ -367,8 +367,20 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
             Map<String, Object> metadata
     ) {
 
+        Object value = context.getAttribute("requestMetadata");
+
+        String keyword = "";
+
+        if (value instanceof Map<?, ?> requestMetadata) {
+            Object k = requestMetadata.get("keyword");
+            if (k != null && !k.toString().isBlank()) {
+                keyword = k.toString();
+            }
+        }
+
         String title = firstNonBlank(
                 string(metadata.get("knowledgeTitle")),
+                keyword,
                 requestText(context)
         );
 

@@ -112,10 +112,19 @@ public final class DefaultExecutionPipeline implements com.shreeai.os.platform.r
                     .build();
             
             // Convert ExecutionRequest to PipelineContext
-            com.shreeai.os.platform.runtime.pipeline.PipelineContext pipelineContext = 
-                com.shreeai.os.platform.runtime.pipeline.PipelineContext.builder()
-                    .executionRequest(pipelineRequest)
-                    .build();
+            PipelineContext.Builder contextBuilder =
+                    PipelineContext.builder()
+                            .executionRequest(pipelineRequest);
+
+// EO-V1.2 : propagate SDK metadata
+            if (request.metadata() != null) {
+                contextBuilder.addAttribute(
+                        "requestMetadata",
+                        request.metadata()
+                );
+            }
+
+            PipelineContext pipelineContext = contextBuilder.build();
 
             // Execute using pipeline contract
             com.shreeai.os.platform.runtime.pipeline.PipelineResult pipelineResult = execute(pipelineContext);

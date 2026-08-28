@@ -146,7 +146,13 @@ public final class KnowledgeStage implements ExecutionStage {
 
                 KnowledgeNode top = rankedKnowledge.getFirst();
 
-                state.addMetadata("knowledgeTitle", top.getLabel());
+                String title = top.getLabel();
+
+                if (title == null || title.isBlank()) {
+                    title = requestText;
+                }
+
+                state.addMetadata("knowledgeTitle", title);
                 state.addMetadata("knowledgeSummary", top.getDescription());
                 state.addMetadata("knowledgeMetadata", top.getMetadata());
             }
