@@ -98,10 +98,24 @@ public final class KnowledgeStage implements ExecutionStage {
             }
 
             // Get the request text for knowledge search
-            String requestText =
-                    context.getExecutionRequest() != null
-                            ? context.getExecutionRequest().getUserInput()
-                            : "";
+            String requestText = "";
+
+            Object value = context.getAttribute("requestMetadata");
+
+            if (value instanceof Map<?, ?> requestMetadata) {
+
+                Object keyword = requestMetadata.get("keyword");
+
+                if (keyword != null && !keyword.toString().isBlank()) {
+                    requestText = keyword.toString();
+                }
+            }
+
+            if (requestText.isBlank()
+                    && context.getExecutionRequest() != null) {
+
+                requestText = context.getExecutionRequest().getUserInput();
+            }
 
             // Search for relevant knowledge
             List<KnowledgeNode> allKnowledge = knowledgeSearchService.search(requestText);
