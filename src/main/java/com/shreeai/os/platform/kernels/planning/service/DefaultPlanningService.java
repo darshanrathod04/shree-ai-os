@@ -133,9 +133,10 @@ public final class DefaultPlanningService implements PlanningService {
 
         // Preserve the semantic metadata produced by PlanningStage (requestId, requestText,
         // reasoningId, reasoningConclusion, etc.) instead of replacing it with empty metadata
-        Map<String, String> objectiveMetadata = planningRequest.constraints() != null
-                ? planningRequest.constraints().metadata()
-                : java.util.Map.of();
+        Map<String, Object> objectiveMetadata =
+                planningRequest.constraints() != null
+                        ? planningRequest.constraints().metadata()
+                        : Map.of();
 
         // Validate request
         PlanningValidationResult validationResult = validator.validatePlanningObjective(
@@ -172,6 +173,8 @@ public final class DefaultPlanningService implements PlanningService {
             ), e);
         }
     }
+
+
 
     @Override
     public String refinePlan(PlanningService.PlanRefinementRequest planRefinementRequest) {

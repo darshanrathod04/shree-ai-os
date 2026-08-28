@@ -38,7 +38,7 @@ public final class PlanningObjective {
     private final PlanningId planningId;
     private final String description;
     private final String scope;
-    private final Map<String, String> metadata;
+    private final Map<String, Object> metadata;
 
     /**
      * Constructs a {@code PlanningObjective} with the specified parameters.
@@ -49,15 +49,18 @@ public final class PlanningObjective {
      * @param metadata    additional metadata (must not be {@code null})
      * @throws NullPointerException if any argument is {@code null}
      */
-    public PlanningObjective(PlanningId planningId,
-                             String description,
-                             String scope,
-                             Map<String, String> metadata) {
-        this.planningId = Objects.requireNonNull(planningId, "planningId must not be null");
-        this.description = Objects.requireNonNull(description, "description must not be null");
-        this.scope = Objects.requireNonNull(scope, "scope must not be null");
-        this.metadata = Collections.unmodifiableMap(
-                Objects.requireNonNull(metadata, "metadata must not be null"));
+    public PlanningObjective(
+            PlanningId planningId,
+            String description,
+            String scope,
+            Map<String, Object> metadata
+    ) {
+        this.planningId = Objects.requireNonNull(planningId);
+        this.description = Objects.requireNonNull(description);
+        this.scope = Objects.requireNonNull(scope);
+        this.metadata = metadata == null
+                ? Map.of()
+                : Map.copyOf(metadata);
     }
 
     /**
@@ -92,7 +95,7 @@ public final class PlanningObjective {
      *
      * @return the metadata map
      */
-    public Map<String, String> metadata() {
+    public Map<String, Object> metadata() {
         return metadata;
     }
 

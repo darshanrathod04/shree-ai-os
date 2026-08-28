@@ -2,6 +2,7 @@ package com.shreeai.os.platform.kernels.response.model;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -13,7 +14,8 @@ public record SynthesizedResponse(
         List<ResponseSection> sections,
         double confidence,
         ResponseStyle style,
-        Instant generatedAt
+        Instant generatedAt,
+        Map<String, Object> structuredData
 
 ) {
 
@@ -34,6 +36,24 @@ public record SynthesizedResponse(
                 : generatedAt;
 
         sections = List.copyOf(sections);
+
+        structuredData = structuredData == null
+                ? Map.of()
+                : Map.copyOf(structuredData);
+    }
+
+    /**
+     * Backward-compatible constructor for responses without
+     * additional structured data.
+     */
+    public SynthesizedResponse(
+            String answer,
+            List<ResponseSection> sections,
+            double confidence,
+            ResponseStyle style,
+            Instant generatedAt
+    ) {
+        this(answer, sections, confidence, style, generatedAt, Map.of());
     }
 
     public static SynthesizedResponse simple(

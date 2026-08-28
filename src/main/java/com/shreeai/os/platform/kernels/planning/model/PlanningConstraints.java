@@ -36,7 +36,7 @@ public final class PlanningConstraints {
     private final Map<String, String> timeConstraints;
     private final Map<String, String> dependencyConstraints;
     private final Map<String, String> policyConstraints;
-    private final Map<String, String> metadata;
+    private final Map<String, Object> metadata;
 
     /**
      * Constructs a {@code PlanningConstraints} with the specified parameters.
@@ -47,18 +47,24 @@ public final class PlanningConstraints {
      * @param metadata              additional metadata (must not be {@code null})
      * @throws NullPointerException if any argument is {@code null}
      */
-    public PlanningConstraints(Map<String, String> timeConstraints,
-                               Map<String, String> dependencyConstraints,
-                               Map<String, String> policyConstraints,
-                               Map<String, String> metadata) {
+    public PlanningConstraints(
+            Map<String, String> timeConstraints,
+            Map<String, String> dependencyConstraints,
+            Map<String, String> policyConstraints,
+            Map<String, Object> metadata
+    ) {
         this.timeConstraints = Collections.unmodifiableMap(
                 Objects.requireNonNull(timeConstraints, "timeConstraints must not be null"));
+
         this.dependencyConstraints = Collections.unmodifiableMap(
                 Objects.requireNonNull(dependencyConstraints, "dependencyConstraints must not be null"));
+
         this.policyConstraints = Collections.unmodifiableMap(
                 Objects.requireNonNull(policyConstraints, "policyConstraints must not be null"));
-        this.metadata = Collections.unmodifiableMap(
-                Objects.requireNonNull(metadata, "metadata must not be null"));
+
+        this.metadata = metadata == null
+                ? Map.of()
+                : Map.copyOf(metadata);
     }
 
     /**
@@ -93,7 +99,7 @@ public final class PlanningConstraints {
      *
      * @return the metadata map
      */
-    public Map<String, String> metadata() {
+    public Map<String, Object> metadata() {
         return metadata;
     }
 

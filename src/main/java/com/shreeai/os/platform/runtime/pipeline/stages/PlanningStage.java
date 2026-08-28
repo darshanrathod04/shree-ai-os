@@ -157,6 +157,15 @@ public final class PlanningStage implements ExecutionStage {
                             ? context.getExecutionRequest().getUserInput()
                             : "";
 
+            // Prefer the developer-supplied planning objective (set by the
+            // SDK) so goal intelligence classifies the real intent rather
+            // than the SDK message marker. Falls back to the request text.
+            String goalText = requestObjective(context);
+
+            if (goalText.isBlank()) {
+                goalText = requestText;
+            }
+
             /*
              * -------------------------------------------------------------
              * 2. Retrieve authoritative reasoning
@@ -269,7 +278,7 @@ public final class PlanningStage implements ExecutionStage {
             GoalRequest goalRequest =
                     new GoalRequest(
                             "goal-" + requestId,
-                            requestText,
+                            goalText,
                             evidence,
                             List.of(),
                             List.of(),
@@ -296,8 +305,7 @@ public final class PlanningStage implements ExecutionStage {
              * -------------------------------------------------------------
              */
 
-            Map<String, String> objectiveMetadata =
-                    new LinkedHashMap<>();
+            Map<String, Object> objectiveMetadata = new LinkedHashMap<>();
 
             objectiveMetadata.put(
                     "requestId",
@@ -348,139 +356,24 @@ public final class PlanningStage implements ExecutionStage {
                                 reasoningResult.confidence()
                         )
                 );
+
+                objectiveMetadata.put("goalSubtasks", goalAnalysis.subtasks());
+
+                objectiveMetadata.put("goalDependencies", goalAnalysis.dependencies());
+
+                objectiveMetadata.put("goalBlockers", goalAnalysis.blockers());
+
+                objectiveMetadata.put("goalRecommendations", goalAnalysis.recommendations());
+
+                objectiveMetadata.put("goalEvidence", goalAnalysis.evidence());
+
+                objectiveMetadata.put("goalConstraints", goalAnalysis.constraints());
+
+                objectiveMetadata.put("goalConflicts", goalAnalysis.conflicts());
+
+                objectiveMetadata.put("goalEvolutionSignals", goalAnalysis.evolutionSignals());
             }
 
-            /*
-             * -------------------------------------------------------------
-             * Goal Intelligence metadata
-             * -------------------------------------------------------------
-             */
-
-            objectiveMetadata.put(
-                    "goalIntelligenceSource",
-                    "GoalIntelligenceEngine"
-            );
-
-            objectiveMetadata.put(
-                    "goalAnalysisId",
-                    goalAnalysis.analysisId()
-            );
-
-            objectiveMetadata.put(
-                    "goalStatus",
-                    goalAnalysis.status().name()
-            );
-
-            objectiveMetadata.put(
-                    "goalPriority",
-                    goalAnalysis.priority().name()
-            );
-
-            objectiveMetadata.put(
-                    "goalFeasibility",
-                    goalAnalysis.feasibility().name()
-            );
-
-            objectiveMetadata.put(
-                    "goalProgress",
-                    String.valueOf(
-                            goalAnalysis.progress()
-                    )
-            );
-
-            objectiveMetadata.put(
-                    "goalConfidence",
-                    String.valueOf(
-                            goalAnalysis.confidence()
-                    )
-            );
-
-            objectiveMetadata.put(
-                    "goalConfidenceBand",
-                    goalAnalysis.confidenceBand().name()
-            );
-
-            objectiveMetadata.put(
-                    "goalDecompositionRequired",
-                    String.valueOf(
-                            goalAnalysis.decompositionRequired()
-                    )
-            );
-
-            objectiveMetadata.put(
-                    "goalReplanningRelevant",
-                    String.valueOf(
-                            goalAnalysis.replanningRelevant()
-                    )
-            );
-
-            objectiveMetadata.put(
-                    "goalSubtasks",
-                    String.valueOf(
-                            goalAnalysis.subtasks()
-                    )
-            );
-
-            objectiveMetadata.put(
-                    "goalDependencies",
-                    String.valueOf(
-                            goalAnalysis.dependencies()
-                    )
-            );
-
-            objectiveMetadata.put(
-                    "goalBlockers",
-                    String.valueOf(
-                            goalAnalysis.blockers()
-                    )
-            );
-
-            objectiveMetadata.put(
-                    "goalConflicts",
-                    String.valueOf(
-                            goalAnalysis.conflicts()
-                    )
-            );
-
-            objectiveMetadata.put(
-                    "goalMissingInformation",
-                    String.valueOf(
-                            goalAnalysis.requiredInformation()
-                    )
-            );
-
-            objectiveMetadata.put(
-                    "goalEvolutionSignals",
-                    String.valueOf(
-                            goalAnalysis.evolutionSignals()
-                    )
-            );
-
-            objectiveMetadata.put(
-                    "goalRecommendations",
-                    String.valueOf(
-                            goalAnalysis.recommendations()
-                    )
-            );
-
-            /*
-             * The Planning Kernel can consume these through its existing
-             * metadata-aware processing contract.
-             */
-
-            objectiveMetadata.put(
-                    "goalEvidence",
-                    String.valueOf(
-                            goalAnalysis.evidence()
-                    )
-            );
-
-            objectiveMetadata.put(
-                    "goalConstraints",
-                    String.valueOf(
-                            goalAnalysis.constraints()
-                    )
-            );
 
             /*
              * -------------------------------------------------------------
@@ -515,17 +408,14 @@ public final class PlanningStage implements ExecutionStage {
              * -------------------------------------------------------------
              */
 
-            Map<String, String> constraintMetadata =
-                    new LinkedHashMap<>(
-                            objectiveMetadata
-                    );
+
 
             PlanningConstraints constraints =
                     new PlanningConstraints(
                             Map.of(),
                             Map.of(),
                             Map.of(),
-                            constraintMetadata
+                            objectiveMetadata
                     );
 
             PlanningService.PlanningRequest planningRequest =
@@ -714,6 +604,30 @@ public final class PlanningStage implements ExecutionStage {
 
         return value != null
                 ? String.valueOf(value)
+                : "";
+    }
+
+    /**
+     * Reads the developer-supplied planning objective from the request
+     * metadata, falling back to an empty string when absent.
+     */
+    private String requestObjective(
+            PipelineContext context) {
+
+        if (context == null
+                || context.getExecutionRequest() == null
+                || context.getExecutionRequest().getMetadata() == null) {
+
+            return "";
+        }
+
+        Object value =
+                context.getExecutionRequest()
+                        .getMetadata()
+                        .get("objective");
+
+        return value != null
+                ? String.valueOf(value).trim()
                 : "";
     }
 

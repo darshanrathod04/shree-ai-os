@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -216,6 +217,15 @@ public final class GoalIntelligenceEngine {
      * decomposition. It extracts explicit task boundaries when they are
      * observable in the goal text and otherwise keeps the goal intact.</p>
      */
+    /**
+     * Deterministic planning-domain decomposition.
+     *
+     * <p>Recognizes common planning domains through keyword classification
+     * and returns meaningful, canonical subtask steps for the matched domain.
+     * When no domain matches, it falls back to explicit separator
+     * decomposition and finally to a conservative general-project
+     * decomposition. Placeholder names are never emitted.</p>
+     */
     private List<String> decomposeGoal(String goal) {
 
         if (goal == null || goal.isBlank()) {
@@ -223,6 +233,60 @@ public final class GoalIntelligenceEngine {
         }
 
         String normalized = goal.trim();
+        String lower = normalized.toLowerCase(Locale.ROOT);
+
+        PlanningDomain domain = classifyDomain(lower);
+
+        if (domain != null) {
+            return domain.subtasks;
+        }
+
+        // Preserve explicit task boundaries when observable in the goal text.
+        List<String> splitParts = splitOnSeparators(normalized);
+
+        if (splitParts.size() > 1) {
+            return splitParts;
+        }
+
+        // General project fallback.
+        return List.of(
+                "Research",
+                "Planning",
+                "Implementation",
+                "Testing",
+                "Review"
+        );
+    }
+
+    /**
+     * Classifies the goal text into a planning domain by keyword scoring.
+     *
+     * <p>Selection is deterministic: the domain with the highest keyword
+     * match count wins, with earlier domains breaking ties.</p>
+     */
+    private PlanningDomain classifyDomain(String lower) {
+
+        PlanningDomain best = null;
+        int bestScore = 0;
+
+        for (PlanningDomain domain : PlanningDomain.values()) {
+
+            int score = domain.score(lower);
+
+            if (score > bestScore) {
+                best = domain;
+                bestScore = score;
+            }
+        }
+
+        return best;
+    }
+
+    /**
+     * Splits a goal on explicit task-boundary separators, preserving each
+     * part verbatim.
+     */
+    private List<String> splitOnSeparators(String normalized) {
 
         String[] separators = {
                 "\\s+and\\s+",
@@ -255,7 +319,78 @@ public final class GoalIntelligenceEngine {
             }
         }
 
-        return List.of(normalized);
+        return List.of();
+    }
+
+    /**
+     * Recognized planning domains with their keyword signals and canonical
+     * deterministic subtask steps.
+     */
+    private enum PlanningDomain {
+
+        GYM(
+                List.of(
+                        "push", "pull", "leg", "workout", "gym", "fitness",
+                        "exercise", "training", "muscle", "squat", "bench",
+                        "deadlift", "cardio", "strength"),
+                List.of(
+                        "Push workout",
+                        "Pull workout",
+                        "Legs workout",
+                        "Recovery strategy")
+        ),
+
+        SOFTWARE(
+                List.of(
+                        "software", "application", "backend", "frontend",
+                        "database", "microservice", "api", "service",
+                        "server", "develop", "system", "code"),
+                List.of(
+                        "Architecture",
+                        "Backend",
+                        "Frontend",
+                        "Database",
+                        "Testing",
+                        "Deployment")
+        ),
+
+        WEBSITE(
+                List.of(
+                        "website", "web site", "web app", "webpage",
+                        "landing page", "portfolio", "homepage", "blog",
+                        "onepage", "saas"),
+                List.of(
+                        "Landing page",
+                        "About",
+                        "Projects",
+                        "Contact",
+                        "Deployment")
+        );
+
+        private final List<String> keywords;
+        private final List<String> subtasks;
+
+        PlanningDomain(
+                List<String> keywords,
+                List<String> subtasks) {
+
+            this.keywords = keywords;
+            this.subtasks = subtasks;
+        }
+
+        int score(String lower) {
+
+            int score = 0;
+
+            for (String keyword : keywords) {
+
+                if (lower.contains(keyword)) {
+                    score++;
+                }
+            }
+
+            return score;
+        }
     }
 
     /**

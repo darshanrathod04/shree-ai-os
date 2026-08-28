@@ -283,8 +283,7 @@ public final class PlanningIntelligenceEngine {
     private List<TaskBlueprint> deriveTaskBlueprints(
             PlanningObjective objective) {
 
-        Map<String, String> metadata =
-                objective.metadata();
+        Map<String, Object> metadata = objective.metadata();
 
         List<TaskBlueprint> explicit =
                 parseExplicitTasks(
@@ -364,7 +363,7 @@ public final class PlanningIntelligenceEngine {
     }
 
     private List<TaskBlueprint> parseExplicitTasks(
-            Map<String, String> metadata) {
+            Map<String, Object> metadata) {
 
         String raw =
                 firstNonBlank(
@@ -780,10 +779,8 @@ public final class PlanningIntelligenceEngine {
             PlanningObjective objective,
             List<Task> tasks) {
 
-        Map<String, String> metadata =
-                new LinkedHashMap<>(
-                        objective.metadata()
-                );
+        Map<String, Object> metadata =
+                new LinkedHashMap<>(objective.metadata());
 
         metadata.put(
                 "planningIntelligenceVersion",

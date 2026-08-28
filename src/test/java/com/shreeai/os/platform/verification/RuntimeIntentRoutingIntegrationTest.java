@@ -97,7 +97,7 @@ public class RuntimeIntentRoutingIntegrationTest {
         assertRoutedTo(response, "CREATE_PLAN", "Planning Kernel", "Planning");
     }
 
-    @Test
+        @Test
     public void testPlanProjectRoutesToPlanningKernel() {
         SDKRequest request = SDKRequest.builder()
                 .message("Plan the migration project")
@@ -106,6 +106,102 @@ public class RuntimeIntentRoutingIntegrationTest {
 
         SDKResponse response = ai.chat(request);
         assertRoutedTo(response, "PLAN_PROJECT", "Planning Kernel", "Planning");
+    }
+
+    /* ==========================================================
+       Planning content verification (EO-V1-003)
+       ========================================================== */
+
+    @Test
+    public void testCreatePlanWorkoutProducesDomainSubtasks() {
+
+        SDKResponse response = ai.planning().createPlan(
+                "workout-001",
+                "Create a 3-day beginner Push Pull Legs workout",
+                "COMPREHENSIVE"
+        );
+
+        assertNotNull(response, "Response should not be null");
+        assertNotNull(response.answer(), "Answer should not be null");
+
+        String answer = response.answer();
+
+        // Must NOT contain the placeholder SDK message
+        assertFalse(answer.contains("PLANNING_CREATE"),
+                "Plan must not contain the SDK message placeholder: " + answer);
+
+        // Must contain domain-specific subtasks from GYM domain
+        assertTrue(answer.contains("Push workout"),
+                "Plan must contain 'Push workout': " + answer);
+        assertTrue(answer.contains("Pull workout"),
+                "Plan must contain 'Pull workout': " + answer);
+        assertTrue(answer.contains("Legs workout"),
+                "Plan must contain 'Legs workout': " + answer);
+        assertTrue(answer.contains("Recovery strategy"),
+                "Plan must contain 'Recovery strategy': " + answer);
+
+        // Verify structured payload carries the subtasks
+        Map<String, Object> payload = response.structuredPayload();
+        assertNotNull(payload, "Structured payload should not be null");
+
+        com.shreeai.os.platform.kernels.response.model.SynthesizedResponse synth =
+                (com.shreeai.os.platform.kernels.response.model.SynthesizedResponse)
+                        payload.get("response");
+        assertNotNull(synth, "SynthesizedResponse must be in structured payload");
+
+        @SuppressWarnings("unchecked")
+        List<String> subtasks = (List<String>) synth.structuredData().get("subtasks");
+        assertNotNull(subtasks, "Subtasks must be in structured data");
+        assertTrue(subtasks.contains("Push workout"),
+                "Subtasks list must contain 'Push workout'");
+        assertTrue(subtasks.contains("Pull workout"),
+                "Subtasks list must contain 'Pull workout'");
+        assertTrue(subtasks.contains("Legs workout"),
+                "Subtasks list must contain 'Legs workout'");
+        assertTrue(subtasks.contains("Recovery strategy"),
+                "Subtasks list must contain 'Recovery strategy'");
+    }
+
+    @Test
+    public void testCreatePlanSoftwareProducesDomainSubtasks() {
+
+        SDKResponse response = ai.planning().createPlan(
+                "software-001",
+                "Build a backend software application with a database",
+                "COMPREHENSIVE"
+        );
+
+        String answer = response.answer();
+
+        assertFalse(answer.contains("PLANNING_CREATE"),
+                "Plan must not contain the SDK message placeholder");
+
+        assertTrue(answer.contains("Architecture"),
+                "Plan must contain 'Architecture': " + answer);
+        assertTrue(answer.contains("Backend"),
+                "Plan must contain 'Backend': " + answer);
+        assertTrue(answer.contains("Deployment"),
+                "Plan must contain 'Deployment': " + answer);
+    }
+
+    @Test
+    public void testCreatePlanFallbackProducesGeneralSubtasks() {
+
+        SDKResponse response = ai.planning().createPlan(
+                "general-001",
+                "Organize the annual team offsite",
+                "COMPREHENSIVE"
+        );
+
+        String answer = response.answer();
+
+        assertFalse(answer.contains("PLANNING_CREATE"),
+                "Plan must not contain the SDK message placeholder");
+
+        assertTrue(answer.contains("Research"),
+                "Fallback plan must contain 'Research': " + answer);
+        assertTrue(answer.contains("Implementation"),
+                "Fallback plan must contain 'Implementation': " + answer);
     }
 
     /* ==========================================================

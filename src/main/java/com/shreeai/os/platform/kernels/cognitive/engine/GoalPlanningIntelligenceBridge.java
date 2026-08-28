@@ -121,8 +121,7 @@ public final class GoalPlanningIntelligenceBridge {
             );
         }
 
-        Map<String, String> metadata =
-                new LinkedHashMap<>();
+        Map<String, Object> metadata = new LinkedHashMap<>();
 
         /*
          * Preserve the complete Goal Intelligence output using
