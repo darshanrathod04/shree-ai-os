@@ -46,25 +46,25 @@ Every contributor shall read the following documents in order:
 
 The supreme governing document. Defines platform identity, core values, constitutional principles, and amendment policy.
 
-**Location:** [constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md](../constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md)
+**Location:** [constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md)
 
 ### VISION-001 — Platform Vision
 
 Defines the long-term vision and strategic direction of the platform.
 
-**Location:** [vision/VISION-001-PLATFORM-VISION.md](../vision/VISION-001-PLATFORM-VISION.md)
+**Location:** [vision/VISION-001-PLATFORM-VISION.md](../philosophy/vision/VISION-001-PLATFORM-VISION.md)
 
 ### MISSION-001 — Platform Mission
 
 Defines the platform's mission, objectives, and purpose.
 
-**Location:** [mission/MISSION-001-PLATFORM-MISSION.md](../mission/MISSION-001-PLATFORM-MISSION.md)
+**Location:** [mission/MISSION-001-PLATFORM-MISSION.md](../philosophy/mission/MISSION-001-PLATFORM-MISSION.md)
 
 ### ORG-001 — Engineering Organization
 
 Defines the engineering organization structure, roles, and governance.
 
-**Location:** [organization/ORG-001-ENGINEERING-ORGANIZATION.md](../organization/ORG-001-ENGINEERING-ORGANIZATION.md)
+**Location:** [organization/ORG-001-ENGINEERING-ORGANIZATION.md](../governance/organization/ORG-001-ENGINEERING-ORGANIZATION.md)
 
 ### WORKFLOW-001 — Engineering Workflow
 
@@ -76,7 +76,7 @@ Defines the engineering workflow, development process, and contribution lifecycl
 
 Defines the binding engineering rules that govern all platform development.
 
-**Location:** [rules/RULE-001-PLATFORM-ENGINEERING-RULES.md](../rules/RULE-001-PLATFORM-ENGINEERING-RULES.md)
+**Location:** [rules/RULE-001-PLATFORM-ENGINEERING-RULES.md](../governance/rules/RULE-001-PLATFORM-ENGINEERING-RULES.md)
 
 ---
 

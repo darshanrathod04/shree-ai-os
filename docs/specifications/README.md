@@ -200,7 +200,7 @@ Specifications use precise language to eliminate ambiguity.
 ## Related Documentation
 
 - [Architecture README](../architecture/README.md) — Architecture Documentation
-- [Constitution](../constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
+- [Constitution](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
 - [Standards](../standards/) — Engineering Standards
 - [ADR](../adr/) — Architecture Decision Records
 

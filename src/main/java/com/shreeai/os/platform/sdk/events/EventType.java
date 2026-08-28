@@ -1,0 +1,23 @@
+package com.shreeai.os.platform.sdk.events;
+
+/**
+ * Canonical runtime event types exposed by the SDK.
+ */
+public enum EventType {
+
+    PIPELINE_STARTED,
+    PIPELINE_COMPLETED,
+    PIPELINE_FAILED,
+
+    IDENTITY_COMPLETED,
+    CONTEXT_COMPLETED,
+    MEMORY_RECALL_COMPLETED,
+    KNOWLEDGE_COMPLETED,
+    REASONING_COMPLETED,
+    INFERENCE_COMPLETED,
+    PLANNING_COMPLETED,
+    EXECUTION_COMPLETED,
+    MEMORY_STORE_COMPLETED,
+    CHIEF_REVIEW_COMPLETED,
+    REFLECTION_COMPLETED
+}

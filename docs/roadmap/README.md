@@ -200,8 +200,8 @@ Every roadmap decision includes documented rationale.
 
 ## Related Documentation
 
-- [Constitution](../constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
-- [Vision](../vision/) — Platform Vision
+- [Constitution](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
+- [Vision](../philosophy/vision/) — Platform Vision
 - [Research](../research/) — Research Initiatives
 - [Decisions](../decisions/) — Platform Decisions
 - [Architecture](../architecture/) — Architecture Documentation

@@ -157,7 +157,7 @@ Last Updated: DD Month YYYY
 ## Related Documentation
 
 - [Architecture README](../architecture/README.md) — Architecture Documentation Index
-- [Constitution](../constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
+- [Constitution](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
 - [Decisions](../decisions/) — Platform Decisions
 - [Standards](../standards/) — Engineering Standards
 

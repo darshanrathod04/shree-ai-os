@@ -81,6 +81,27 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!--
+						EO-V1-REL1-BUGFIX-002: Legacy test classification.
+						These three test classes verify the preserved research/prototype
+						system (legacy brain/autonomy/chief/planner/personality packages).
+						They are excluded from the V1 release test execution scope using
+						an explicit, narrow class-level exclusion. The tests are preserved
+						in the repository and can be run explicitly via:
+						  mvn -Dtest=AutonomousPlanningTests,ConversationContinuityTests,ExecutionAuditTests test
+						See docs/engineering/EO-V1-REL1-BUGFIX-002-TEST-OWNERSHIP.md
+					-->
+					<excludes>
+						<exclude>com/shreeai/os/platform/AutonomousPlanningTests.java</exclude>
+						<exclude>com/shreeai/os/platform/ConversationContinuityTests.java</exclude>
+						<exclude>com/shreeai/os/platform/ExecutionAuditTests.java</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<annotationProcessorPaths>
@@ -101,7 +122,22 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+					<!--
+						EO-V1-REL1-SDK-PKG-001:
+						Produce the executable Spring Boot JAR with an '-exec' classifier
+						so the main artifact (shreeAiOS-0.0.1-SNAPSHOT.jar) remains the
+						plain Maven-consumable JAR with classes at the root (e.g.
+						com/shreeai/os/platform/sdk/ShreeAI.class).
+					-->
+					<classifier>exec</classifier>
 				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

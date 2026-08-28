@@ -218,9 +218,9 @@ Handbooks cover procedures comprehensively.
 
 ## Related Documentation
 
-- [Constitution](../constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
+- [Constitution](../governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Platform Constitution
 - [Standards](../standards/) — Engineering Standards
-- [Organization](../organization/) — Platform Organization
+- [Organization](../governance/organization/) — Platform Organization
 - [Decisions](../decisions/) — Platform Decisions
 
 ---

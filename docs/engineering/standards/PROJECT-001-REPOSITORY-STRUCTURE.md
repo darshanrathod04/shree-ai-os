@@ -2,14 +2,14 @@
 
 ## Document Information
 
-| Field | Value |
-|-------|-------|
-| Document ID | PROJECT-001 |
+| Field         | Value                |
+|---------------|----------------------|
+| Document ID   | PROJECT-001          |
 | Document Type | Engineering Standard |
-| Platform | Shree AI OS |
-| Version | 1.0 |
-| Status | Approved |
-| Owner | Chief AI Architect |
+| Platform      | Shree AI OS          |
+| Version       | 1.0                  |
+| Status        | Approved             |
+| Owner         | Chief AI Architect   |
 
 ---
 

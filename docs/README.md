@@ -119,16 +119,16 @@ docs/
 
 ### Foundation Layer
 - [Foundation Index](foundation/README.md) — Foundation Layer overview
-- [Constitution](constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Supreme governing document
-- [Vision](vision/VISION-001-PLATFORM-VISION.md) — Platform vision and strategic direction
-- [Mission](mission/MISSION-001-PLATFORM-MISSION.md) — Platform mission and objectives
-- [Organization](organization/ORG-001-ENGINEERING-ORGANIZATION.md) — Engineering organization
+- [Constitution](governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Supreme governing document
+- [Vision](philosophy/vision/VISION-001-PLATFORM-VISION.md) — Platform vision and strategic direction
+- [Mission](philosophy/mission/MISSION-001-PLATFORM-MISSION.md) — Platform mission and objectives
+- [Organization](governance/organization/ORG-001-ENGINEERING-ORGANIZATION.md) — Engineering organization
 - [Workflow](workflow/WORKFLOW-001-ENGINEERING-WORKFLOW.md) — Engineering workflow
-- [Rules](rules/RULE-001-PLATFORM-ENGINEERING-RULES.md) — Engineering rules
+- [Rules](governance/rules/RULE-001-PLATFORM-ENGINEERING-RULES.md) — Engineering rules
 
 ### Platform Governance
 - [Philosophy](philosophy/) — Engineering philosophy
-- [Doctrine](doctrine/) — Platform doctrine and tenets
+- [Doctrine](philosophy/doctrine/) — Platform doctrine and tenets
 
 ### Architecture & Design
 - [Architecture](architecture/) — System architecture and ADD
