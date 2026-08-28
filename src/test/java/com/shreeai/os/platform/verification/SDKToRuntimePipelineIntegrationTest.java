@@ -61,10 +61,10 @@ public class SDKToRuntimePipelineIntegrationTest {
         assertTrue(runtime.pipeline() instanceof DefaultExecutionPipeline,
                 "Runtime pipeline should be the canonical DefaultExecutionPipeline");
 
-        // 5. Canonical pipeline has all 10 stages
+        // 5. Canonical pipeline has all 11 stages
         DefaultExecutionPipeline pipeline = (DefaultExecutionPipeline) runtime.pipeline();
         List<ExecutionStage> stages = pipeline.getStages();
-        assertEquals(10, stages.size(), "Canonical pipeline should have 10 stages");
+        assertEquals(11, stages.size(), "Canonical pipeline should have 11 stages");
 
         // Verify stage order
         assertEquals("Identity", stages.get(0).getDescriptor().getStageName());
@@ -75,8 +75,9 @@ public class SDKToRuntimePipelineIntegrationTest {
         assertEquals("Inference", stages.get(5).getDescriptor().getStageName());
         assertEquals("Planning", stages.get(6).getDescriptor().getStageName());
         assertEquals("Execution", stages.get(7).getDescriptor().getStageName());
-        assertEquals("MemoryStore", stages.get(8).getDescriptor().getStageName());
-        assertEquals("ChiefReview", stages.get(9).getDescriptor().getStageName());
+        assertEquals("Reflection", stages.get(8).getDescriptor().getStageName());
+        assertEquals("MemoryStore", stages.get(9).getDescriptor().getStageName());
+        assertEquals("ChiefReview", stages.get(10).getDescriptor().getStageName());
 
         // 6. Execute chat through SDK
         SDKResponse response = shree.chat("Hello Shree");
@@ -155,8 +156,8 @@ public class SDKToRuntimePipelineIntegrationTest {
         assertNotNull(result, "Pipeline result should not be null");
         assertTrue(result.isSuccess(), "Pipeline should succeed. Status: " + result.getStatus());
         assertEquals("COMPLETED", result.getStatus(), "Pipeline should complete");
-        assertEquals(10, result.getCompletedStages().size(),
-                "All 10 stages should complete");
+        assertEquals(11, result.getCompletedStages().size(),
+                "All 11 stages should complete");
     }
 
     @Test

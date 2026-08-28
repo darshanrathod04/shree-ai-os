@@ -8,6 +8,7 @@ import com.shreeai.os.platform.kernels.response.model.ResponseStyle;
 import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeCitation;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 
 import java.time.Instant;
@@ -413,7 +414,11 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
 
             StringBuilder keyPoints = new StringBuilder();
 
+            int citationIndex = 0;
+
             for (KnowledgeNode node : results) {
+
+                citationIndex++;
 
                 answer.append("- **")
                         .append(node.getLabel())
@@ -426,7 +431,7 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
                             .append(node.getDescription());
                 }
 
-                answer.append("\n");
+                answer.append(" [").append(citationIndex).append("]\n");
 
                 keyPoints.append("• ")
                         .append(node.getLabel());
@@ -438,7 +443,7 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
                             .append(node.getDescription());
                 }
 
-                keyPoints.append("\n");
+                keyPoints.append(" [").append(citationIndex).append("]\n");
             }
 
             sections.add(new ResponseSection(
@@ -447,9 +452,37 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
             ));
 
             structured.put("knowledgeCount", results.size());
+
+            // EO-V1.3 Citations — verifiable references to the knowledge graph
+            answer.append("\n## Citations\n\n");
+
+            List<String> citationLines = new ArrayList<>();
+
+            for (int i = 0; i < results.size(); i++) {
+
+                KnowledgeCitation citation =
+                        KnowledgeCitation.fromNode(i + 1, results.get(i));
+
+                citationLines.add(citation.toMarkdownLine());
+
+                answer.append(citation.toMarkdownLine()).append("\n");
+            }
+
+            sections.add(new ResponseSection(
+                    "Citations",
+                    String.join("\n", citationLines)
+            ));
+
+            structured.put("citations", citationLines);
         }
 
         structured.put("knowledgeTitle", title);
+
+        Object grounding = metadata.get("knowledgeGroundingScore");
+
+        if (grounding instanceof Number groundingScore) {
+            structured.put("groundingScore", groundingScore.doubleValue());
+        }
 
         return new SynthesizedResponse(
                 answer.toString().trim(),

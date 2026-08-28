@@ -2,8 +2,10 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeQueryService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeSearchService;
+import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeGroundingService;
 import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeRankingService;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgePayload;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
@@ -49,6 +51,8 @@ public final class KnowledgeStage implements ExecutionStage {
     private final KnowledgeQueryService knowledgeQueryService;
     private final KnowledgeSearchService knowledgeSearchService;
     private final KnowledgeRankingService knowledgeRankingService;
+    private final KnowledgeGroundingService knowledgeGroundingService =
+            new KnowledgeGroundingService();
 
     /**
      * Creates a new KnowledgeStage with real knowledge kernel services.
@@ -141,6 +145,16 @@ public final class KnowledgeStage implements ExecutionStage {
 // EO-V1.2 Structured Knowledge Payload
             state.addMetadata("routedKernel", "Knowledge Kernel");
             state.addMetadata("knowledgeResults", rankedKnowledge);
+
+// EO-V1.3 Grounding, Citations and Structured Payload
+            KnowledgePayload knowledgePayload = knowledgeGroundingService.ground(
+                    requestText != null ? requestText : "",
+                    rankedKnowledge,
+                    null);
+
+            state.addMetadata("knowledgePayload", knowledgePayload);
+            state.addMetadata("knowledgeCitations", knowledgePayload.getCitations());
+            state.addMetadata("knowledgeGroundingScore", knowledgePayload.getGroundingScore());
 
             if (!rankedKnowledge.isEmpty()) {
 

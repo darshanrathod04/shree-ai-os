@@ -34,8 +34,8 @@ import java.util.List;
  * PlanningStage - Converts upstream cognitive intelligence into an
  * evidence-aware execution plan.
  *
- * <p>The stage now incorporates Goal Intelligence before creating the
- * PlanningObjective. This keeps the canonical ten-stage runtime pipeline
+  * <p>The stage now incorporates Goal Intelligence before creating the
+ * PlanningObjective. This keeps the canonical eleven-stage runtime pipeline
  * unchanged while making planning goal-aware.</p>
  *
  * <p>Flow:</p>

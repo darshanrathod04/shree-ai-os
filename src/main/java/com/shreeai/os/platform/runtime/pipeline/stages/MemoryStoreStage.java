@@ -39,7 +39,7 @@ public final class MemoryStoreStage implements ExecutionStage {
 
     private static final PipelineStageDescriptor DESCRIPTOR = PipelineStageDescriptor.builder()
             .stageName("MemoryStore")
-            .priority(9)
+            .priority(10)
             .enabled(true)
             .version("1.0")
             .description("Stores execution results in memory")

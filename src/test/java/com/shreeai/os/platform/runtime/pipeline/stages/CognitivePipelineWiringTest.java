@@ -343,7 +343,7 @@ public class CognitivePipelineWiringTest {
 
     @Test
     public void testFullPipelineSucceedsWithRealKernels() {
-        // Build the full canonical 10-stage pipeline with real kernel services
+                // Build the full canonical 11-stage pipeline with real kernel services
         List<ExecutionStage> stages = List.of(
                 new IdentityStage(),
                 new ContextStage(),
@@ -353,6 +353,7 @@ public class CognitivePipelineWiringTest {
                 new InferenceStage(new DefaultInferenceEngine()),
                 new PlanningStage(buildPlanningService()),
                 new ActionExecutionStage(),
+                new ReflectionStage(null),
                 new MemoryStoreStage(),
                 new ChiefReviewStage()
         );
@@ -365,8 +366,8 @@ public class CognitivePipelineWiringTest {
         assertNotNull(result, "Pipeline result must not be null");
         assertTrue(result.isSuccess(), "Pipeline should succeed. Status: " + result.getStatus());
         assertEquals("COMPLETED", result.getStatus(), "Pipeline should complete");
-        assertEquals(10, result.getCompletedStages().size(),
-                "All 10 stages should complete");
+                assertEquals(11, result.getCompletedStages().size(),
+                "All 11 stages should complete");
     }
 
     @Test

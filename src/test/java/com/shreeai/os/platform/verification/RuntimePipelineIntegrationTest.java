@@ -25,6 +25,7 @@ import com.shreeai.os.platform.runtime.pipeline.stages.MemoryRecallStage;
 import com.shreeai.os.platform.runtime.pipeline.stages.MemoryStoreStage;
 import com.shreeai.os.platform.runtime.pipeline.stages.PlanningStage;
 import com.shreeai.os.platform.runtime.pipeline.stages.ReasoningStage;
+import com.shreeai.os.platform.runtime.pipeline.stages.ReflectionStage;
 import com.shreeai.os.platform.runtime.service.DefaultRuntimeService;
 import com.shreeai.os.platform.kernels.memory.engine.DefaultMemoryProcessingEngine;
 import com.shreeai.os.platform.kernels.memory.engine.MemoryRankingService;
@@ -49,7 +50,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Runtime Pipeline Integration Test
  *
- * <p>This test verifies the complete 10-stage runtime pipeline executes end-to-end.</p>
+  * <p>This test verifies the complete 11-stage runtime pipeline executes end-to-end.</p>
  *
  * @author Shree AI OS Team
  * @version 1.0
@@ -139,8 +140,8 @@ public class RuntimePipelineIntegrationTest {
         DefaultInferenceEngine inferenceEngine =
                 new DefaultInferenceEngine();
 
-        // ==========================================================
-        // Canonical 10-Stage Runtime Pipeline
+                // ==========================================================
+        // Canonical 11-Stage Runtime Pipeline
         // ==========================================================
 
         stageList.add(new IdentityStage(identityService));
@@ -159,6 +160,7 @@ public class RuntimePipelineIntegrationTest {
         stageList.add(new InferenceStage(inferenceEngine));
         stageList.add(new PlanningStage(planningService));
         stageList.add(new ActionExecutionStage(executionService));
+        stageList.add(new ReflectionStage(memoryService));
         stageList.add(new MemoryStoreStage(memoryService));
         stageList.add(new ChiefReviewStage(chiefService));
 
@@ -194,8 +196,8 @@ public class RuntimePipelineIntegrationTest {
 
     @Test
     public void testEveryStageCalledOnce() {
-        // Verify all 10 stages are present
-        assertEquals(10, stages.size(), "Should have 10 stages");
+                // Verify all 11 stages are present
+        assertEquals(11, stages.size(), "Should have 11 stages");
 
         // Verify stage order using getStageName()
         assertEquals("Identity", stages.get(0).getDescriptor().getStageName());
@@ -206,8 +208,9 @@ public class RuntimePipelineIntegrationTest {
         assertEquals("Inference", stages.get(5).getDescriptor().getStageName());
         assertEquals("Planning", stages.get(6).getDescriptor().getStageName());
         assertEquals("Execution", stages.get(7).getDescriptor().getStageName());
-        assertEquals("MemoryStore", stages.get(8).getDescriptor().getStageName());
-        assertEquals("ChiefReview", stages.get(9).getDescriptor().getStageName());
+        assertEquals("Reflection", stages.get(8).getDescriptor().getStageName());
+        assertEquals("MemoryStore", stages.get(9).getDescriptor().getStageName());
+        assertEquals("ChiefReview", stages.get(10).getDescriptor().getStageName());
     }
 
     @Test
@@ -267,6 +270,7 @@ public class RuntimePipelineIntegrationTest {
         assertTrue(stages.get(0) instanceof IdentityStage);
         assertTrue(stages.get(6) instanceof PlanningStage);
         assertTrue(stages.get(7) instanceof ActionExecutionStage);
-        assertTrue(stages.get(9) instanceof ChiefReviewStage);
+        assertTrue(stages.get(8) instanceof ReflectionStage);
+        assertTrue(stages.get(10) instanceof ChiefReviewStage);
     }
 }

@@ -7,8 +7,10 @@ import com.shreeai.os.platform.kernels.memory.api.MemoryQueryService;
 import com.shreeai.os.platform.kernels.memory.api.MemorySearchService;
 import com.shreeai.os.platform.kernels.memory.api.MemoryService;
 import com.shreeai.os.platform.kernels.memory.api.MemoryStatisticsService;
+import com.shreeai.os.platform.kernels.memory.engine.MemoryLifecycleService;
 import com.shreeai.os.platform.kernels.memory.engine.MemoryProcessingEngine;
 import com.shreeai.os.platform.kernels.memory.engine.MemoryProcessingResult;
+import com.shreeai.os.platform.kernels.memory.engine.MemoryVersionLedger;
 import com.shreeai.os.platform.kernels.memory.model.CreateMemoryRequest;
 import com.shreeai.os.platform.kernels.memory.model.Memory;
 import com.shreeai.os.platform.kernels.memory.model.MemoryContent;
@@ -88,11 +90,14 @@ public final class DefaultMemoryService implements
         MemoryImportExportService,
         MemoryStatisticsService {
 
-    private final MemoryValidator validator;
+        private final MemoryValidator validator;
     private final MemoryProcessingEngine processingEngine;
+    private final MemoryLifecycleService lifecycleService;
     private final ConcurrentHashMap<MemoryId, Memory> memories;
+    /** Versioning ledger retaining superseded memory versions. */
+    private final MemoryVersionLedger versionLedger = new MemoryVersionLedger();
 
-    /**
+        /**
      * Constructs a new {@code DefaultMemoryService} with the given dependencies.
      *
      * <p>Constructor injection is the only allowed injection mechanism.</p>
@@ -102,8 +107,25 @@ public final class DefaultMemoryService implements
      * @throws NullPointerException if any parameter is null
      */
     public DefaultMemoryService(MemoryValidator validator, MemoryProcessingEngine processingEngine) {
+        this(validator, processingEngine, new MemoryLifecycleService());
+    }
+
+    /**
+     * Constructs a new {@code DefaultMemoryService} with the given dependencies
+     * and an explicit lifecycle policy service.
+     *
+     * @param validator          the memory validator (must not be null)
+     * @param processingEngine   the memory processing engine (must not be null)
+     * @param lifecycleService   the memory lifecycle service (must not be null)
+     * @throws NullPointerException if any parameter is null
+     */
+    public DefaultMemoryService(
+            MemoryValidator validator,
+            MemoryProcessingEngine processingEngine,
+            MemoryLifecycleService lifecycleService) {
         this.validator = Objects.requireNonNull(validator, "validator must not be null");
         this.processingEngine = Objects.requireNonNull(processingEngine, "processingEngine must not be null");
+        this.lifecycleService = Objects.requireNonNull(lifecycleService, "lifecycleService must not be null");
         this.memories = new ConcurrentHashMap<>();
     }
 
@@ -185,6 +207,8 @@ public final class DefaultMemoryService implements
         Instant now = request.updatedAt();
 
         Memory updated = new Memory(id, newContent, newMetadata, existing.createdAt(), now);
+        // EO-V1.4 Memory Lifecycle — retain the superseded version before overwrite
+        versionLedger.snapshot(existing);
         memories.put(id, updated);
         return MemoryResult.success(updated);
     }
@@ -197,6 +221,7 @@ public final class DefaultMemoryService implements
         if (removed == null) {
             return MemoryResult.failure("Memory not found: " + id.value());
         }
+        versionLedger.snapshot(removed);
         return MemoryResult.success(removed);
     }
 
@@ -226,6 +251,7 @@ public final class DefaultMemoryService implements
         );
 
         Memory archived = new Memory(id, existing.content(), archivedMetadata, existing.createdAt(), Instant.now());
+        versionLedger.snapshot(existing);
         memories.put(id, archived);
         return MemoryResult.success(archived);
     }
@@ -256,8 +282,156 @@ public final class DefaultMemoryService implements
         );
 
         Memory restored = new Memory(id, existing.content(), restoredMetadata, existing.createdAt(), Instant.now());
+        versionLedger.snapshot(existing);
         memories.put(id, restored);
         return MemoryResult.success(restored);
+    }
+
+    // -----------------------------------------------------------------------
+    // EO-V1.4 Memory Lifecycle — version history access
+    // -----------------------------------------------------------------------
+
+    /**
+     * Returns the current version number of a memory (1 + retained prior versions).
+     *
+     * @param id the memory id (must not be null)
+     * @return the current version number
+     */
+    public int versionOf(MemoryId id) {
+        Objects.requireNonNull(id, "id must not be null");
+        return versionLedger.versionOf(id);
+    }
+
+    /**
+     * Returns all superseded versions of a memory, oldest first.
+     *
+     * @param id the memory id (must not be null)
+     * @return an unmodifiable history list (never null, may be empty)
+     */
+    public List<Memory> history(MemoryId id) {
+        Objects.requireNonNull(id, "id must not be null");
+        return versionLedger.history(id);
+    }
+
+    /**
+     * Returns the immediately superseded version of a memory.
+     *
+     * @param id the memory id (must not be null)
+     * @return the previous version, or empty when the memory has no history
+     */
+        public Optional<Memory> previousVersion(MemoryId id) {
+        Objects.requireNonNull(id, "id must not be null");
+        return versionLedger.previousVersion(id);
+    }
+
+    // -----------------------------------------------------------------------
+    // EO-V1.4 Memory Lifecycle — importance, promotion, archival, consolidation
+    // -----------------------------------------------------------------------
+
+    /**
+     * Rescores a memory's dynamic importance (recency + frequency + base).
+     *
+     * @param id the memory id (must not be null)
+     * @return the rescored importance (0.0-1.0), or {@code 0.0} when the memory is absent
+     */
+    public double scoreImportance(MemoryId id) {
+        Objects.requireNonNull(id, "id must not be null");
+        Memory memory = memories.get(id);
+        if (memory == null) {
+            return 0.0;
+        }
+        return lifecycleService.scoreImportance(memory);
+    }
+
+    /**
+     * Records an access on a memory: bumps access count, refreshes
+     * {@code accessedAt} and rescores importance. The memory is persisted
+     * back into the store if it was actively accessible.
+     *
+     * @param id the memory id (must not be null)
+     * @return the touched memory, or empty when the memory is absent or not ACTIVE
+     */
+    public Optional<Memory> touchMemory(MemoryId id) {
+        Objects.requireNonNull(id, "id must not be null");
+        Memory existing = memories.get(id);
+        if (existing == null) {
+            return Optional.empty();
+        }
+        Memory touched = lifecycleService.touch(existing);
+        if (touched != existing) {
+            // Record version snapshot of the superseded state.
+            versionLedger.snapshot(existing);
+            memories.put(id, touched);
+        }
+        return Optional.of(touched);
+    }
+
+    /**
+     * Promotes a working memory to long-term if lifecycle policy criteria are met.
+     *
+     * @param id the memory id (must not be null)
+     * @return the promoted memory, or empty when promotion is not eligible
+     */
+    public Optional<Memory> promoteIfEligible(MemoryId id) {
+        Objects.requireNonNull(id, "id must not be null");
+        Memory existing = memories.get(id);
+        if (existing == null) {
+            return Optional.empty();
+        }
+        return lifecycleService.promoteIfEligible(existing)
+                .map(promoted -> {
+                    versionLedger.snapshot(existing);
+                    memories.put(id, promoted);
+                    return promoted;
+                });
+    }
+
+    /**
+     * Archives a memory if it is stale and low-importance according to
+     * the lifecycle policy. FACT and SYSTEM memories are never archived.
+     *
+     * @param id the memory id (must not be null)
+     * @return the archived memory, or empty when archival does not apply
+     */
+    public Optional<Memory> archiveIfStale(MemoryId id) {
+        Objects.requireNonNull(id, "id must not be null");
+        Memory existing = memories.get(id);
+        if (existing == null) {
+            return Optional.empty();
+        }
+        return lifecycleService.archiveIfStale(existing)
+                .map(archived -> {
+                    versionLedger.snapshot(existing);
+                    memories.put(id, archived);
+                    return archived;
+                });
+    }
+
+    /**
+     * Runs a full lifecycle consolidation pass over all in-store memories:
+     * promotes eligible working memories and archives stale low-importance ones.
+     *
+     * @return the list of memories that changed status (promoted or archived)
+     */
+    public List<Memory> consolidateMemories() {
+        return lifecycleService.consolidate(memories.values().stream()
+                .collect(java.util.stream.Collectors.toUnmodifiableList()))
+                .stream()
+                .map(this::applyConsolidatedChange)
+                .collect(java.util.stream.Collectors.toUnmodifiableList());
+    }
+
+    /**
+     * Persists a memory produced by lifecycle consolidation back into the
+     * store, recording a version snapshot of the superseded state first.
+     */
+    private Memory applyConsolidatedChange(Memory changed) {
+        MemoryId id = changed.id();
+        Memory previous = memories.put(id, changed);
+        if (previous != null) {
+            versionLedger.snapshot(previous);
+        }
+        return changed;
     }
 
     // -----------------------------------------------------------------------

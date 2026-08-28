@@ -25,6 +25,7 @@ import com.shreeai.os.platform.runtime.pipeline.stages.MemoryRecallStage;
 import com.shreeai.os.platform.runtime.pipeline.stages.MemoryStoreStage;
 import com.shreeai.os.platform.runtime.pipeline.stages.PlanningStage;
 import com.shreeai.os.platform.runtime.pipeline.stages.ReasoningStage;
+import com.shreeai.os.platform.runtime.pipeline.stages.ReflectionStage;
 import com.shreeai.os.platform.kernels.memory.api.MemoryQueryService;
 import com.shreeai.os.platform.kernels.memory.api.MemorySearchService;
 import com.shreeai.os.platform.kernels.memory.engine.DefaultMemoryProcessingEngine;
@@ -51,6 +52,14 @@ import com.shreeai.os.platform.kernels.response.engine.DefaultResponseSynthesize
 import com.shreeai.os.platform.kernels.response.service.ResponseSynthesisService;
 import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
 import com.shreeai.os.platform.runtime.routing.RuntimeIntentRouter;
+import com.shreeai.os.platform.llm.LlmProvider;
+import com.shreeai.os.platform.llm.inmemory.InMemoryLlmProvider;
+import com.shreeai.os.platform.llm.ollama.OllamaProvider;
+import com.shreeai.os.platform.llm.openai.OpenAiProvider;
+import com.shreeai.os.platform.llm.gemini.GeminiProvider;
+import com.shreeai.os.platform.llm.router.LlmRouter;
+import com.shreeai.os.platform.security.api.ApprovalService;
+import com.shreeai.os.platform.security.engine.InMemoryApprovalService;
 
 import java.time.Instant;
 import java.util.*;
@@ -85,6 +94,62 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     private final RuntimeEventBus eventBus;
     private final ResponseSynthesisService responseSynthesisService;
     private RuntimeIntentRouter intentRouter;
+    /** Interchangeable LLM provider chain (GPT / Gemini / Ollama / in-memory). */
+    private final LlmRouter llmRouter = buildDefaultLlmRouter();
+    /** Approval gate backing autonomous retries and escalations. */
+    private final ApprovalService approvalService = new InMemoryApprovalService();
+
+    /** Maximum autonomous re-executions advised by the reflection kernel. */
+    private static final int MAX_AUTONOMOUS_RETRIES = 2;
+
+    /**
+     * Builds the runtime's default LLM router from configuration.
+     *
+     * <p>Chain order comes from the {@code shree.llm.chain} system property or
+     * the {@code LLM_CHAIN} environment variable (comma-separated provider
+     * names, e.g. {@code openai,gemini,ollama,in-memory}); it defaults to the
+     * deterministic in-memory provider so tests and offline runs stay stable.
+     * Cloud providers register only when their API keys are present.</p>
+     */
+    private static LlmRouter buildDefaultLlmRouter() {
+        Map<String, LlmProvider> registry = new LinkedHashMap<>();
+        registry.put("in-memory", new InMemoryLlmProvider());
+        registry.put("ollama", new OllamaProvider());
+
+        String openAiKey = firstNonBlank(System.getenv("OPENAI_API_KEY"), null);
+        if (openAiKey != null) {
+            registry.put("openai", new OpenAiProvider(openAiKey));
+        }
+
+        String geminiKey = firstNonBlank(System.getenv("GEMINI_API_KEY"), System.getenv("GOOGLE_API_KEY"));
+        if (geminiKey != null) {
+            registry.put("gemini", new GeminiProvider(geminiKey));
+        }
+
+        String chain = firstNonBlank(
+                System.getProperty("shree.llm.chain"),
+                System.getenv("LLM_CHAIN"));
+        if (chain == null) {
+            chain = "in-memory";
+        }
+
+        try {
+            return LlmRouter.fromChain(chain, registry);
+        } catch (IllegalArgumentException ignored) {
+            // Unknown provider names in the chain — fall back to a safe default.
+            return new LlmRouter(List.of(registry.get("in-memory")));
+        }
+    }
+
+    private static String firstNonBlank(String primary, String secondary) {
+        if (primary != null && !primary.isBlank()) {
+            return primary;
+        }
+        if (secondary != null && !secondary.isBlank()) {
+            return secondary;
+        }
+        return null;
+    }
     /**
      * Constructs a new DefaultRuntimeService with the given configuration and contract.
      *
@@ -147,10 +212,10 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         initializeStages();
     }
     
-    /**
+        /**
      * Initialize the real kernel execution pipeline stages.
      *
-     * <p>This method builds the 10-stage kernel execution pipeline:</p>
+     * <p>This method builds the 11-stage kernel execution pipeline:</p>
      * <ol>
      *   <li>IdentityStage - Resolves agent identity</li>
      *   <li>ContextStage - Builds execution context</li>
@@ -160,6 +225,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
      *   <li>InferenceStage - Generates hypotheses</li>
      *   <li>PlanningStage - Creates execution plan</li>
      *   <li>ExecutionStage - Executes planned actions</li>
+     *   <li>ReflectionStage - Evaluates execution outcome and stores lessons</li>
      *   <li>MemoryStoreStage - Stores results in memory</li>
      *   <li>ChiefReviewStage - Final review and approval</li>
      * </ol>
@@ -227,8 +293,8 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         ChiefService chiefService =
                 kernelFactory.createChiefService();
 
-        // ==========================================================
-        // Canonical 10-Stage Runtime Pipeline
+                // ==========================================================
+        // Canonical 11-Stage Runtime Pipeline
         // ==========================================================
 
         stages.clear();
@@ -265,10 +331,13 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
         stages.add(new ActionExecutionStage(executionService));
 
+        // EO-V1.5 Reflection Kernel — post-execution evaluation + lesson memory
+        stages.add(new ReflectionStage(memoryService));
+
         MemoryStoreStage memoryStoreStage = new MemoryStoreStage(memoryService);
         stages.add(memoryStoreStage);
 
-        stages.add(new ChiefReviewStage(chiefService));
+        stages.add(new ChiefReviewStage(chiefService, approvalService));
 
         // ==========================================================
         // Deterministic Intent Router
@@ -400,23 +469,66 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 effectivePipeline = new DefaultExecutionPipeline(route.stages());
             }
 
-            // Execute the canonical pipeline exactly once
+            // Execute the canonical pipeline with reflection-driven autonomous retry
             com.shreeai.os.platform.runtime.pipeline.PipelineContext pipelineContext = null;
             PipelineResult pipelineResult = null;
 
             if (effectivePipeline != null) {
 
-                pipelineContext =
-                        com.shreeai.os.platform.runtime.pipeline.PipelineContext.builder()
-                                .executionRequest(request)
-                                .addAttribute("executionContext", context)
-                                .addAttribute("executionSession", session)
-                                .addAttribute("requestContext", request.context())
-                                .addAttribute("requestMetadata", request.metadata())
-                                .addAttribute("runtimeEventBus", eventBus)
-                                .build();
+                int maxAttempts = 1 + MAX_AUTONOMOUS_RETRIES;
+                List<Object> retryLessons = List.of();
 
-                pipelineResult = effectivePipeline.execute(pipelineContext);
+                for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+
+                    Map<String, Object> attemptMetadata = new LinkedHashMap<>();
+                    if (request.metadata() != null) {
+                        attemptMetadata.putAll(request.metadata());
+                    }
+                    if (attempt > 1) {
+                        attemptMetadata.put("retryAttempt", attempt - 1);
+                        attemptMetadata.put("reflectionLessons", retryLessons);
+                    }
+
+                    pipelineContext =
+                            com.shreeai.os.platform.runtime.pipeline.PipelineContext.builder()
+                                    .executionRequest(request)
+                                    .addAttribute("executionContext", context)
+                                    .addAttribute("executionSession", session)
+                                    .addAttribute("requestContext", request.context())
+                                    .addAttribute("requestMetadata", attemptMetadata)
+                                    .addAttribute("runtimeEventBus", eventBus)
+                                    .addAttribute("llmRouter", llmRouter)
+                                    .addAttribute("approvalService", approvalService)
+                                    .build();
+
+                    pipelineResult = effectivePipeline.execute(pipelineContext);
+
+                    boolean retryAdvised = pipelineResult != null
+                            && pipelineResult.getExecutionState() != null
+                            && Boolean.TRUE.equals(
+                                    pipelineResult.getExecutionState().getMetadata()
+                                            .get("reflectionRetryAdvised"));
+
+                    if (!retryAdvised || attempt == maxAttempts) {
+                        break;
+                    }
+
+                    // Carry the reflection lessons into the next attempt so the
+                    // planning stage can adjust strategy.
+                    Object lessons = pipelineResult.getExecutionState().getMetadata()
+                            .get("reflectionLessons");
+                    if (lessons instanceof List<?> lessonList) {
+                        retryLessons = List.copyOf(lessonList);
+                    }
+
+                    eventBus.publish(new RuntimeEvent(
+                            EventType.EXECUTION_COMPLETED,
+                            request.requestId(),
+                            "Runtime",
+                            Instant.now(),
+                            Map.of("autonomousRetry", attempt)
+                    ));
+                }
             }
 
             // Convert PipelineResult to ExecutionResult, preserving any structured

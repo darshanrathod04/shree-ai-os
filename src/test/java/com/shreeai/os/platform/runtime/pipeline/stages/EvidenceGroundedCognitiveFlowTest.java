@@ -277,7 +277,7 @@ public class EvidenceGroundedCognitiveFlowTest {
 
     @Test
     public void testFullPipelineWithEvidenceSucceeds() {
-        List<ExecutionStage> stages = List.of(
+                List<ExecutionStage> stages = List.of(
                 new IdentityStage(),
                 new ContextStage(),
                 new MemoryRecallStage(),
@@ -286,6 +286,7 @@ public class EvidenceGroundedCognitiveFlowTest {
                 new InferenceStage(new DefaultInferenceEngine()),
                 new PlanningStage(buildPlanningService()),
                 new ActionExecutionStage(),
+                new ReflectionStage(null),
                 new MemoryStoreStage(),
                 new ChiefReviewStage()
         );
@@ -297,7 +298,7 @@ public class EvidenceGroundedCognitiveFlowTest {
         assertNotNull(result, "Pipeline result must not be null");
         assertTrue(result.isSuccess(), "Pipeline should succeed. Status: " + result.getStatus());
         assertEquals("COMPLETED", result.getStatus(), "Pipeline should complete");
-        assertEquals(10, result.getCompletedStages().size(),
-                "All 10 stages should complete");
+                assertEquals(11, result.getCompletedStages().size(),
+                "All 11 stages should complete");
     }
 }

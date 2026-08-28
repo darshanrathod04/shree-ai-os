@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * <p>Proves that SDK requests carrying {@code metadata.operation} are
  * dispatched to their owning kernel instead of the generic Chief reasoning
- * path, while unrouted requests still traverse the canonical 10-stage
+ * path, while unrouted requests still traverse the canonical 11-stage
  * Chief orchestration pipeline.</p>
  */
 public class RuntimeIntentRoutingIntegrationTest {
@@ -248,8 +248,8 @@ public class RuntimeIntentRoutingIntegrationTest {
                 (com.shreeai.os.platform.runtime.pipeline.DefaultExecutionPipeline)
                         runtime.pipeline();
 
-        assertEquals(10, pipeline.getStages().size(),
-                "Canonical Chief orchestration pipeline must keep 10 stages");
+        assertEquals(11, pipeline.getStages().size(),
+                "Canonical Chief orchestration pipeline must keep 11 stages");
     }
 
     @Test
