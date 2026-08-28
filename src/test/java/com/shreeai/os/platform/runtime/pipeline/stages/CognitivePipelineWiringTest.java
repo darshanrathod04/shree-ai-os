@@ -184,7 +184,7 @@ public class CognitivePipelineWiringTest {
         assertNotNull(objective, "PlanningObjective must be stored in state");
 
         // The objective metadata must carry the request/reasoning information
-        Map<String, String> objectiveMetadata = objective.metadata();
+        Map<String, Object> objectiveMetadata = objective.metadata();
         assertEquals("test-request-001", objectiveMetadata.get("requestId"),
                 "Objective metadata must contain requestId");
         assertEquals(TEST_USER_INPUT, objectiveMetadata.get("requestText"),
@@ -457,7 +457,7 @@ public class CognitivePipelineWiringTest {
                 "PlanningObjective must be present"
         );
 
-        Map<String, String> metadata =
+        Map<String, Object> metadata =
                 objective.metadata();
 
         assertEquals(

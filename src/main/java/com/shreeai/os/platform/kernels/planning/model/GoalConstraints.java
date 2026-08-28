@@ -36,7 +36,7 @@ public final class GoalConstraints {
     private final Map<String, String> completionConstraints;
     private final Map<String, String> dependencyLimits;
     private final Map<String, String> resourceLimits;
-    private final Map<String, String> metadata;
+    private final Map<String, Object> metadata;
 
     /**
      * Constructs a {@code GoalConstraints} with the specified parameters.
@@ -47,10 +47,12 @@ public final class GoalConstraints {
      * @param metadata              additional metadata (must not be {@code null})
      * @throws NullPointerException if any argument is {@code null}
      */
-    public GoalConstraints(Map<String, String> completionConstraints,
-                           Map<String, String> dependencyLimits,
-                           Map<String, String> resourceLimits,
-                           Map<String, String> metadata) {
+    public GoalConstraints(
+            Map<String,String> completionConstraints,
+            Map<String,String> dependencyLimits,
+            Map<String,String> resourceLimits,
+            Map<String,Object> metadata
+    ) {
         this.completionConstraints = Collections.unmodifiableMap(
                 Objects.requireNonNull(completionConstraints, "completionConstraints must not be null"));
         this.dependencyLimits = Collections.unmodifiableMap(
@@ -93,7 +95,7 @@ public final class GoalConstraints {
      *
      * @return the metadata map
      */
-    public Map<String, String> metadata() {
+    public Map<String, Object> metadata() {
         return metadata;
     }
 

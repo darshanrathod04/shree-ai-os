@@ -36,12 +36,16 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
 
         Map<String, Object> metadata = state.getMetadata();
 
-        // Planning results render as a structured, human-readable plan.
-        // Detection requires BOTH a completed planning result in the state
-        // AND a routed planning operation on the request, so unrouted chat
-        // requests keep the exact legacy rendering behavior.
         if (isPlanningResult(context, metadata)) {
             return synthesizePlanning(context, metadata);
+        }
+
+        if (isKnowledgeResult(context, metadata)) {
+            return synthesizeKnowledge(context, metadata);
+        }
+
+        if (isConversationalChat(context, metadata)) {
+            return synthesizeChat(context, metadata);
         }
 
         return synthesizeDefault(metadata);
@@ -240,6 +244,34 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         return isRoutedPlanningOperation(context);
     }
 
+    private boolean isConversationalChat(
+            PipelineContext context,
+            Map<String, Object> metadata
+    ) {
+
+        if (context == null || context.getExecutionRequest() == null) {
+            return false;
+        }
+
+        // Planning requests are never chat
+        if (isRoutedPlanningOperation(context)) {
+            return false;
+        }
+
+        // Knowledge requests are never chat
+        if (isKnowledgeResult(context, metadata)) {
+            return false;
+        }
+
+        String input = requestText(context).toLowerCase(Locale.ROOT).trim();
+
+        return input.equals("hi")
+                || input.equals("hello")
+                || input.equals("hello shree")
+                || input.equals("hey")
+                || input.equals("hey shree");
+    }
+
     /**
      * Checks whether the request was routed to the Planning Kernel.
      */
@@ -320,6 +352,54 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         }
 
         return "";
+    }
+
+    private boolean isKnowledgeResult(
+            PipelineContext context,
+            Map<String, Object> metadata
+    ) {
+        return "Knowledge Kernel".equals(metadata.get("routedKernel"));
+    }
+
+    private SynthesizedResponse synthesizeKnowledge(
+            PipelineContext context,
+            Map<String, Object> metadata
+    ) {
+        return synthesizeDefault(metadata);
+    }
+
+    private SynthesizedResponse synthesizeChat(
+            PipelineContext context,
+            Map<String, Object> metadata
+    ) {
+
+        String userMessage = requestText(context);
+
+        String answer;
+
+        if (userMessage.equalsIgnoreCase("hello shree")
+                || userMessage.equalsIgnoreCase("hello")
+                || userMessage.equalsIgnoreCase("hi")) {
+
+            answer = """
+                Hello! I'm Shree AI.
+
+                How can I help you today?
+                """;
+
+        } else {
+
+            answer = "I received your message: \"" + userMessage +
+                    "\".\n\nHow can I help you?";
+        }
+
+        return new SynthesizedResponse(
+                answer.strip(),
+                List.of(),
+                1.0,
+                ResponseStyle.CONVERSATIONAL,
+                Instant.now()
+        );
     }
 /**
      * Renders a structured, human-readable plan from the Planning Kernel

@@ -294,15 +294,9 @@ public final class PlanningIntelligenceEngine {
             return explicit;
         }
 
-        String requestText =
-                safe(
-                        metadata.get("requestText")
-                );
-
+        String requestText = safe(metadata.get("requestText"));
         String reasoningConclusion =
-                safe(
-                        metadata.get("reasoningConclusion")
-                );
+                safe(metadata.get("reasoningConclusion"));
 
         String objectiveDescription =
                 safe(
@@ -367,9 +361,9 @@ public final class PlanningIntelligenceEngine {
 
         String raw =
                 firstNonBlank(
-                        metadata.get("tasks"),
-                        metadata.get("taskList"),
-                        metadata.get("planningTasks")
+                        safe(metadata.get("objective")),
+                        safe(metadata.get("requestText")),
+                        safe(metadata.get("reasoningConclusion"))
                 );
 
         if (raw == null) {
@@ -779,56 +773,31 @@ public final class PlanningIntelligenceEngine {
             PlanningObjective objective,
             List<Task> tasks) {
 
-        Map<String, Object> metadata =
-                new LinkedHashMap<>(objective.metadata());
+        Map<String, Object> metadata = new LinkedHashMap<>();
 
-        metadata.put(
-                "planningIntelligenceVersion",
-                "1.0"
-        );
+// Preserve Goal Intelligence metadata
+        metadata.putAll(objective.metadata());
 
-        metadata.put(
-                "generatedTaskCount",
-                String.valueOf(
-                        tasks.size()
-                )
-        );
-
-        metadata.put(
-                "decompositionMode",
-                "DETERMINISTIC_EVIDENCE_AWARE"
-        );
+// Planning metadata
+        metadata.put("planningIntelligenceVersion", "1.0");
+        metadata.put("generatedTaskCount", tasks.size());
+        metadata.put("decompositionMode", "DETERMINISTIC");
 
         return new Goal(
-                new PlanningId(
-                        "goal-"
-                                + objective.planningId().value()
-                ),
+                new PlanningId("goal-" + objective.planningId().value()),
                 objective,
                 new GoalConstraints(
-                        Map.of(
-                                "taskCount",
-                                String.valueOf(
-                                        tasks.size()
-                                )
-                        ),
+                        Map.of("taskCount", String.valueOf(tasks.size())),
                         dependencyMap(
                                 tasks.stream()
-                                        .map(
-                                                Task::planningId
-                                        )
-                                        .map(
-                                                PlanningId::value
-                                        )
+                                        .map(Task::planningId)
+                                        .map(PlanningId::value)
                                         .toList()
                         ),
                         Map.of(),
-                        Map.of(
-                                "planningIntelligenceVersion",
-                                "1.0"
-                        )
+                        metadata          // Map<String, Object>
                 ),
-                metadata
+                metadata              // Goal metadata
         );
     }
 
@@ -1456,12 +1425,11 @@ public final class PlanningIntelligenceEngine {
         return null;
     }
 
-    private String safe(
-            String value) {
-
-        return value == null
-                ? ""
-                : value.trim();
+    private String safe(Object value) {
+        if (value == null) {
+            return "";
+        }
+        return String.valueOf(value).trim();
     }
 
     private String normalizeText(

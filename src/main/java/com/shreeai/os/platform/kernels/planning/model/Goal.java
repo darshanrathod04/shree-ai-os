@@ -40,7 +40,7 @@ public final class Goal {
     private final PlanningId planningId;
     private final PlanningObjective objective;
     private final GoalConstraints constraints;
-    private final Map<String, String> metadata;
+    private final Map<String, Object> metadata;
 
     /**
      * Constructs a {@code Goal} with the specified parameters.
@@ -51,15 +51,18 @@ public final class Goal {
      * @param metadata    additional metadata (must not be {@code null})
      * @throws NullPointerException if any argument is {@code null}
      */
-    public Goal(PlanningId planningId,
-                PlanningObjective objective,
-                GoalConstraints constraints,
-                Map<String, String> metadata) {
+    public Goal(
+            PlanningId planningId,
+            PlanningObjective objective,
+            GoalConstraints constraints,
+            Map<String, Object> metadata
+    ) {
         this.planningId = Objects.requireNonNull(planningId, "planningId must not be null");
         this.objective = Objects.requireNonNull(objective, "objective must not be null");
         this.constraints = Objects.requireNonNull(constraints, "constraints must not be null");
-        this.metadata = Collections.unmodifiableMap(
-                Objects.requireNonNull(metadata, "metadata must not be null"));
+        this.metadata = Map.copyOf(
+                Objects.requireNonNull(metadata, "metadata must not be null")
+        );
     }
 
     /**
@@ -94,7 +97,7 @@ public final class Goal {
      *
      * @return the metadata map
      */
-    public Map<String, String> metadata() {
+    public Map<String, Object> metadata() {
         return metadata;
     }
 

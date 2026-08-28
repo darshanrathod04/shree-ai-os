@@ -431,7 +431,13 @@ public final class DefaultKnowledgeService implements
      */
     @Override
     public List<KnowledgeNode> search(String keyword) {
-        return searchEngine.keywordSearch(knowledgeGraph, keyword);
+
+        Objects.requireNonNull(keyword, "keyword must not be null");
+
+        List<KnowledgeNode> results =
+                searchEngine.keywordSearch(knowledgeGraph, keyword);
+
+        return List.copyOf(results);
     }
 
     /**

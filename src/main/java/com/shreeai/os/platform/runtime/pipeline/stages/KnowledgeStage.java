@@ -98,9 +98,10 @@ public final class KnowledgeStage implements ExecutionStage {
             }
 
             // Get the request text for knowledge search
-            String requestText = context.getExecutionRequest() != null 
-                    ? context.getExecutionRequest().toString() 
-                    : "";
+            String requestText =
+                    context.getExecutionRequest() != null
+                            ? context.getExecutionRequest().getUserInput()
+                            : "";
 
             // Search for relevant knowledge
             List<KnowledgeNode> allKnowledge = knowledgeSearchService.search(requestText);
@@ -122,6 +123,20 @@ public final class KnowledgeStage implements ExecutionStage {
             state.addMetadata("knowledgeCount", knowledgeCount);
             state.addMetadata("rankedKnowledge", rankedKnowledge);
             state.addMetadata("knowledgeConfidence", knowledgeConfidence);
+
+// EO-V1.2 Structured Knowledge Payload
+            state.addMetadata("routedKernel", "Knowledge Kernel");
+            state.addMetadata("knowledgeResults", rankedKnowledge);
+
+            if (!rankedKnowledge.isEmpty()) {
+
+                KnowledgeNode top = rankedKnowledge.getFirst();
+
+                state.addMetadata("knowledgeTitle", top.getLabel());
+                state.addMetadata("knowledgeSummary", top.getDescription());
+                state.addMetadata("knowledgeMetadata", top.getMetadata());
+            }
+
             state.addMessage("Knowledge retrieved: " + knowledgeCount + " items for memory " + memoryId);
             publishKnowledgeEvent(
                     context,

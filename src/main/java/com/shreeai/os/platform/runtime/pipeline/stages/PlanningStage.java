@@ -9,6 +9,7 @@ import com.shreeai.os.platform.kernels.planning.api.PlanningTypes;
 import com.shreeai.os.platform.kernels.planning.model.PlanningConstraints;
 import com.shreeai.os.platform.kernels.planning.model.PlanningId;
 import com.shreeai.os.platform.kernels.planning.model.PlanningObjective;
+import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
@@ -18,6 +19,8 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
 import com.shreeai.os.platform.sdk.events.EventType;
 import com.shreeai.os.platform.sdk.events.RuntimeEvent;
 import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
+import com.shreeai.os.platform.kernels.planning.response.PlanningResponseBuilder;
+import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
 
 import java.time.Instant;
 import java.util.Map;
@@ -66,6 +69,8 @@ public final class PlanningStage implements ExecutionStage {
 
     private final PlanningService planningService;
     private final GoalIntelligenceEngine goalIntelligenceEngine;
+    private final PlanningResponseBuilder responseBuilder =
+            new PlanningResponseBuilder();
 
     /**
      * Creates a PlanningStage with explicit dependencies.
@@ -299,6 +304,12 @@ public final class PlanningStage implements ExecutionStage {
                             goalRequest
                     );
 
+            PlanningResponse planningResponse =
+                    responseBuilder.build(goalAnalysis);
+
+            PlanningResponse response =
+                    responseBuilder.build(goalAnalysis);
+
             /*
              * -------------------------------------------------------------
              * 6. Build goal-aware PlanningObjective
@@ -307,20 +318,27 @@ public final class PlanningStage implements ExecutionStage {
 
             Map<String, Object> objectiveMetadata = new LinkedHashMap<>();
 
-            objectiveMetadata.put(
-                    "requestId",
-                    requestId
-            );
+            objectiveMetadata.put("goalIntelligenceSource", "GoalIntelligenceEngine");
+            objectiveMetadata.put("requestId", requestId);
+            objectiveMetadata.put("requestText", requestText);
+            objectiveMetadata.put("reasoningId", reasoningId);
+            objectiveMetadata.put("reasoningConfidence", reasoningConfidence);
+            objectiveMetadata.put("goalAnalysisId", goalAnalysis.analysisId());
+            objectiveMetadata.put("goalStatus", goalAnalysis.status().name());
+            objectiveMetadata.put("goalPriority", goalAnalysis.priority().name());
+            objectiveMetadata.put("goalFeasibility", goalAnalysis.feasibility().name());
 
-            objectiveMetadata.put(
-                    "requestText",
-                    requestText
-            );
+            objectiveMetadata.put("goalProgress",
+                    String.valueOf(goalAnalysis.progress()));
 
-            objectiveMetadata.put(
-                    "reasoningId",
-                    safe(reasoningId)
-            );
+            objectiveMetadata.put("goalConfidence",
+                    String.valueOf(goalAnalysis.confidence()));
+
+            objectiveMetadata.put("goalConfidenceBand",
+                    goalAnalysis.confidenceBand().name());
+
+            objectiveMetadata.put("goalDecompositionRequired",
+                    String.valueOf(goalAnalysis.decompositionRequired()));
 
             /*
              * Preserve authoritative reasoning information.
@@ -445,6 +463,11 @@ public final class PlanningStage implements ExecutionStage {
             state.addMetadata(
                     "goalAnalysis",
                     goalAnalysis
+            );
+
+            state.addMetadata(
+                    "planningResponse",
+                    planningResponse
             );
 
             state.addMetadata(

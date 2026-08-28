@@ -201,7 +201,7 @@ public class EvidenceGroundedCognitiveFlowTest {
         assertNotNull(objective, "PlanningObjective must be stored in state");
 
         // The objective metadata must carry the request/reasoning information
-        Map<String, String> objectiveMetadata = objective.metadata();
+        Map<String, Object> objectiveMetadata = objective.metadata();
         assertEquals("test-request-evidence", objectiveMetadata.get("requestId"),
                 "Objective metadata must contain requestId");
         assertEquals(COLLEGE_MGMT_EVIDENCE, objectiveMetadata.get("requestText"),
