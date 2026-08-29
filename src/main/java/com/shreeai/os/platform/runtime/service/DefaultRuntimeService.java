@@ -42,6 +42,10 @@ import com.shreeai.os.platform.kernels.inference.engine.DefaultInferenceEngine;
 import com.shreeai.os.platform.kernels.factory.KernelFactory;
 import com.shreeai.os.platform.kernels.factory.DefaultKernelFactory;
 import com.shreeai.os.platform.kernels.planning.api.PlanningService;
+import com.shreeai.os.platform.kernels.planning.api.PlanningTypes;
+import com.shreeai.os.platform.kernels.planning.model.PlanningConstraints;
+import com.shreeai.os.platform.kernels.memory.model.Memory;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 import com.shreeai.os.platform.kernels.execution.api.ExecutionService;
 import com.shreeai.os.platform.kernels.chief.api.ChiefService;
 import com.shreeai.os.platform.kernels.identity.api.IdentityService;
@@ -52,6 +56,13 @@ import com.shreeai.os.platform.kernels.response.engine.DefaultResponseSynthesize
 import com.shreeai.os.platform.kernels.response.service.ResponseSynthesisService;
 import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
 import com.shreeai.os.platform.runtime.routing.RuntimeIntentRouter;
+import com.shreeai.os.platform.runtime.execution.ExecutionCapability;
+import com.shreeai.os.platform.runtime.execution.ExecutionDispatcher;
+import com.shreeai.os.platform.runtime.execution.KernelRegistry;
+import com.shreeai.os.platform.runtime.execution.KernelHandler;
+import com.shreeai.os.platform.runtime.execution.PermissionPolicy;
+import com.shreeai.os.platform.runtime.execution.DefaultPermissionPolicy;
+import com.shreeai.os.platform.runtime.execution.RichExecutionResult;
 import com.shreeai.os.platform.llm.LlmProvider;
 import com.shreeai.os.platform.llm.inmemory.InMemoryLlmProvider;
 import com.shreeai.os.platform.llm.ollama.OllamaProvider;
@@ -99,8 +110,27 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     /** Approval gate backing autonomous retries and escalations. */
     private final ApprovalService approvalService = new InMemoryApprovalService();
 
+    /** Thread-safe registry mapping capabilities to kernel handlers. */
+    private final KernelRegistry kernelRegistry = new KernelRegistry();
+
+    /** Permission policy evaluated before capability dispatch. */
+    private final PermissionPolicy permissionPolicy = new DefaultPermissionPolicy();
+
+    /** Capability-driven execution dispatcher. */
+    private final ExecutionDispatcher executionDispatcher =
+            new ExecutionDispatcher(kernelRegistry, permissionPolicy);
+
     /** Maximum autonomous re-executions advised by the reflection kernel. */
     private static final int MAX_AUTONOMOUS_RETRIES = 2;
+
+    /** Request metadata key carrying the requested operation. */
+    private static final String OPERATION_KEY = "operation";
+
+    /** The operation value that triggers capability-driven dispatch. */
+    private static final String EXECUTE_TASK_OPERATION = "EXECUTE_TASK";
+
+    /** Request metadata key carrying the requested capability. */
+    private static final String CAPABILITY_KEY = "capability";
 
     /**
      * Builds the runtime's default LLM router from configuration.
@@ -293,6 +323,16 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         ChiefService chiefService =
                 kernelFactory.createChiefService();
 
+        // ==========================================================
+        // V2.1 Capability-Driven Dispatch — register kernel handlers
+        // ==========================================================
+        registerCapabilityHandlers(
+                memoryService,
+                knowledgeService,
+                planningService,
+                executionService
+        );
+
                 // ==========================================================
         // Canonical 11-Stage Runtime Pipeline
         // ==========================================================
@@ -355,6 +395,105 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 memoryRecallStage,
                 memoryStoreStage
         );
+    }
+
+    /**
+     * Registers kernel handlers for the supported {@link ExecutionCapability}
+     * values. Each handler delegates to the kernel that owns the capability
+     * and produces a {@link RichExecutionResult}.
+     *
+     * <p>Registration is OCP-compliant: new capabilities can be added without
+     * modifying the dispatcher.</p>
+     *
+     * @param memoryService    the memory kernel service (never null)
+     * @param knowledgeService the knowledge kernel service (never null)
+     * @param planningService  the planning kernel service (never null)
+     * @param executionService the execution kernel service (never null)
+     */
+    private void registerCapabilityHandlers(
+            DefaultMemoryService memoryService,
+            DefaultKnowledgeService knowledgeService,
+            PlanningService planningService,
+            ExecutionService executionService) {
+
+        // Memory Recall → Memory Kernel
+        kernelRegistry.register(ExecutionCapability.MEMORY_RECALL,
+                (capability, input, context) -> {
+                    List<Memory> memories = memoryService.search(input);
+                    String output = memories.stream()
+                            .map(m -> m.content().text())
+                            .collect(java.util.stream.Collectors.joining("\n"));
+                    return RichExecutionResult.success(
+                            capability, output, 0.85);
+                });
+
+        // Knowledge Search → Knowledge Kernel
+        kernelRegistry.register(ExecutionCapability.KNOWLEDGE_SEARCH,
+                (capability, input, context) -> {
+                    List<KnowledgeNode> nodes = knowledgeService.search(input);
+                    String output = nodes.stream()
+                            .map(KnowledgeNode::getLabel)
+                            .collect(java.util.stream.Collectors.joining("\n"));
+                    return RichExecutionResult.success(
+                            capability, output, 0.90);
+                });
+
+        // Project Planning → Planning Kernel
+        kernelRegistry.register(ExecutionCapability.PROJECT_PLANNING,
+                (capability, input, context) -> {
+                    String planId = planningService.createPlan(
+                            new PlanningService.PlanningRequest(
+                                    input,
+                                    PlanningTypes.PlanningScope.STANDARD,
+                                    emptyPlanningConstraints()));
+                    return RichExecutionResult.success(
+                            capability, planId, 0.80);
+                });
+
+        // Workout Planning → Planning Kernel
+        kernelRegistry.register(ExecutionCapability.WORKOUT_PLANNING,
+                (capability, input, context) -> {
+                    String planId = planningService.createPlan(
+                            new PlanningService.PlanningRequest(
+                                    input,
+                                    PlanningTypes.PlanningScope.STANDARD,
+                                    emptyPlanningConstraints()));
+                    return RichExecutionResult.success(
+                            capability, planId, 0.80);
+                });
+
+        // Task Execution → Execution Kernel
+        kernelRegistry.register(ExecutionCapability.TASK_EXECUTION,
+                (capability, input, context) -> {
+                    String taskId = executionService.executeTask(
+                            new com.shreeai.os.platform.kernels.execution.model.ExecutionRequest(
+                                    new com.shreeai.os.platform.kernels.execution.model.ExecutionId(
+                                            "exec-" + java.util.UUID.randomUUID()),
+                                    input,
+                                    new com.shreeai.os.platform.kernels.execution.model.ExecutionContext(
+                                            new com.shreeai.os.platform.kernels.execution.model.ExecutionId(
+                                                    "exec-" + java.util.UUID.randomUUID()),
+                                            "dispatcher",
+                                            "Task dispatched via ExecutionDispatcher",
+                                            Map.of("input", input),
+                                            1),
+                                    new com.shreeai.os.platform.kernels.execution.model.ExecutionOptions(
+                                            30000, 3, 1000, false, false,
+                                            Map.of("source", "ExecutionDispatcher")),
+                                    Map.of()));
+                    return RichExecutionResult.success(
+                            capability, taskId, 0.75);
+                });
+    }
+
+    /**
+     * Returns empty planning constraints for dispatcher-driven planning.
+     *
+     * @return empty planning constraints (never null)
+     */
+    private PlanningConstraints emptyPlanningConstraints() {
+        return new PlanningConstraints(
+                Map.of(), Map.of(), Map.of(), Map.of());
     }
 
     @Override
@@ -467,6 +606,53 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             com.shreeai.os.platform.runtime.pipeline.ExecutionPipeline effectivePipeline = pipeline;
             if (route != null) {
                 effectivePipeline = new DefaultExecutionPipeline(route.stages());
+            }
+
+            // ================================================================
+            // V2.1 Capability-Driven Dispatch
+            // Requests carrying operation=EXECUTE_TASK with a capability field
+            // are dispatched directly to the owning kernel handler through the
+            // ExecutionDispatcher, bypassing the canonical pipeline entirely.
+            // ================================================================
+            String operation = request.metadata() != null
+                    ? String.valueOf(request.metadata().getOrDefault(OPERATION_KEY, ""))
+                    : "";
+            String capabilityValue = request.metadata() != null
+                    ? String.valueOf(request.metadata().getOrDefault(CAPABILITY_KEY, ""))
+                    : "";
+
+            if (EXECUTE_TASK_OPERATION.equals(operation) && !capabilityValue.isBlank()) {
+                java.util.Optional<ExecutionCapability> capability =
+                        ExecutionCapability.fromValue(capabilityValue);
+                if (capability.isPresent()) {
+                    RichExecutionResult richResult = executionDispatcher.dispatch(
+                            capability.get(),
+                            request.payload(),
+                            request.metadata() != null ? request.metadata() : Map.of());
+
+                    com.shreeai.os.platform.runtime.execution.ExecutionResult result =
+                            richResult.toExecutionResult();
+
+                    eventBus.publish(
+                            new RuntimeEvent(
+                                    EventType.PIPELINE_COMPLETED,
+                                    request.requestId(),
+                                    "CapabilityDispatch",
+                                    Instant.now(),
+                                    Map.of(
+                                            "status", result.isSuccess() ? "SUCCESS" : "FAILED",
+                                            "capability", capabilityValue)));
+
+                    return com.shreeai.os.platform.runtime.execution.ExecutionSession.builder()
+                            .sessionId(session.sessionId())
+                            .requestId(session.requestId())
+                            .status(result.isSuccess()
+                                    ? com.shreeai.os.platform.runtime.execution.ExecutionSession.SessionStatus.COMPLETED
+                                    : com.shreeai.os.platform.runtime.execution.ExecutionSession.SessionStatus.FAILED)
+                            .result(result)
+                            .createdAt(session.createdAt())
+                            .build();
+                }
             }
 
             // Execute the canonical pipeline with reflection-driven autonomous retry
