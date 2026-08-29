@@ -16,6 +16,10 @@ import com.shreeai.os.platform.kernels.identity.api.IdentityService;
 import com.shreeai.os.platform.kernels.identity.engine.DefaultIdentityProcessingEngine;
 import com.shreeai.os.platform.kernels.identity.service.DefaultIdentityService;
 import com.shreeai.os.platform.kernels.identity.validation.IdentityValidator;
+import com.shreeai.os.platform.kernels.tool.api.ToolService;
+import com.shreeai.os.platform.kernels.tool.engine.DefaultToolProcessingEngine;
+import com.shreeai.os.platform.kernels.tool.service.DefaultToolService;
+import com.shreeai.os.platform.kernels.tool.validation.ToolValidator;
 
 import java.util.Objects;
 
@@ -30,6 +34,7 @@ public final class DefaultKernelFactory implements KernelFactory {
     private final PlanningService planningService;
     private final ExecutionService executionService;
     private final ChiefService chiefService;
+    private final ToolService toolService;
 
     public DefaultKernelFactory() {
 
@@ -82,6 +87,19 @@ public final class DefaultKernelFactory implements KernelFactory {
                         chiefEngine
                 );
 
+        // Tool Kernel
+        ToolValidator toolValidator =
+                new ToolValidator();
+
+        DefaultToolProcessingEngine toolEngine =
+                new DefaultToolProcessingEngine();
+
+        this.toolService =
+                new DefaultToolService(
+                        toolValidator,
+                        toolEngine
+                );
+
         validateComposition();
     }
 
@@ -96,6 +114,7 @@ public final class DefaultKernelFactory implements KernelFactory {
         Objects.requireNonNull(planningService);
         Objects.requireNonNull(executionService);
         Objects.requireNonNull(chiefService);
+        Objects.requireNonNull(toolService);
     }
 
     @Override
@@ -111,5 +130,10 @@ public final class DefaultKernelFactory implements KernelFactory {
     @Override
     public ChiefService createChiefService() {
         return chiefService;
+    }
+
+    @Override
+    public ToolService createToolService() {
+        return toolService;
     }
 }

@@ -20,8 +20,11 @@ public final class AutonomousPlatformVerifier {
 
     public boolean verify() {
 
-        AgentOrchestrator orchestrator = (objective, context) ->
-                List.of(
+        AgentOrchestrator orchestrator = new AgentOrchestrator() {
+            @Override
+            public List<AgentResponse> orchestrate(
+                    String objective, Map<String, Object> context) {
+                return List.of(
                         new AgentResponse(
                                 true,
                                 "Planning completed",
@@ -29,6 +32,19 @@ public final class AutonomousPlatformVerifier {
                                 Map.of("objective", objective)
                         )
                 );
+            }
+
+            @Override
+            public com.shreeai.os.platform.kernels.multiagent.model.ParallelOrchestrationResult parallelOrchestrate(
+                    String objective,
+                    Map<String, Object> context,
+                    com.shreeai.os.platform.kernels.multiagent.model.ParallelExecutionPolicy policy) {
+                return new com.shreeai.os.platform.kernels.multiagent.model.ParallelOrchestrationResult(
+                        objective, List.of(), 0, 0, 0,
+                        java.time.Instant.now(), java.time.Instant.now(),
+                        java.util.Map.of());
+            }
+        };
 
         DefaultChiefProcessingEngine chief =
                 new DefaultChiefProcessingEngine(orchestrator);

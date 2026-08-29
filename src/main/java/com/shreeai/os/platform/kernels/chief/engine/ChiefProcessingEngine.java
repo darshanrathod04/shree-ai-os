@@ -3,6 +3,7 @@ package com.shreeai.os.platform.kernels.chief.engine;
 import com.shreeai.os.platform.kernels.chief.api.ChiefService;
 import com.shreeai.os.platform.kernels.chief.model.ChiefRequest;
 import com.shreeai.os.platform.kernels.chief.model.ChiefResponse;
+import com.shreeai.os.platform.kernels.chief.model.RetryPolicy;
 
 /**
  * <b>ChiefProcessingEngine</b>
@@ -49,4 +50,19 @@ public interface ChiefProcessingEngine {
      * @throws IllegalArgumentException if request is {@code null}
      */
     ChiefResponse process(ChiefRequest request);
+
+    /**
+     * Processes an orchestration request under a retry governance policy.
+     *
+     * <p>Executes the primary orchestration and, subject to the supplied
+     * {@link RetryPolicy}, retries failed or partial work up to the configured
+     * maximum number of attempts. The resulting response carries retry
+     * accounting in its metadata.</p>
+     *
+     * @param request the orchestration request (must not be {@code null})
+     * @param policy  the retry governance policy (must not be {@code null})
+     * @return the orchestration response with retry accounting
+     * @throws IllegalArgumentException if request or policy is {@code null}
+     */
+    ChiefResponse processWithRetry(ChiefRequest request, RetryPolicy policy);
 }
