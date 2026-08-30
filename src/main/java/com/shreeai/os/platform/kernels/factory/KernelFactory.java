@@ -4,6 +4,7 @@ import com.shreeai.os.platform.kernels.planning.api.PlanningService;
 import com.shreeai.os.platform.kernels.execution.api.ExecutionService;
 import com.shreeai.os.platform.kernels.chief.api.ChiefService;
 import com.shreeai.os.platform.kernels.identity.api.IdentityService;
+import com.shreeai.os.platform.kernels.tool.api.ToolService;
 
 /**
  * <b>KernelFactory</b>
@@ -50,4 +51,11 @@ public interface KernelFactory {
      * @return a ChiefService instance
      */
     ChiefService createChiefService();
+
+    /**
+     * Creates a ToolService instance.
+     *
+     * @return a ToolService instance
+     */
+    ToolService createToolService();
 }
