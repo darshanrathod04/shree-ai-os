@@ -3,6 +3,9 @@ package com.shreeai.os.platform.runtime.execution;
 import java.util.Map;
 import java.util.Objects;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * <b>ExecutionDispatcher</b>
  *
@@ -24,6 +27,8 @@ import java.util.Objects;
  * @since 2.1
  */
 public final class ExecutionDispatcher {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ExecutionDispatcher.class);
 
     private final KernelRegistry kernelRegistry;
     private final PermissionPolicy permissionPolicy;
@@ -67,16 +72,24 @@ public final class ExecutionDispatcher {
             throw new IllegalArgumentException("capability must not be null");
         }
 
+        LOG.info("DISPATCH_START capability={} inputLength={}",
+                capability.value(),
+                input == null ? 0 : input.length());
+
         // 1. Permission gate
         PermissionDecision decision = permissionPolicy.evaluate(capability);
+        LOG.info("DISPATCH_PERMISSION capability={} decision={}",
+                capability.value(), decision);
 
         if (decision == PermissionDecision.DENY) {
+            LOG.warn("DISPATCH_DENIED capability={}", capability.value());
             return RichExecutionResult.denied(
                     capability,
                     "Execution denied by permission policy");
         }
 
         if (decision == PermissionDecision.REQUIRE_APPROVAL) {
+            LOG.info("DISPATCH_PENDING_APPROVAL capability={}", capability.value());
             return RichExecutionResult.pendingApproval(
                     capability,
                     "Execution requires approval before dispatching");
@@ -85,21 +98,32 @@ public final class ExecutionDispatcher {
         // 2. Handler resolution
         return kernelRegistry.resolve(capability)
                 .map(handler -> {
+                    LOG.info("DISPATCH_HANDLER_FOUND capability={} handlerClass={}",
+                            capability.value(),
+                            handler.getClass().getSimpleName());
                     try {
-                        return handler.handle(
+                        RichExecutionResult result = handler.handle(
                                 capability,
                                 input == null ? "" : input,
                                 context == null ? Map.of() : context);
+                        LOG.info("DISPATCH_HANDLER_COMPLETE capability={} status={}",
+                                capability.value(), result.status());
+                        return result;
                     } catch (Exception e) {
+                        LOG.error("DISPATCH_HANDLER_EXCEPTION capability={} message={}",
+                                capability.value(), e.getMessage());
                         return RichExecutionResult.failure(
                                 capability,
                                 "Handler execution failed: " + e.getMessage());
                     }
                 })
-                .orElseGet(() -> RichExecutionResult.failure(
-                        capability,
-                        "No handler registered for capability: "
-                                + capability.value()));
+                .orElseGet(() -> {
+                    LOG.error("DISPATCH_NO_HANDLER capability={}", capability.value());
+                    return RichExecutionResult.failure(
+                            capability,
+                            "No handler registered for capability: "
+                                    + capability.value());
+                });
     }
 
     /**

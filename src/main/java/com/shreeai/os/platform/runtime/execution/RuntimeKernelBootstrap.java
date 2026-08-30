@@ -62,13 +62,16 @@ public final class RuntimeKernelBootstrap {
                 ExecutionCapability.TASK_EXECUTION,
                 new ToolRegistryKernelHandler(toolService));
 
-        // Reflection handler (post-execution analysis) - registered as a
-        // fallback for any capability, primarily used for reflection tasks
+        // Reflection handler - used for post-execution analysis and
+        // reflection-driven autonomous retry. Registered for KNOWLEDGE_SEARCH,
+        // PROJECT_PLANNING, and WORKOUT_PLANNING as a deterministic fallback
+        // when no dedicated handler is injected.
+        // NOTE: For production use, inject dedicated Knowledge and Planning
+        // handlers via register() after bootstrap initialization.
         kernelRegistry.register(
                 ExecutionCapability.KNOWLEDGE_SEARCH,
                 new ReflectionKernelHandler(reflectionEngine));
 
-        // Default handlers for planning capabilities
         kernelRegistry.register(
                 ExecutionCapability.PROJECT_PLANNING,
                 new ReflectionKernelHandler(reflectionEngine));
