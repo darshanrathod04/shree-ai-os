@@ -38,6 +38,13 @@ public final class ShreeClient {
         );
         this.runtime = runtime;
         this.eventBus = Objects.requireNonNull(eventBus);
+
+        // Bind the SDK event bus to the Runtime so runtime-side consumers
+        // (knowledge ingestion) can act on SDK-published events. No-op for
+        // runtimes that do not support event binding.
+        if (runtime != null) {
+            runtime.bindEventBus(eventBus);
+        }
     }
 
     /* ==========================================================

@@ -4,9 +4,12 @@ import com.shreeai.os.platform.kernels.knowledge.error.KnowledgeException;
 import com.shreeai.os.platform.kernels.knowledge.model.*;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeExtractionService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeGraphService;
+import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeIngestionService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeQueryService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeSearchService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeService;
+import com.shreeai.os.platform.kernels.knowledge.engine.DefaultKnowledgeIngestionEngine;
+import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeIngestionEngine;
 import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeProcessingEngine;
 import com.shreeai.os.platform.kernels.knowledge.error.KnowledgeError;
 import com.shreeai.os.platform.kernels.knowledge.error.KnowledgeErrorCode;
@@ -18,12 +21,25 @@ import com.shreeai.os.platform.kernels.knowledge.model.UpdateKnowledgeRequest;
 import com.shreeai.os.platform.kernels.knowledge.validation.KnowledgeValidator;
 import com.shreeai.os.platform.kernels.knowledge.engine.search.DefaultKnowledgeSearchEngine;
 import com.shreeai.os.platform.kernels.knowledge.engine.search.KnowledgeSearchEngine;
+import com.shreeai.os.platform.runtime.embedding.EmbeddingProvider;
+import com.shreeai.os.platform.runtime.embedding.LocalDeterministicEmbedder;
+import com.shreeai.os.platform.runtime.storage.InMemoryKnowledgeGraphStore;
+import com.shreeai.os.platform.runtime.storage.KnowledgeGraphStore;
+import com.shreeai.os.platform.runtime.vector.InMemoryVectorStoreProvider;
+import com.shreeai.os.platform.runtime.vector.VectorRecord;
+import com.shreeai.os.platform.runtime.vector.VectorSearchEngine;
+import com.shreeai.os.platform.runtime.vector.VectorSearchResult;
+import com.shreeai.os.platform.runtime.vector.VectorStore;
+import com.shreeai.os.platform.runtime.vector.VectorStoreProvider;
 
 import java.time.Instant;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * <b>DefaultKnowledgeService</b>
@@ -82,24 +98,41 @@ public final class DefaultKnowledgeService implements
         KnowledgeQueryService,
         KnowledgeSearchService,
         KnowledgeGraphService,
-        KnowledgeExtractionService {
+        KnowledgeExtractionService,
+        KnowledgeIngestionService {
 
     private final KnowledgeProcessingEngine processingEngine;
 
     private final KnowledgeSearchEngine searchEngine;
-    private KnowledgeGraph knowledgeGraph;
+
+    /**
+     * Current graph snapshot. Guarded by an {@link AtomicReference} so
+     * mutations are atomic swap operations (PHASE-1 thread-safety fix —
+     * the previous bare field was not safe under concurrent mutation).
+     */
+    private final AtomicReference<KnowledgeGraph> graphRef;
+
+    /** Durable graph store SPI (nullable — null keeps purely in-memory behavior). */
+    private final KnowledgeGraphStore graphStore;
+
+    /** Vector store SPI (nullable — null disables semantic vector retrieval). */
+    private final VectorStore vectorStore;
+
+    /** Vector search engine SPI (nullable — null disables semantic vector retrieval). */
+    private final VectorSearchEngine vectorSearchEngine;
+
+    /** Embedding provider SPI (nullable — null disables embedding production). */
+    private final EmbeddingProvider embeddingProvider;
+
+    /** Pure ingestion processing engine (never null). */
+    private final KnowledgeIngestionEngine ingestionEngine;
 
     /**
      * Creates a new DefaultKnowledgeService with constructor injection.
      *
-     * <p><b>Dependency Injection:</b> Uses constructor injection only. The processing engine
-     * is injected via the constructor and stored in an immutable final field.</p>
-     *
-     * <p><b>Thread Safety:</b> This constructor is thread-safe. The service is immutable
-     * after construction.</p>
-     *
-     * <p><b>Stateless:</b> This service maintains no mutable state. All operations
-     * delegate to the injected engine.</p>
+     * <p><b>Backward compatibility:</b> this constructor preserves the exact
+     * pre-PHASE-1 behavior — purely in-memory graph, lexical search only, no
+     * persistence. Existing tests and integrations are unaffected.</p>
      *
      * @param processingEngine the KnowledgeProcessingEngine to delegate processing to
      *                         (must not be null)
@@ -108,13 +141,142 @@ public final class DefaultKnowledgeService implements
     public DefaultKnowledgeService(
             KnowledgeProcessingEngine processingEngine
     ) {
+        this(processingEngine, null, null, null, null);
+    }
+
+    /**
+     * Creates a fully wired DefaultKnowledgeService.
+     *
+     * <p>Every storage SPI parameter is optional (nullable): a {@code null}
+     * disables the corresponding capability and preserves pre-PHASE-1
+     * behavior. This is the seam through which PostgreSQL + pgvector and
+     * Neo4j adapters are injected by the composition root — never hard-coded.</p>
+     *
+     * @param processingEngine   the processing engine (must not be null)
+     * @param graphStore         durable graph store SPI (may be null)
+     * @param vectorStore        vector store SPI (may be null)
+     * @param vectorSearchEngine vector search engine SPI (may be null)
+     * @param embeddingProvider  embedding provider SPI (may be null)
+     */
+    public DefaultKnowledgeService(
+            KnowledgeProcessingEngine processingEngine,
+            KnowledgeGraphStore graphStore,
+            VectorStore vectorStore,
+            VectorSearchEngine vectorSearchEngine,
+            EmbeddingProvider embeddingProvider) {
+
         this.processingEngine = Objects.requireNonNull(
                 processingEngine,
                 "processingEngine must not be null"
         );
 
         this.searchEngine = new DefaultKnowledgeSearchEngine();
-        this.knowledgeGraph = KnowledgeGraph.empty();
+        this.graphRef = new AtomicReference<>(KnowledgeGraph.empty());
+        this.graphStore = graphStore;
+        this.vectorStore = vectorStore;
+        this.vectorSearchEngine = vectorSearchEngine;
+        this.embeddingProvider = embeddingProvider;
+        this.ingestionEngine = new DefaultKnowledgeIngestionEngine();
+    }
+
+    /**
+     * Convenience factory producing the canonical in-memory wiring:
+     * in-memory graph store, in-memory vector provider, local deterministic
+     * embedder. Used by the composition root as the default (zero
+     * infrastructure) configuration.
+     *
+     * @param processingEngine the processing engine (must not be null)
+     * @return a fully wired in-memory service
+     */
+    public static DefaultKnowledgeService withInMemoryDefaults(
+            KnowledgeProcessingEngine processingEngine) {
+        VectorStoreProvider vectorProvider = new InMemoryVectorStoreProvider();
+        return new DefaultKnowledgeService(
+                processingEngine,
+                new InMemoryKnowledgeGraphStore(),
+                vectorProvider.vectorStore(),
+                vectorProvider.searchEngine(),
+                new LocalDeterministicEmbedder());
+    }
+
+    // ========================================================================
+    // KnowledgeIngestionService Implementation
+    // ========================================================================
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p><b>Ingestion flow:</b> validate → chunk → (embed + persist vector
+     * record) → create knowledge node (graph mutation + durable store
+     * write-through). Ingested documents become permanently searchable through
+     * {@link #search(String)} and {@link #searchBySimilarity(String)}.</p>
+     */
+    @Override
+    public KnowledgeIngestionResult ingest(
+            String title,
+            String content,
+            Map<String, Object> metadata) {
+
+        if (title == null || title.isBlank()) {
+            throw createValidationException("title must not be null or blank");
+        }
+        if (content == null || content.isBlank()) {
+            throw createValidationException("content must not be null or blank");
+        }
+
+        String tenantId = stringMetadata(metadata, "tenantId", "default");
+        String documentId = UUID.randomUUID().toString();
+        String embeddingVersion = embeddingProvider != null ? embeddingProvider.version() : null;
+
+        List<KnowledgeChunk> chunks = ingestionEngine.chunk(content);
+        List<String> nodeIds = new ArrayList<>();
+
+        KnowledgeGraph graph = graphRef.get();
+        for (KnowledgeChunk chunk : chunks) {
+            KnowledgeId nodeId = new KnowledgeId(UUID.randomUUID().toString());
+            KnowledgeNode node = ingestionEngine.toNode(
+                    documentId, title, tenantId, chunk, embeddingVersion, metadata, nodeId);
+
+            if (embeddingProvider != null && vectorStore != null) {
+                double[] embedding = embeddingProvider.embed(chunk.text());
+                Map<String, Object> vectorMetadata =
+                        new LinkedHashMap<>(metadata != null ? metadata : Map.of());
+                vectorMetadata.put("documentId", documentId);
+                vectorMetadata.put("tenantId", tenantId);
+                vectorMetadata.put("title", title);
+                vectorMetadata.put("chunkIndex", chunk.index());
+                vectorMetadata.put("embeddingVersion", embeddingVersion);
+                vectorMetadata.put("source",
+                        DefaultKnowledgeIngestionEngine.SOURCE_DOCUMENT_INGESTION);
+                vectorStore.store(VectorRecord.of(nodeId.value(), chunk.text(), embedding, vectorMetadata));
+            }
+
+            graph = processingEngine.processCreate(graph, node).getGraph();
+
+            if (graphStore != null) {
+                graphStore.saveNode(node);
+            }
+
+            nodeIds.add(nodeId.value());
+        }
+
+        graphRef.set(graph);
+
+        return KnowledgeIngestionResult.of(
+                documentId,
+                title,
+                tenantId,
+                chunks.size(),
+                nodeIds,
+                embeddingVersion);
+    }
+
+    private String stringMetadata(Map<String, Object> metadata, String key, String fallback) {
+        if (metadata == null) {
+            return fallback;
+        }
+        Object value = metadata.get(key);
+        return value != null && !value.toString().isBlank() ? value.toString() : fallback;
     }
 
     // ========================================================================
@@ -153,11 +315,15 @@ public final class DefaultKnowledgeService implements
         KnowledgeNode node = buildNode(request);
 
         var result = processingEngine.processCreate(
-                knowledgeGraph,
+                graphRef.get(),
                 node
         );
 
-        this.knowledgeGraph = result.getGraph();
+        graphRef.set(result.getGraph());
+
+        if (graphStore != null) {
+            graphStore.saveNode(node);
+        }
 
         return node.getId().value();
     }
@@ -193,11 +359,15 @@ public final class DefaultKnowledgeService implements
         // Build updated node and delegate to engine
         KnowledgeNode updatedNode = buildUpdatedNode(id, request);
         var result = processingEngine.processUpdate(
-                knowledgeGraph,
+                graphRef.get(),
                 updatedNode
         );
 
-        this.knowledgeGraph = result.getGraph();
+        graphRef.set(result.getGraph());
+
+        if (graphStore != null) {
+            graphStore.saveNode(updatedNode);
+        }
 
         return result.isSuccessful();
     }
@@ -222,11 +392,15 @@ public final class DefaultKnowledgeService implements
 
         // Delegate to engine
         var result = processingEngine.processDelete(
-                knowledgeGraph,
+                graphRef.get(),
                 id
         );
 
-        this.knowledgeGraph = result.getGraph();
+        graphRef.set(result.getGraph());
+
+        if (graphStore != null) {
+            graphStore.removeNode(id.value());
+        }
 
         return result.isSuccessful();
     }
@@ -278,7 +452,7 @@ public final class DefaultKnowledgeService implements
     public Object[] searchSemantic(String query) {
 
         return searchEngine
-                .semanticSearch(knowledgeGraph, query)
+                .semanticSearch(graphRef.get(), query)
                 .toArray();
     }
 
@@ -358,6 +532,11 @@ public final class DefaultKnowledgeService implements
         // Build relationship and delegate to engine
         KnowledgeRelationship relationship = buildRelationship(sourceId, targetId, relationshipType);
         var result = processingEngine.processLink(KnowledgeGraph.empty(), relationship);
+
+        if (graphStore != null) {
+            graphStore.saveRelationship(relationship);
+        }
+
         return relationship.getId().value();
     }
 
@@ -372,6 +551,11 @@ public final class DefaultKnowledgeService implements
     public boolean removeRelationship(String relationshipId) {
         KnowledgeId id = parseKnowledgeId(relationshipId);
         var result = processingEngine.processUnlink(KnowledgeGraph.empty(), id);
+
+        if (graphStore != null) {
+            graphStore.removeRelationship(id.value());
+        }
+
         return result.isSuccessful();
     }
 
@@ -435,7 +619,17 @@ public final class DefaultKnowledgeService implements
         Objects.requireNonNull(keyword, "keyword must not be null");
 
         List<KnowledgeNode> results =
-                searchEngine.keywordSearch(knowledgeGraph, keyword);
+                searchEngine.keywordSearch(graphRef.get(), keyword);
+
+        // Hybrid retrieval: when lexical search finds nothing, fall back to
+        // semantic vector retrieval so paraphrased queries still match
+        // ingested documents.
+        if (results.isEmpty()) {
+            List<KnowledgeNode> semantic = semanticVectorSearch(keyword, 10);
+            if (!semantic.isEmpty()) {
+                return semantic;
+            }
+        }
 
         return List.copyOf(results);
     }
@@ -449,7 +643,7 @@ public final class DefaultKnowledgeService implements
      */
     @Override
     public List<KnowledgeNode> searchByTopic(String topic) {
-        return searchEngine.topicSearch(knowledgeGraph, topic);
+        return searchEngine.topicSearch(graphRef.get(), topic);
     }
 
     /**
@@ -477,7 +671,7 @@ public final class DefaultKnowledgeService implements
      */
     @Override
     public List<KnowledgeNode> searchByTags(Iterable<String> tags) {
-        return searchEngine.tagSearch(knowledgeGraph, tags);
+        return searchEngine.tagSearch(graphRef.get(), tags);
     }
 
     /**
@@ -490,10 +684,44 @@ public final class DefaultKnowledgeService implements
     @Override
     public List<KnowledgeNode> searchBySimilarity(String text) {
 
+        // Semantic retrieval prefers the vector search engine when available
+        // (embeddings persisted at ingestion time); the lexical engine is the
+        // backward-compatible fallback.
+        List<KnowledgeNode> semantic = semanticVectorSearch(text, 10);
+        if (!semantic.isEmpty()) {
+            return semantic;
+        }
+
         return searchEngine.semanticSearch(
-                knowledgeGraph,
+                graphRef.get(),
                 text
         );
+    }
+
+    /**
+     * Performs semantic vector retrieval and maps record ids back to their
+     * knowledge nodes. Returns an empty list when the vector subsystem is
+     * not configured.
+     */
+    private List<KnowledgeNode> semanticVectorSearch(String text, int topK) {
+        if (vectorSearchEngine == null || embeddingProvider == null
+                || text == null || text.isBlank()) {
+            return List.of();
+        }
+
+        double[] queryEmbedding = embeddingProvider.embed(text);
+        return vectorSearchEngine.search(queryEmbedding, topK).stream()
+                .map(VectorSearchResult::recordId)
+                .map(this::findNodeByVectorId)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private KnowledgeNode findNodeByVectorId(String recordId) {
+        return graphRef.get().getNodes().stream()
+                .filter(node -> node.getId().value().equals(recordId))
+                .findFirst()
+                .orElse(null);
     }
 
     // ========================================================================

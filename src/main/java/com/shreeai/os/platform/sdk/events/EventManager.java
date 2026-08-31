@@ -34,4 +34,18 @@ public final class EventManager {
     ) {
         eventBus.unsubscribe(type, listener);
     }
+
+    /**
+     * Publishes a runtime event to all subscribers of its type.
+     *
+     * <p>Dispatch is synchronous: by the time this method returns, every
+     * subscriber has processed the event. This is what makes the event-driven
+     * {@code KnowledgeSDK.ingest(...)} contract deterministic — ingestion
+     * completes before the SDK call returns.</p>
+     *
+     * @param event the event to publish (must not be null)
+     */
+    public void publish(RuntimeEvent event) {
+        eventBus.publish(Objects.requireNonNull(event, "event must not be null"));
+    }
 }

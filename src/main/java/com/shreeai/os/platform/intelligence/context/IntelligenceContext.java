@@ -47,7 +47,9 @@ public record IntelligenceContext(
         List<String> knowledgeReferences,
         Map<String, Object> environment,
         Map<String, Object> metadata,
-        Instant createdAt
+        Instant createdAt,
+        String tenantId,
+        String organizationId
 ) {
 
     /**
@@ -68,6 +70,8 @@ public record IntelligenceContext(
         knowledgeReferences = knowledgeReferences != null ? List.copyOf(knowledgeReferences) : List.of();
         environment = environment != null ? Map.copyOf(environment) : Map.of();
         metadata = metadata != null ? Map.copyOf(metadata) : Map.of();
+        tenantId = tenantId != null ? tenantId : "default";
+        organizationId = organizationId != null ? organizationId : "default";
     }
 
     /**
@@ -94,6 +98,8 @@ public record IntelligenceContext(
         private Map<String, Object> environment = Map.of();
         private Map<String, Object> metadata = Map.of();
         private Instant createdAt = Instant.now();
+        private String tenantId = "default";
+        private String organizationId = "default";
 
         private Builder(String contextId, IntelligenceRequest request) {
             this.contextId = Objects.requireNonNull(contextId, "contextId must not be null");
@@ -135,11 +141,22 @@ public record IntelligenceContext(
             return this;
         }
 
+        public Builder tenantId(String tenantId) {
+            this.tenantId = tenantId != null ? tenantId : "default";
+            return this;
+        }
+
+        public Builder organizationId(String organizationId) {
+            this.organizationId = organizationId != null ? organizationId : "default";
+            return this;
+        }
+
         public IntelligenceContext build() {
             return new IntelligenceContext(
                     contextId, request, project, evidence,
                     memoryReferences, knowledgeReferences,
-                    environment, metadata, createdAt
+                    environment, metadata, createdAt,
+                    tenantId, organizationId
             );
         }
     }

@@ -18,8 +18,8 @@ import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 
 import java.time.Instant;
 import java.util.Map;
-
 import java.util.List;
+import java.util.Objects;
 
 /**
  * KnowledgeStage - Retrieves relevant knowledge for the current request.
@@ -51,8 +51,7 @@ public final class KnowledgeStage implements ExecutionStage {
     private final KnowledgeQueryService knowledgeQueryService;
     private final KnowledgeSearchService knowledgeSearchService;
     private final KnowledgeRankingService knowledgeRankingService;
-    private final KnowledgeGroundingService knowledgeGroundingService =
-            new KnowledgeGroundingService();
+    private final KnowledgeGroundingService knowledgeGroundingService;
 
     /**
      * Creates a new KnowledgeStage with real knowledge kernel services.
@@ -65,9 +64,32 @@ public final class KnowledgeStage implements ExecutionStage {
             KnowledgeQueryService knowledgeQueryService,
             KnowledgeSearchService knowledgeSearchService,
             KnowledgeRankingService knowledgeRankingService) {
+        this(knowledgeQueryService, knowledgeSearchService, knowledgeRankingService,
+                new KnowledgeGroundingService());
+    }
+
+    /**
+     * Creates a new KnowledgeStage with an explicit grounding service.
+     *
+     * <p>Injecting a {@link KnowledgeGroundingService} constructed with an
+     * {@code EmbeddingProvider} enables semantic grounding
+     * (PHASE-1: groundingScore ≥ 0.90 for ingested-document evidence).</p>
+     *
+     * @param knowledgeQueryService the knowledge query service
+     * @param knowledgeSearchService the knowledge search service
+     * @param knowledgeRankingService the knowledge ranking service
+     * @param knowledgeGroundingService the grounding service (must not be null)
+     */
+    public KnowledgeStage(
+            KnowledgeQueryService knowledgeQueryService,
+            KnowledgeSearchService knowledgeSearchService,
+            KnowledgeRankingService knowledgeRankingService,
+            KnowledgeGroundingService knowledgeGroundingService) {
         this.knowledgeQueryService = knowledgeQueryService;
         this.knowledgeSearchService = knowledgeSearchService;
         this.knowledgeRankingService = knowledgeRankingService;
+        this.knowledgeGroundingService = Objects.requireNonNull(
+                knowledgeGroundingService, "knowledgeGroundingService must not be null");
     }
 
     /**

@@ -32,11 +32,20 @@ import com.shreeai.os.platform.kernels.memory.engine.DefaultMemoryProcessingEngi
 import com.shreeai.os.platform.kernels.memory.engine.MemoryRankingService;
 import com.shreeai.os.platform.kernels.memory.service.DefaultMemoryService;
 import com.shreeai.os.platform.kernels.memory.validator.MemoryValidator;
+import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeIngestionService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeQueryService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeSearchService;
 import com.shreeai.os.platform.kernels.knowledge.engine.DefaultKnowledgeProcessingEngine;
+import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeGroundingService;
 import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeRankingService;
 import com.shreeai.os.platform.kernels.knowledge.service.DefaultKnowledgeService;
+import com.shreeai.os.platform.runtime.embedding.EmbeddingProvider;
+import com.shreeai.os.platform.runtime.embedding.LocalDeterministicEmbedder;
+import com.shreeai.os.platform.runtime.execution.KnowledgeIngestionEventConsumer;
+import com.shreeai.os.platform.runtime.storage.KnowledgeGraphStore;
+import com.shreeai.os.platform.runtime.storage.KnowledgeGraphStores;
+import com.shreeai.os.platform.runtime.vector.VectorStoreProvider;
+import com.shreeai.os.platform.runtime.vector.VectorStoreProviders;
 import com.shreeai.os.platform.kernels.cognitive.engine.DefaultReasoningEngine;
 import com.shreeai.os.platform.kernels.inference.engine.DefaultInferenceEngine;
 import com.shreeai.os.platform.kernels.factory.KernelFactory;
@@ -122,6 +131,12 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
     /** Maximum autonomous re-executions advised by the reflection kernel. */
     private static final int MAX_AUTONOMOUS_RETRIES = 2;
+
+    /**
+     * Event-driven knowledge ingestion service, set during
+     * {@link #initializeStages()} and consumed via {@link #bindEventBus(RuntimeEventBus)}.
+     */
+    private volatile KnowledgeIngestionService knowledgeIngestionService;
 
     /** Request metadata key carrying the requested operation. */
     private static final String OPERATION_KEY = "operation";
@@ -283,18 +298,36 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
         // ==========================================================
         // Knowledge Kernel
+        // Storage providers are configuration-driven (PHASE-1):
+        // in-memory by default; pgvector / neo4j when configured.
         // ==========================================================
+
+        EmbeddingProvider embeddingProvider = new LocalDeterministicEmbedder(
+                VectorStoreProviders.embeddingDimensions(System.getProperties()));
+
+        KnowledgeGraphStore knowledgeGraphStore = KnowledgeGraphStores.selected();
+        VectorStoreProvider vectorStoreProvider = VectorStoreProviders.selected();
 
         DefaultKnowledgeProcessingEngine knowledgeEngine =
                 new DefaultKnowledgeProcessingEngine();
 
         DefaultKnowledgeService knowledgeService =
-                new DefaultKnowledgeService(knowledgeEngine);
+                new DefaultKnowledgeService(
+                        knowledgeEngine,
+                        knowledgeGraphStore,
+                        vectorStoreProvider.vectorStore(),
+                        vectorStoreProvider.searchEngine(),
+                        embeddingProvider);
+
+        // Expose the event-driven ingestion entry point for bindEventBus().
+        this.knowledgeIngestionService = knowledgeService;
 
         KnowledgeQueryService knowledgeQueryService = knowledgeService;
         KnowledgeSearchService knowledgeSearchService = knowledgeService;
         KnowledgeRankingService knowledgeRankingService =
                 new KnowledgeRankingService();
+        KnowledgeGroundingService knowledgeGroundingService =
+                new KnowledgeGroundingService(embeddingProvider);
 
         // ==========================================================
         // Cognitive Kernels
@@ -358,7 +391,8 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 new KnowledgeStage(
                         knowledgeQueryService,
                         knowledgeSearchService,
-                        knowledgeRankingService
+                        knowledgeRankingService,
+                        knowledgeGroundingService
                 );
 
         stages.add(knowledgeStage);
@@ -395,6 +429,25 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 memoryRecallStage,
                 memoryStoreStage
         );
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Subscribes the runtime-side event-driven kernel consumers on the
+     * given SDK event bus. Currently binds the knowledge ingestion consumer
+     * backing the event-driven {@code KnowledgeSDK.ingest(...)} contract.</p>
+     */
+    @Override
+    public void bindEventBus(RuntimeEventBus eventBus) {
+        if (eventBus == null) {
+            return;
+        }
+        eventBus.subscribe(
+                EventType.KNOWLEDGE_INGEST_REQUESTED,
+                new KnowledgeIngestionEventConsumer(
+                        () -> knowledgeIngestionService,
+                        eventBus));
     }
 
     /**

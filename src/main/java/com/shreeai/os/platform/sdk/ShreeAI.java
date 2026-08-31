@@ -33,6 +33,7 @@ public final class ShreeAI {
     private final KnowledgeSDK knowledge;
     private final MemorySDK memory;
     private final IdentitySDK identity;
+    private final ReflectionSDK reflection;
     private final SDKConfiguration configuration;
     private final ShreeClient client;
 
@@ -48,6 +49,7 @@ public final class ShreeAI {
         this.knowledge = new KnowledgeSDK(client);
         this.planning = new PlanningSDK(client);
         this.execution = new ExecutionSDK(client);
+        this.reflection = new ReflectionSDK(client);
     }
 
     /**
@@ -157,6 +159,13 @@ public final class ShreeAI {
      */
     public ExecutionSDK execution() {
         return execution;
+    }
+
+    /**
+     * Reflection Kernel SDK (Phase 1.5).
+     */
+    public ReflectionSDK reflection() {
+        return reflection;
     }
 
     /**
