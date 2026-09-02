@@ -533,10 +533,25 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
             }
         }
 
+        // Sprint-17.3: Derive title from the real question in metadata, not the
+        // SDK message literal (which was previously "KNOWLEDGE_QUERY"). The question
+        // is stored at requestMetadata.question by KnowledgeSDK.query(). Falls back
+        // to the request text (Sprint-12 behavior) when no explicit question was
+        // provided — e.g., for Chief-orchestrated CHAT requests routed through
+        // KnowledgeStage without an explicit "question" metadata field.
+        String realQuestion = "";
+        if (value instanceof Map<?, ?> requestMetadata) {
+            Object q = requestMetadata.get("question");
+            if (q != null && !q.toString().isBlank()) {
+                realQuestion = q.toString();
+            }
+        }
+
         String title = firstNonBlank(
                 string(metadata.get("knowledgeTitle")),
                 keyword,
-                requestText(context)
+                realQuestion,
+                requestText(context)   // Sprint-17.3: fallback to request text when no question metadata
         );
 
         String summary = string(metadata.get("knowledgeSummary"));
@@ -632,20 +647,47 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
 
         structured.put("knowledgeTitle", title);
 
-        Object grounding = metadata.get("knowledgeGroundingScore");
-
-        if (grounding instanceof Number groundingScore) {
-            structured.put("groundingScore", groundingScore.doubleValue());
-        }
+        // Sprint-17.3: Derive confidence from grounding score, not hard-coded 0.95.
+        // Low/no grounding → low confidence; strong grounding → high confidence.
+        double confidence = deriveKnowledgeConfidence(results, metadata);
 
         return new SynthesizedResponse(
                 answer.toString().trim(),
                 sections,
-                0.95,
+                confidence,
                 ResponseStyle.PROFESSIONAL,
                 Instant.now(),
                 structured
         );
+    }
+
+    /**
+     * Sprint-17.3: Derives confidence for knowledge synthesis based on:
+     * 1. Whether results were found (empty graph → low confidence)
+     * 2. The knowledgeGroundingScore if available (real grounding signal)
+     *
+     * @param results  the retrieved knowledge nodes (may be empty)
+     * @param metadata the pipeline metadata
+     * @return confidence in [0.0, 1.0]
+     */
+    private double deriveKnowledgeConfidence(
+            List<KnowledgeNode> results,
+            Map<String, Object> metadata
+    ) {
+        // No results found — low confidence (no evidence)
+        if (results.isEmpty()) {
+            return 0.15;  // Sprint-17.3: was 0.95 — now honestly reports no evidence
+        }
+
+        // Results found — check grounding score
+        Object grounding = metadata.get("knowledgeGroundingScore");
+        if (grounding instanceof Number groundingScore) {
+            // Use the real grounding score as the confidence signal
+            return Math.max(0.0, Math.min(1.0, groundingScore.doubleValue()));
+        }
+
+        // Results found but no grounding score — moderate confidence
+        return 0.80;
     }
 
     private SynthesizedResponse synthesizeChat(

@@ -37,7 +37,15 @@ public final class ProjectSDK {
 
     private final DefaultProjectIntelligenceEngine engine;
 
-    ProjectSDK() {
+    /**
+     * Creates a new ProjectSDK instance.
+     *
+     * <p>Designed to be instantiated by a Spring {@code @Bean} factory
+     * in {@code ShreeAiOsConfig} so it can be injected into application
+     * services ({@code WorkspaceService}, {@code DeveloperWorkflowService})
+     * alongside the parent {@code ShreeAI} bean.</p>
+     */
+    public ProjectSDK() {
         this.engine = new DefaultProjectIntelligenceEngine();
     }
 
@@ -186,6 +194,25 @@ public final class ProjectSDK {
     public ProjectEntity findEntity(String simpleName) {
         Objects.requireNonNull(simpleName, "simpleName must not be null");
         return engine.findEntity(simpleName);
+    }
+
+    /**
+     * Sprint-17.3: Returns the cached project summary from the last analyze() call.
+     * Allows callers (chat services, orchestrators) to query project statistics
+     * (class count, endpoint count, framework) without re-analyzing.
+     *
+     * @return the cached ProjectSummary, or null if no project has been analyzed
+     */
+    public ProjectSummary summarize() {
+        return engine.getSummary();
+    }
+
+    /**
+     * Sprint-17.3: Returns the last analyzed project path, or null if none.
+     */
+    public String lastAnalyzedPath() {
+        Path path = engine.getLastAnalyzedPath();
+        return path == null ? null : path.toString();
     }
 
     /**

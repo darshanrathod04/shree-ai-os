@@ -105,6 +105,8 @@ public final class IntentAnalysisResult {
         REFLECTION,
         /** Sprint-14: Developer Agent — implementation planning & impact analysis */
         DEVELOPER,
+        /** Sprint-17.3: Project Intelligence — actual code analysis on analyzed projects */
+        PROJECT_INTELLIGENCE,
         CHAT
     }
 
@@ -120,6 +122,8 @@ public final class IntentAnalysisResult {
         REFLECTION,
         /** Sprint-14: Developer Agent kernel */
         DEVELOPER,
+        /** Sprint-17.3: Project Intelligence kernel — operates on analyzed project structures */
+        PROJECT,
         CHIEF
     }
 
@@ -184,6 +188,7 @@ public final class IntentAnalysisResult {
                 case EXECUTION -> KernelType.EXECUTION;
                 case REFLECTION -> KernelType.REFLECTION;
                 case DEVELOPER -> KernelType.DEVELOPER;
+                case PROJECT_INTELLIGENCE -> KernelType.PROJECT;   // Sprint-17.3
                 case CHAT -> KernelType.CHIEF;
             };
         }

@@ -28,6 +28,9 @@ import java.util.regex.Pattern;
  *   <li>PLANNING — "roadmap", "plan", "create a", "build a", "architecture"</li>
  *   <li>KNOWLEDGE — "what is", "explain", "how does", "tell me about"</li>
  *   <li>EXECUTION — "execute", "run", "deploy", "build it"</li>
+ *   <li>PROJECT_INTELLIGENCE (Sprint-17.3) — "explain the X class",
+ *       "which classes depend on Y", "what endpoints exist",
+ *       "show the Y class", "find class X", "impact of X"</li>
  * </ul>
  *
  * @since Sprint-12
@@ -145,6 +148,34 @@ public final class IntentAnalyzer {
             Pattern.compile("(?i)\\brepository\\b")
     );
 
+    // Sprint-17.3: Project Intelligence patterns — actual code analysis on
+    // previously analyzed projects (project graph, classes, endpoints).
+    // These patterns indicate the user is asking about real, analyzed code,
+    // not abstract knowledge from documents.
+    private static final List<Pattern> PROJECT_INTELLIGENCE_PATTERNS = List.of(
+            // Class-level queries
+            Pattern.compile("(?i)\\b(explain|describe|show|find|get|tell me about)\\s+the\\s+\\w+\\s+class\\b"),
+            Pattern.compile("(?i)\\b(explain|describe|show|find|get|tell me about)\\s+\\w+(Controller|Service|Repository|SDK|Engine|Stage)\\b"),
+            Pattern.compile("(?i)\\bwhat is the\\s+\\w+\\s+class\\b"),
+            Pattern.compile("(?i)\\bhow does the\\s+\\w+\\s+class\\b"),
+            // Endpoint queries
+            Pattern.compile("(?i)\\b(endpoints|routes)\\s+(exist|available|in)\\b"),
+            Pattern.compile("(?i)\\bwhat\\s+(endpoints|routes|apis)\\b"),
+            Pattern.compile("(?i)\\blist\\s+(endpoints|routes|apis|controllers)\\b"),
+            // Dependency / impact queries
+            Pattern.compile("(?i)\\bwhich\\s+(classes|files)\\s+depend(s)?\\s+on\\b"),
+            Pattern.compile("(?i)\\bwhat\\s+depend(s)?\\s+on\\b"),
+            Pattern.compile("(?i)\\bimpact\\s+(of|analysis)\\b"),
+            Pattern.compile("(?i)\\bwho\\s+(uses|calls|depends)\\b"),
+            // Project overview
+            Pattern.compile("(?i)\\bproject\\s+(structure|summary|overview|architecture)\\b"),
+            Pattern.compile("(?i)\\bclass\\s+hierarchy\\b"),
+            // Controller/Service specific lookups
+            Pattern.compile("(?i)\\b\\w+Controller\\b"),
+            Pattern.compile("(?i)\\b\\w+Service\\b"),
+            Pattern.compile("(?i)\\b\\w+Repository\\b")
+    );
+
     // ─────────────────────────────────────────────────────────────────────────
     // Domain entity extractors
     // ─────────────────────────────────────────────────────────────────────────
@@ -188,11 +219,13 @@ public final class IntentAnalyzer {
         double knowledgeScore = score(normalized, KNOWLEDGE_PATTERNS);
         double executionScore = score(normalized, EXECUTION_PATTERNS);
         double developerScore = score(normalized, DEVELOPER_PATTERNS); // Sprint-14
+        double projectScore = score(normalized, PROJECT_INTELLIGENCE_PATTERNS); // Sprint-17.3
 
         // Determine primary intent (highest score wins).
         // If no intent is detected (all scores = 0), fall back to CHAT.
         if (storeScore == 0.0 && recallScore == 0.0 && planningScore == 0.0
-                && knowledgeScore == 0.0 && executionScore == 0.0 && developerScore == 0.0) {
+                && knowledgeScore == 0.0 && executionScore == 0.0 && developerScore == 0.0
+                && projectScore == 0.0) {
             primaryIntent = IntentType.CHAT;
             highestConfidence = 0.0;
         } else {
@@ -228,13 +261,24 @@ public final class IntentAnalyzer {
                     highestConfidence = developerScore;
                     primaryIntent = IntentType.DEVELOPER;
                 }
+                // Sprint-17.3: Project Intelligence — higher priority than KNOWLEDGE only.
+                // "Explain the X class" should route to the analyzed project graph, not the
+                // empty document knowledge graph. PROJECT wins over KNOWLEDGE on ties
+                // (e.g., "explain" matches both), but PLANNING still wins if it scored higher.
+                if (projectScore > highestConfidence
+                        || (projectScore == highestConfidence
+                                && primaryIntent == IntentType.KNOWLEDGE_QUERY)) {
+                    highestConfidence = projectScore;
+                    primaryIntent = IntentType.PROJECT_INTELLIGENCE;
+                }
             }
         }
 
         // Build secondary intents
         List<IntentType> secondaryIntents = buildSecondaryIntents(
                 normalized, primaryIntent, storeScore, recallScore,
-                planningScore, knowledgeScore, executionScore, developerScore
+                planningScore, knowledgeScore, executionScore, developerScore,
+                projectScore  // Sprint-17.3
         );
 
         // Build required kernels
@@ -287,7 +331,8 @@ public final class IntentAnalyzer {
             double planningScore,
             double knowledgeScore,
             double executionScore,
-            double developerScore
+            double developerScore,
+            double projectScore  // Sprint-17.3
     ) {
         List<IntentType> secondaries = new ArrayList<>();
         double threshold = 0.3;
@@ -318,9 +363,16 @@ public final class IntentAnalyzer {
             secondaries.add(IntentType.REFLECTION);
         }
 
+        // Sprint-17.3: If primary is PROJECT_INTELLIGENCE → add MEMORY as secondary
+        // (context about the project from previous interactions)
+        if (primary == IntentType.PROJECT_INTELLIGENCE && storeScore >= threshold) {
+            secondaries.add(IntentType.MEMORY_STORE);
+        }
+
         // Generic knowledge + planning cross-detection
         if (storeScore >= threshold && knowledgeScore >= threshold
-                && primary != IntentType.MEMORY_STORE && primary != IntentType.KNOWLEDGE_QUERY) {
+                && primary != IntentType.MEMORY_STORE && primary != IntentType.KNOWLEDGE_QUERY
+                && primary != IntentType.PROJECT_INTELLIGENCE) {
             if (!secondaries.contains(IntentType.MEMORY_STORE)) {
                 secondaries.add(IntentType.MEMORY_STORE);
             }
@@ -358,6 +410,7 @@ public final class IntentAnalyzer {
             case EXECUTION -> KernelType.EXECUTION;
             case REFLECTION -> KernelType.REFLECTION;
             case DEVELOPER -> KernelType.DEVELOPER; // Sprint-14
+            case PROJECT_INTELLIGENCE -> KernelType.PROJECT; // Sprint-17.3
             case CHAT -> KernelType.CHIEF;
         };
     }

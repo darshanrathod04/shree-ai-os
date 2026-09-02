@@ -156,6 +156,7 @@ public final class KernelExecutionGraph {
                 case REFLECTION -> IntentAnalysisResult.IntentType.REFLECTION;
                 case DEVELOPER -> IntentAnalysisResult.IntentType.DEVELOPER; // Sprint-14
                 case CHIEF -> IntentAnalysisResult.IntentType.CHAT;
+                case PROJECT -> IntentAnalysisResult.IntentType.PROJECT_INTELLIGENCE; // Sprint-17.3
             };
         }
 
@@ -218,13 +219,23 @@ public final class KernelExecutionGraph {
                                 "originalInput", analysis.originalInput()));
             }
 
-            // Phase 2: KNOWLEDGE (ground subsequent planning/execution)
+            // Phase 2: KNOWLEDGE and PROJECT (ground subsequent planning/execution)
+            // Sprint-17.3: PROJECT runs alongside KNOWLEDGE — both provide contextual grounding.
             if (required.contains(KernelType.KNOWLEDGE)) {
                 List<KernelType> deps = hasMemory(required)
                         ? List.of(KernelType.MEMORY)
                         : List.of();
                 addKernel(KernelType.KNOWLEDGE, position++, deps,
                         Map.of("intent", IntentAnalysisResult.IntentType.KNOWLEDGE_QUERY,
+                                "originalInput", analysis.originalInput()));
+            }
+
+            if (required.contains(KernelType.PROJECT)) {   // Sprint-17.3
+                List<KernelType> deps = hasMemory(required)
+                        ? List.of(KernelType.MEMORY)
+                        : List.of();
+                addKernel(KernelType.PROJECT, position++, deps,
+                        Map.of("intent", IntentAnalysisResult.IntentType.PROJECT_INTELLIGENCE,
                                 "originalInput", analysis.originalInput()));
             }
 
@@ -286,6 +297,7 @@ public final class KernelExecutionGraph {
                 case EXECUTION -> IntentAnalysisResult.IntentType.EXECUTION;
                 case REFLECTION -> IntentAnalysisResult.IntentType.REFLECTION;
                 case DEVELOPER -> IntentAnalysisResult.IntentType.DEVELOPER; // Sprint-14
+                case PROJECT -> IntentAnalysisResult.IntentType.PROJECT_INTELLIGENCE; // Sprint-17.3
                 case CHIEF -> IntentAnalysisResult.IntentType.CHAT;
             };
         }

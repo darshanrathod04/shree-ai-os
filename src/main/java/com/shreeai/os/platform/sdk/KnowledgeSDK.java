@@ -32,11 +32,18 @@ public final class KnowledgeSDK {
 
     /**
      * Semantic knowledge query.
+     *
+     * <p>Passes the user's actual question as the message so that the runtime
+     * synthesizer renders it as the response title, not a literal placeholder.
+     * The real question is forwarded in metadata for KnowledgeStage routing.</p>
+     *
+     * @param question the user's natural-language question
+     * @return SDKResponse with the knowledge query result
      */
     public SDKResponse query(String question) {
 
         SDKRequest request = SDKRequest.builder()
-                .message("KNOWLEDGE_QUERY")
+                .message(question)   // Sprint-17.3: was literal "KNOWLEDGE_QUERY"
                 .metadata(Map.of(
                         "operation", "QUERY_KNOWLEDGE",
                         "question", question
@@ -47,12 +54,15 @@ public final class KnowledgeSDK {
     }
 
     /**
-     * Retrieve a knowledge entity.
+     * Retrieve a knowledge entity by its identifier.
+     *
+     * @param entityId the unique entity identifier
+     * @return SDKResponse with the entity data
      */
     public SDKResponse retrieve(String entityId) {
 
         SDKRequest request = SDKRequest.builder()
-                .message("KNOWLEDGE_RETRIEVE")
+                .message("Retrieve knowledge: " + entityId)   // Sprint-17.3: real context
                 .metadata(Map.of(
                         "operation", "RETRIEVE_ENTITY",
                         "entityId", entityId
@@ -63,12 +73,15 @@ public final class KnowledgeSDK {
     }
 
     /**
-     * Search the knowledge graph.
+     * Search the knowledge graph by keyword.
+     *
+     * @param keyword the search keyword
+     * @return SDKResponse with the matching knowledge nodes
      */
     public SDKResponse search(String keyword) {
 
         SDKRequest request = SDKRequest.builder()
-                .message("KNOWLEDGE_SEARCH")
+                .message("Search knowledge: " + keyword)   // Sprint-17.3: real context
                 .metadata(Map.of(
                         "operation", "SEARCH_KNOWLEDGE",
                         "keyword", keyword

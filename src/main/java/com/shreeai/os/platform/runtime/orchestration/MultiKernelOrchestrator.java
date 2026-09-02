@@ -21,10 +21,15 @@ import com.shreeai.os.platform.kernels.memory.model.MemoryMetadata;
 import com.shreeai.os.platform.kernels.memory.model.MemoryStatus;
 import com.shreeai.os.platform.kernels.memory.model.MemoryType;
 import com.shreeai.os.platform.kernels.memory.model.MemoryVisibility;
+import com.shreeai.os.platform.kernels.project.engine.DefaultProjectIntelligenceEngine;
 import com.shreeai.os.platform.kernels.planning.api.PlanningService;
 import com.shreeai.os.platform.kernels.planning.api.PlanningTypes;
 import com.shreeai.os.platform.kernels.planning.model.PlanningConstraints;
 import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
+import com.shreeai.os.platform.kernels.project.model.ProjectClass;
+import com.shreeai.os.platform.kernels.project.model.ProjectEndpoint;
+import com.shreeai.os.platform.kernels.project.model.ProjectImpact;
+import com.shreeai.os.platform.kernels.project.model.ProjectSummary;
 import com.shreeai.os.platform.kernels.response.service.ResponseSynthesisService;
 import com.shreeai.os.platform.runtime.execution.ExecutionCapability;
 import com.shreeai.os.platform.runtime.execution.RichExecutionResult;
@@ -33,6 +38,7 @@ import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -59,6 +65,7 @@ public final class MultiKernelOrchestrator {
     private final ResponseSynthesisService responseSynthesisService;
     private final RuntimeEventBus eventBus;
     private final DefaultDeveloperAgentEngine developerAgent;
+    private final DefaultProjectIntelligenceEngine projectEngine; // Sprint-17.3
 
     public MultiKernelOrchestrator(
             IntentAnalyzer intentAnalyzer,
@@ -70,6 +77,25 @@ public final class MultiKernelOrchestrator {
             RuntimeEventBus eventBus,
             DefaultDeveloperAgentEngine developerAgent
     ) {
+        this(intentAnalyzer, memoryService, knowledgeSearchService, planningService,
+                reflectionEngine, responseSynthesisService, eventBus, developerAgent,
+                new DefaultProjectIntelligenceEngine());   // Sprint-17.3
+    }
+
+    /**
+     * Sprint-17.3: Constructor that accepts an explicit ProjectIntelligenceEngine.
+     */
+    public MultiKernelOrchestrator(
+            IntentAnalyzer intentAnalyzer,
+            MemoryService memoryService,
+            KnowledgeSearchService knowledgeSearchService,
+            PlanningService planningService,
+            DefaultReflectionEngine reflectionEngine,
+            ResponseSynthesisService responseSynthesisService,
+            RuntimeEventBus eventBus,
+            DefaultDeveloperAgentEngine developerAgent,
+            DefaultProjectIntelligenceEngine projectEngine
+    ) {
         this.intentAnalyzer = Objects.requireNonNull(intentAnalyzer, "intentAnalyzer must not be null");
         this.memoryService = memoryService; // may be null
         this.knowledgeSearchService = knowledgeSearchService; // may be null
@@ -78,6 +104,7 @@ public final class MultiKernelOrchestrator {
         this.responseSynthesisService = responseSynthesisService; // may be null
         this.eventBus = eventBus; // may be null
         this.developerAgent = developerAgent; // may be null — Sprint-14
+        this.projectEngine = projectEngine; // may be null — Sprint-17.3
     }
 
     /**
@@ -147,6 +174,7 @@ public final class MultiKernelOrchestrator {
                 case EXECUTION -> executeExecutionKernel(node, userInput, composite);
                 case CHIEF -> executeChiefKernel(node, userInput, composite);
                 case DEVELOPER -> executeDeveloperKernel(node, userInput, composite);
+                case PROJECT -> executeProjectIntelligenceKernel(node, userInput, metadata, composite);   // Sprint-17.3
             }
         } catch (Exception e) {
             long executionTime = Instant.now().toEpochMilli() - kernelStart.toEpochMilli();
@@ -489,6 +517,335 @@ public final class MultiKernelOrchestrator {
                     Map.of("error", e.getClass().getSimpleName())
             ));
         }
+    }
+
+    // ─── Project Intelligence Kernel (Sprint-17.3) ─────────────────────────
+
+    /**
+     * Sprint-17.3: Executes the Project Intelligence kernel.
+     *
+     * <p>Delegates to {@link DefaultProjectIntelligenceEngine} to answer questions
+     * about the previously analyzed project (classes, endpoints, entities, dependencies,
+     * impact analysis). This kernel is triggered when the user asks questions like
+     * "explain the X class", "what endpoints exist", "which classes depend on Y",
+     * "show me the project structure", etc.</p>
+     *
+     * <p>The project must have been analyzed previously via {@link DefaultProjectIntelligenceEngine#analyze}
+     * (typically called by WorkspaceService when opening the workspace). The engine
+     * maintains in-memory state of the analyzed project graph.</p>
+     *
+     * @param node      the kernel execution node
+     * @param userInput the original user question
+     * @param metadata  the request metadata (may contain sessionId for workspace lookup)
+     * @param composite the composite result builder
+     */
+    private void executeProjectIntelligenceKernel(
+            KernelExecutionGraph.Node node,
+            String userInput,
+            Map<String, Object> metadata,
+            CompositeKernelResult.Builder composite
+    ) {
+        Instant start = Instant.now();
+
+        if (projectEngine == null) {
+            composite.addKernelResult(new CompositeKernelResult.KernelResult(
+                    "Project Intelligence",
+                    IntentAnalysisResult.KernelType.PROJECT,
+                    "Project Intelligence engine not available — no project analyzed",
+                    false,
+                    Instant.now().toEpochMilli() - start.toEpochMilli(),
+                    0.0,
+                    Map.of("error", "projectEngine is null — call WorkspaceService.open() first")
+            ));
+            composite.success(false);
+            return;
+        }
+
+        try {
+            String normalizedQuestion = userInput.toLowerCase(Locale.ROOT);
+            Map<String, Object> kernelMetadata = new LinkedHashMap<>();
+            kernelMetadata.put("source", "Project Intelligence Kernel");
+
+            String answer = null;
+            double confidence = 0.80;
+            boolean found = false;
+
+            // Sprint-17.3: Route to the appropriate ProjectIntelligence query method
+            // based on the question pattern. This replaces the Knowledge Graph fallback
+            // that was previously returning "# KNOWLEDGE_QUERY" for all project questions.
+
+            // 1. Class explanation queries: "explain the X class", "describe X class"
+            if (normalizedQuestion.contains("explain")
+                    || normalizedQuestion.contains("describe")
+                    || normalizedQuestion.contains("show")) {
+                String className = extractClassName(userInput);
+                if (className != null) {
+                    ProjectClass cls = projectEngine.findClass(className);
+                    if (cls != null) {
+                        answer = formatProjectClassExplanation(cls);
+                        confidence = 0.95;
+                        found = true;
+                        kernelMetadata.put("className", className);
+                        kernelMetadata.put("matchedBy", "classExplanation");
+                    }
+                }
+            }
+
+            // 2. Endpoint queries: "what endpoints", "which endpoints", "list routes"
+            if (!found && (normalizedQuestion.contains("endpoint")
+                    || normalizedQuestion.contains("routes")
+                    || normalizedQuestion.contains("apis"))) {
+                String path = extractEndpointPath(userInput);
+                if (path != null) {
+                    ProjectEndpoint endpoint = projectEngine.findController(path);
+                    if (endpoint != null) {
+                        answer = formatEndpointExplanation(endpoint);
+                        confidence = 0.95;
+                        found = true;
+                        kernelMetadata.put("path", path);
+                        kernelMetadata.put("matchedBy", "endpointLookup");
+                    }
+                }
+                if (!found) {
+                    // List all endpoints from the analyzed project
+                    ProjectSummary summary = projectEngine.getSummary();
+                    if (summary != null && summary.statistics() != null
+                            && summary.statistics().endpointCount() > 0) {
+                        answer = formatProjectSummary(summary);
+                        confidence = 0.90;
+                        found = true;
+                        kernelMetadata.put("matchedBy", "endpointList");
+                    }
+                }
+            }
+
+            // 3. Dependency / impact queries: "which class depends on", "impact of"
+            if (!found && (normalizedQuestion.contains("depend")
+                    || normalizedQuestion.contains("impact")
+                    || normalizedQuestion.contains("who uses"))) {
+                String className = extractClassName(userInput);
+                if (className != null) {
+                    ProjectImpact impact = projectEngine.impact(className);
+                    if (impact != null) {
+                        answer = formatProjectImpact(impact);
+                        confidence = 0.90;
+                        found = true;
+                        kernelMetadata.put("className", className);
+                        kernelMetadata.put("matchedBy", "impactAnalysis");
+                    }
+                }
+            }
+
+            // 4. Entity queries: "find entity X"
+            if (!found && normalizedQuestion.contains("entity")) {
+                String entityName = extractClassName(userInput);
+                if (entityName != null) {
+                    var entity = projectEngine.findEntity(entityName);
+                    if (entity != null) {
+                        answer = formatEntityExplanation(entity);
+                        confidence = 0.90;
+                        found = true;
+                        kernelMetadata.put("matchedBy", "entityLookup");
+                    }
+                }
+            }
+
+            // 5. Project structure overview
+            if (!found && (normalizedQuestion.contains("structure")
+                    || normalizedQuestion.contains("summary")
+                    || normalizedQuestion.contains("overview"))) {
+                ProjectSummary summary = projectEngine.getSummary();
+                if (summary != null) {
+                    answer = formatProjectSummary(summary);
+                    confidence = 0.90;
+                    found = true;
+                    kernelMetadata.put("matchedBy", "projectSummary");
+                }
+            }
+
+            // 6. Generic class/interface lookup (fallback)
+            if (!found) {
+                String className = extractClassName(userInput);
+                if (className != null) {
+                    ProjectClass cls = projectEngine.findClass(className);
+                    if (cls != null) {
+                        answer = formatProjectClassExplanation(cls);
+                        confidence = 0.90;
+                        found = true;
+                        kernelMetadata.put("className", className);
+                        kernelMetadata.put("matchedBy", "genericClassLookup");
+                    }
+                }
+            }
+
+            long duration = Instant.now().toEpochMilli() - start.toEpochMilli();
+
+            if (found) {
+                composite.addKernelResult(new CompositeKernelResult.KernelResult(
+                        "Project Intelligence",
+                        IntentAnalysisResult.KernelType.PROJECT,
+                        answer,
+                        true,
+                        duration,
+                        confidence,
+                        kernelMetadata
+                ));
+            } else {
+                composite.addKernelResult(new CompositeKernelResult.KernelResult(
+                        "Project Intelligence",
+                        IntentAnalysisResult.KernelType.PROJECT,
+                        "No project intelligence found — project may not have been analyzed. "
+                                + "Call WorkspaceService.open() first, or the requested class/entity does not exist.",
+                        false,
+                        duration,
+                        0.0,
+                        Map.of("error", "notFound", "matchedBy", "none")
+                ));
+                composite.success(false);
+            }
+
+        } catch (Exception e) {
+            long duration = Instant.now().toEpochMilli() - start.toEpochMilli();
+            composite.addKernelResult(new CompositeKernelResult.KernelResult(
+                    "Project Intelligence",
+                    IntentAnalysisResult.KernelType.PROJECT,
+                    "Project Intelligence query failed: " + e.getMessage(),
+                    false,
+                    duration,
+                    0.0,
+                    Map.of("error", e.getClass().getSimpleName())
+            ));
+            composite.success(false);
+        }
+    }
+
+    // ─── Formatters ─────────────────────────────────────────────────────────
+
+    private String formatProjectClassExplanation(ProjectClass cls) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("# ").append(cls.name()).append("\n\n");
+        if (cls.packageName() != null && !cls.packageName().isBlank()) {
+            sb.append("**Package:** `").append(cls.packageName()).append("`\n\n");
+        }
+        if (cls.role() != null && cls.role() != ProjectClass.Role.NONE) {
+            sb.append("**Role:** ").append(cls.role()).append("\n\n");
+        }
+        if (cls.methods() != null && !cls.methods().isEmpty()) {
+            sb.append("**Methods (").append(cls.methods().size()).append("):**\n\n");
+            for (var method : cls.methods().stream().limit(10).toList()) {
+                sb.append("- `").append(method.name()).append("`");
+                if (method.returnType() != null) {
+                    sb.append(" → ").append(method.returnType());
+                }
+                sb.append("\n");
+            }
+        }
+        return sb.toString().trim();
+    }
+
+    private String formatEndpointExplanation(ProjectEndpoint endpoint) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("# ").append(endpoint.httpMethod()).append(" ").append(endpoint.path()).append("\n\n");
+        if (endpoint.controllerClass() != null) {
+            sb.append("**Controller:** `").append(endpoint.controllerClass()).append("`\n\n");
+        }
+        if (endpoint.methodName() != null && !endpoint.methodName().isBlank()) {
+            sb.append("**Method:** `").append(endpoint.methodName()).append("`\n\n");
+        }
+        return sb.toString().trim();
+    }
+
+    private String formatProjectImpact(ProjectImpact impact) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("# Impact Analysis: ").append(impact.target()).append("\n\n");
+        if (impact.affectedClasses() != null && !impact.affectedClasses().isEmpty()) {
+            sb.append("**Affected classes (").append(impact.affectedClasses().size()).append("):**\n\n");
+            for (String cls : impact.affectedClasses().stream().limit(10).toList()) {
+                sb.append("- `").append(cls).append("`\n");
+            }
+        }
+        if (impact.dependencyDepth() > 0) {
+            sb.append("\n**Dependency depth:** ").append(impact.dependencyDepth()).append("\n");
+        }
+        return sb.toString().trim();
+    }
+
+    private String formatEntityExplanation(Object entity) {
+        return "# Entity Information\n\n" + entity.toString();
+    }
+
+    private String formatProjectSummary(ProjectSummary summary) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("# Project Summary\n\n");
+        if (summary.projectName() != null) {
+            sb.append("**Name:** ").append(summary.projectName()).append("\n\n");
+        }
+        if (summary.statistics() != null) {
+            sb.append("**Classes:** ").append(summary.statistics().classCount()).append("\n");
+            sb.append("**Endpoints:** ").append(summary.statistics().endpointCount()).append("\n");
+        }
+        if (summary.framework() != null) {
+            sb.append("**Framework:** ").append(summary.framework()).append("\n");
+        }
+        if (summary.buildSystem() != null) {
+            sb.append("**Build:** ").append(summary.buildSystem()).append("\n");
+        }
+        return sb.toString().trim();
+    }
+
+    /**
+     * Extracts a class name from a natural-language question.
+     * Handles patterns like "Explain the UserService class", "which class depends on X".
+     */
+    private String extractClassName(String question) {
+        if (question == null) return null;
+        String q = question.toLowerCase(Locale.ROOT);
+
+        // "explain the X class", "describe the X class"
+        int idx = q.indexOf("the ");
+        int classIdx = q.indexOf(" class");
+        if (idx >= 0 && classIdx > idx) {
+            String candidate = question.substring(idx + 4, classIdx).trim();
+            if (!candidate.isBlank()) return capitalize(candidate);
+        }
+
+        // Direct class name with suffix
+        for (String suffix : List.of("Controller", "Service", "Repository", "SDK", "Engine",
+                "Stage", "Config", "Handler", "Processor", "Manager")) {
+            idx = q.indexOf(suffix.toLowerCase(Locale.ROOT));
+            if (idx > 0) {
+                String before = question.substring(0, idx).trim();
+                if (!before.isBlank()) {
+                    return before + suffix;
+                }
+                // The word itself might be the class name
+                int wordStart = idx;
+                while (wordStart > 0 && Character.isLowerCase(q.charAt(wordStart - 1))) {
+                    wordStart--;
+                }
+                return question.substring(wordStart, idx + suffix.length());
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Extracts an endpoint path from a question.
+     */
+    private String extractEndpointPath(String question) {
+        if (question == null) return null;
+        // Look for quoted paths like "/users", "/api/v1/..."
+        for (String token : question.split("\\s+")) {
+            if (token.startsWith("/")) {
+                return token.replaceAll("[^a-zA-Z0-9/{}]", "");
+            }
+        }
+        return null;
+    }
+
+    private String capitalize(String s) {
+        if (s == null || s.isBlank()) return s;
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     // ─── Reflection Hook ───────────────────────────────────────────────────
