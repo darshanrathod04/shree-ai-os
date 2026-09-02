@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.runtime.execution;
 
+import com.shreeai.os.platform.kernels.knowledge.engine.QueryNormalizer;
 import com.shreeai.os.platform.kernels.memory.api.MemorySearchService;
 import com.shreeai.os.platform.kernels.memory.model.Memory;
 
@@ -38,7 +39,14 @@ public final class MemoryKernelHandler implements KernelHandler {
         try {
             String query = input != null && !input.isBlank() ? input : "";
 
-            List<Memory> memories = memorySearchService.search(query);
+            // Sprint-9: Normalize natural-language queries so "who is darshan"
+            // becomes "darshan" before reaching the memory search service.
+            // This is the same shared QueryNormalizer used by the Knowledge
+            // kernel — ensures consistent recall semantics across kernels.
+            String normalized = QueryNormalizer.normalize(query);
+            String effectiveQuery = !normalized.isEmpty() ? normalized : query;
+
+            List<Memory> memories = memorySearchService.search(effectiveQuery);
 
             StringBuilder outputBuilder = new StringBuilder();
             outputBuilder.append("Found ").append(memories.size()).append(" memory result(s).");

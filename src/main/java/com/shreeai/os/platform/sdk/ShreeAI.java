@@ -4,6 +4,8 @@ import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 import com.shreeai.os.platform.sdk.exceptions.ConfigurationException;
 import com.shreeai.os.platform.runtime.api.Runtime;
 import com.shreeai.os.platform.sdk.streaming.StreamingListener;
+import com.shreeai.os.platform.services.ByokSettingsService;
+import com.shreeai.os.platform.services.SdkDiagnosticsService;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -34,8 +36,11 @@ public final class ShreeAI {
     private final MemorySDK memory;
     private final IdentitySDK identity;
     private final ReflectionSDK reflection;
+    private final ProjectSDK project;
     private final SDKConfiguration configuration;
     private final ShreeClient client;
+    private final SettingsSDK settings;
+    private final DiagnosticsSDK diagnostics;
 
     ShreeAI(SDKConfiguration configuration, Runtime runtime) {
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
@@ -50,6 +55,9 @@ public final class ShreeAI {
         this.planning = new PlanningSDK(client);
         this.execution = new ExecutionSDK(client);
         this.reflection = new ReflectionSDK(client);
+        this.project = new ProjectSDK();
+        this.settings = new SettingsSDK(new ByokSettingsService());
+        this.diagnostics = new DiagnosticsSDK(new SdkDiagnosticsService());
     }
 
     /**
@@ -166,6 +174,36 @@ public final class ShreeAI {
      */
     public ReflectionSDK reflection() {
         return reflection;
+    }
+
+    /**
+     * Project Intelligence Kernel SDK (Sprint-13).
+     *
+     * <p>Analyzes a software project structurally and provides impact
+     * analysis, class discovery, and architecture intelligence.</p>
+     */
+    public ProjectSDK project() {
+        return project;
+    }
+
+    /**
+     * BYOK Settings SDK (Platform Services v1.0).
+     *
+     * <p>Manages per-provider LLM credentials. Keys are masked before
+     * being returned. Used for Bring-Your-Own-Key configuration.</p>
+     */
+    public SettingsSDK settings() {
+        return settings;
+    }
+
+    /**
+     * SDK Diagnostics (Platform Services v1.0).
+     *
+     * <p>Provides runtime diagnostics: active provider, model, kernel,
+     * latency, knowledge hits, and routing source.</p>
+     */
+    public DiagnosticsSDK diagnostics() {
+        return diagnostics;
     }
 
     /**

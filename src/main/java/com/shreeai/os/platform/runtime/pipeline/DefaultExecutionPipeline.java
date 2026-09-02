@@ -104,13 +104,13 @@ public final class DefaultExecutionPipeline implements com.shreeai.os.platform.r
         }
 
         try {
-            // Convert runtime.execution.ExecutionRequest to execution.ExecutionRequest for PipelineContext
-            ExecutionRequest pipelineRequest =
-                ExecutionRequest.builder()
+            // Convert runtime.execution.ExecutionRequest to V2 ExecutionRequest for PipelineContext
+            com.shreeai.os.platform.kernels.execution.model.ExecutionRequest pipelineRequest =
+                com.shreeai.os.platform.kernels.execution.model.ExecutionRequest.builder()
                     .requestId(request.requestId())
-                    .payload(request.payload())
+                    .requestType(request.requestType())
+                    .parameters(request.metadata() != null ? new java.util.HashMap<>(request.metadata()) : new java.util.HashMap<>())
                     .build();
-            
             // Convert ExecutionRequest to PipelineContext
             PipelineContext.Builder contextBuilder =
                     PipelineContext.builder()

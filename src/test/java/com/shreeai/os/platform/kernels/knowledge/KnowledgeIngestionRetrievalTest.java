@@ -55,6 +55,42 @@ class KnowledgeIngestionRetrievalTest {
     }
 
     @Test
+    void queryNormalizationEnablesRetrievalWithInterrogativePrefix() {
+        // SPRINT-8 ACCEPTANCE TEST: "who is darshan" should find "Darshan"
+        DefaultKnowledgeService service = DefaultKnowledgeService.withInMemoryDefaults(
+                new DefaultKnowledgeProcessingEngine());
+
+        // Ingest document: Title=Darshan, Content=Founder of Shree AI OS
+        KnowledgeIngestionResult result = service.ingest(
+                "Darshan", "Founder of Shree AI OS", Map.of());
+
+        assertFalse(result.getNodeIds().isEmpty(), "Document should be ingested");
+
+        // Test 1: Direct search by title should work
+        List<KnowledgeNode> directHits = service.search("Darshan");
+        assertFalse(directHits.isEmpty(), "Direct title search should work");
+        assertEquals("Darshan", directHits.getFirst().getLabel());
+
+        // Test 2: Search with "who is" prefix should find the document
+        // This tests the query normalization layer
+        List<KnowledgeNode> prefixedHits = service.search("who is darshan");
+        assertFalse(prefixedHits.isEmpty(),
+                "Query normalization should enable 'who is darshan' to find 'Darshan'");
+        assertEquals("Darshan", prefixedHits.getFirst().getLabel());
+
+        // Test 3: Other interrogative prefixes should also work
+        List<KnowledgeNode> whatIsHits = service.search("what is darshan");
+        assertFalse(whatIsHits.isEmpty(),
+                "Query normalization should enable 'what is darshan' to find 'Darshan'");
+        assertEquals("Darshan", whatIsHits.getFirst().getLabel());
+
+        // Test 4: Unknown query should return empty
+        List<KnowledgeNode> unknownHits = service.search("who is python");
+        assertTrue(unknownHits.isEmpty(),
+                "Unknown query should return empty results");
+    }
+
+    @Test
     void vectorRecordCarriesMetadataFirstSchema() {
         com.shreeai.os.platform.runtime.vector.InMemoryVectorStore store =
                 new com.shreeai.os.platform.runtime.vector.InMemoryVectorStore();

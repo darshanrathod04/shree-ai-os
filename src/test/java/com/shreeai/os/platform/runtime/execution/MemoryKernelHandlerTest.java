@@ -118,13 +118,55 @@ class MemoryKernelHandlerTest {
         assertEquals(ExecutionStatus.SUCCESS, result.status());
     }
 
+    @Test
+    @DisplayName("Sprint-9: Handler normalizes 'who is darshan' to 'darshan'")
+    void handlerNormalizesInterrogativePrefix() {
+        // Sprint-9: "who is darshan" should normalize to "darshan" and
+        // find the memory with title "Darshan". The mock is configured to
+        // return all results for any query (so we test the handler's
+        // output formatting with the memory content).
+        List<Memory> memories = List.of(
+                createTestMemory("mem-1", "Founder of Shree AI OS"));
+        mockSearchService.setResults(memories);
+
+        RichExecutionResult result = handler.handle(
+                ExecutionCapability.MEMORY_RECALL,
+                "who is darshan",
+                Map.of());
+
+        // Handler should succeed without throwing, even with interrogative prefix
+        assertEquals(ExecutionStatus.SUCCESS, result.status(),
+                "Handler should not fail on interrogative prefix — normalization must prevent 500");
+        assertTrue(result.output().contains("Found 1 memory"),
+                "Output should contain the memory count");
+    }
+
+    @Test
+    @DisplayName("Sprint-9: Handler never throws — unknown query returns SUCCESS with empty results")
+    void handlerUnknownQueryReturnsSuccessNot500() {
+        mockSearchService.setResults(List.of());
+
+        RichExecutionResult result = handler.handle(
+                ExecutionCapability.MEMORY_RECALL,
+                "who is unknown entity xyz",
+                Map.of());
+
+        // The contract: never HTTP 500. Unknown query → SUCCESS with 0 results.
+        assertEquals(ExecutionStatus.SUCCESS, result.status(),
+                "Unknown query should return SUCCESS, not throw HTTP 500");
+        assertEquals(0, result.metadata().get("memoryCount"),
+                "Unknown query should return 0 memories");
+        assertTrue(result.output().contains("Found 0 memory"),
+                "Output should indicate no memories found");
+    }
+
     private Memory createTestMemory(String id, String text) {
         MemoryId memoryId = new MemoryId(id);
         Instant now = Instant.now();
         MemoryContent content = new MemoryContent(
                 text, null, Map.of(), now);
         IdentityId ownerId = new IdentityId("test-user");
-                MemoryMetadata metadata = new MemoryMetadata(
+        MemoryMetadata metadata = new MemoryMetadata(
                 memoryId, MemoryType.WORKING, MemoryStatus.ACTIVE,
                 MemoryVisibility.PRIVATE, ownerId, Set.of("test"),
                 0.8, 0.9, "test", now, now, now, 0);

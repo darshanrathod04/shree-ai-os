@@ -4,6 +4,7 @@ import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeQueryService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeSearchService;
 import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeGroundingService;
 import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeRankingService;
+import com.shreeai.os.platform.kernels.knowledge.engine.QueryNormalizer;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgePayload;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
@@ -56,8 +57,8 @@ public final class KnowledgeStage implements ExecutionStage {
     /**
      * Creates a new KnowledgeStage with real knowledge kernel services.
      *
-     * @param knowledgeQueryService the knowledge query service
-     * @param knowledgeSearchService the knowledge search service
+     * @param knowledgeQueryService   the knowledge query service
+     * @param knowledgeSearchService  the knowledge search service
      * @param knowledgeRankingService the knowledge ranking service
      */
     public KnowledgeStage(
@@ -75,9 +76,9 @@ public final class KnowledgeStage implements ExecutionStage {
      * {@code EmbeddingProvider} enables semantic grounding
      * (PHASE-1: groundingScore ≥ 0.90 for ingested-document evidence).</p>
      *
-     * @param knowledgeQueryService the knowledge query service
-     * @param knowledgeSearchService the knowledge search service
-     * @param knowledgeRankingService the knowledge ranking service
+     * @param knowledgeQueryService     the knowledge query service
+     * @param knowledgeSearchService    the knowledge search service
+     * @param knowledgeRankingService   the knowledge ranking service
      * @param knowledgeGroundingService the grounding service (must not be null)
      */
     public KnowledgeStage(
@@ -105,8 +106,8 @@ public final class KnowledgeStage implements ExecutionStage {
         try {
             // Retrieve memory information from previous stage
             String memoryId = (String) state.getMetadata().get("memoryId");
-            String requestId = context.getExecutionRequest() != null 
-                    ? context.getExecutionRequest().getRequestId() 
+            String requestId = context.getExecutionRequest() != null
+                    ? context.getExecutionRequest().getRequestId()
                     : "unknown";
 
             // Check if knowledge services are available
@@ -130,10 +131,19 @@ public final class KnowledgeStage implements ExecutionStage {
 
             if (value instanceof Map<?, ?> requestMetadata) {
 
+                // SEARCH_KNOWLEDGE carries the search keyword under "keyword".
                 Object keyword = requestMetadata.get("keyword");
 
                 if (keyword != null && !keyword.toString().isBlank()) {
                     requestText = keyword.toString();
+                }
+
+                // QUERY_KNOWLEDGE carries the question under "question".
+                if (requestText.isBlank()) {
+                    Object question = requestMetadata.get("question");
+                    if (question != null && !question.toString().isBlank()) {
+                        requestText = question.toString();
+                    }
                 }
             }
 
@@ -143,13 +153,16 @@ public final class KnowledgeStage implements ExecutionStage {
                 requestText = context.getExecutionRequest().getUserInput();
             }
 
+            // Normalize the query to enable proper matching (removes interrogative prefixes, etc.)
+            String normalizedQuery = QueryNormalizer.normalize(requestText);
+
             // Search for relevant knowledge
-            List<KnowledgeNode> allKnowledge = knowledgeSearchService.search(requestText);
-            
+            List<KnowledgeNode> allKnowledge = knowledgeSearchService.search(normalizedQuery);
+
             // Rank knowledge by relevance
             List<KnowledgeNode> rankedKnowledge = knowledgeRankingService.rankByRelevance(
-                    requestText, 
-                    allKnowledge, 
+                    normalizedQuery,
+                    allKnowledge,
                     10 // Top 10 knowledge items
             );
 
@@ -170,7 +183,7 @@ public final class KnowledgeStage implements ExecutionStage {
 
 // EO-V1.3 Grounding, Citations and Structured Payload
             KnowledgePayload knowledgePayload = knowledgeGroundingService.ground(
-                    requestText != null ? requestText : "",
+                    normalizedQuery,
                     rankedKnowledge,
                     null);
 
@@ -185,7 +198,7 @@ public final class KnowledgeStage implements ExecutionStage {
                 String title = top.getLabel();
 
                 if (title == null || title.isBlank()) {
-                    title = requestText;
+                    title = normalizedQuery;
                 }
 
                 state.addMetadata("knowledgeTitle", title);

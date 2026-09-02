@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.runtime.pipeline.stages;
 
+import com.shreeai.os.platform.kernels.knowledge.engine.QueryNormalizer;
 import com.shreeai.os.platform.kernels.memory.api.MemoryQueryService;
 import com.shreeai.os.platform.kernels.memory.api.MemorySearchService;
 import com.shreeai.os.platform.kernels.memory.engine.MemoryRankingService;
@@ -53,8 +54,8 @@ public final class MemoryRecallStage implements ExecutionStage {
     /**
      * Creates a new MemoryRecallStage with real memory kernel services.
      *
-     * @param memoryQueryService the memory query service
-     * @param memorySearchService the memory search service
+     * @param memoryQueryService   the memory query service
+     * @param memorySearchService  the memory search service
      * @param memoryRankingService the memory ranking service
      */
     public MemoryRecallStage(
@@ -79,8 +80,8 @@ public final class MemoryRecallStage implements ExecutionStage {
         try {
             // Retrieve context information from previous stage
             String contextId = (String) state.getMetadata().get("contextId");
-            String requestId = context.getExecutionRequest() != null 
-                    ? context.getExecutionRequest().getRequestId() 
+            String requestId = context.getExecutionRequest() != null
+                    ? context.getExecutionRequest().getRequestId()
                     : "unknown";
 
             // Check if memory services are available
@@ -95,17 +96,28 @@ public final class MemoryRecallStage implements ExecutionStage {
             }
 
             // Get the request text for memory search
-            String requestText = context.getExecutionRequest() != null 
-                    ? context.getExecutionRequest().toString() 
+            // Sprint-9: use getUserInput() (raw user payload) instead of
+            // toString() — the previous .toString() call returned an
+            // SDKRequest toString representation (e.g. "SDKRequest@abc123"),
+            // which never matched any real memory and produced HTTP 500s
+            // when downstream processors tried to interpret it.
+            String requestText = context.getExecutionRequest() != null
+                    && context.getExecutionRequest().getUserInput() != null
+                    ? context.getExecutionRequest().getUserInput()
                     : "";
 
+            // Sprint-9: Normalize the query so natural-language inputs
+            // (e.g. "who is darshan") reach the memory store as the
+            // canonical entity ("darshan") and can match stored memories.
+            String normalizedQuery = QueryNormalizer.normalize(requestText);
+
             // Search for relevant memories
-            List<Memory> allMemories = memorySearchService.search(requestText);
-            
+            List<Memory> allMemories = memorySearchService.search(normalizedQuery);
+
             // Rank memories by relevance
             List<Memory> rankedMemories = memoryRankingService.rankByRelevance(
-                    requestText, 
-                    allMemories, 
+                    normalizedQuery,
+                    allMemories,
                     10 // Top 10 memories
             );
 

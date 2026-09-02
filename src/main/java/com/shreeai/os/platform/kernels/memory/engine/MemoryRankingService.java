@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.kernels.memory.engine;
 
+import com.shreeai.os.platform.kernels.knowledge.engine.QueryNormalizer;
 import com.shreeai.os.platform.kernels.memory.model.Memory;
 import com.shreeai.os.platform.kernels.memory.model.MemoryMetadata;
 
@@ -39,9 +40,9 @@ public final class MemoryRankingService {
      *   <li>Access count (frequently accessed ranks higher)</li>
      * </ol>
      *
-     * @param query the search query
+     * @param query    the search query
      * @param memories the memories to rank
-     * @param limit the maximum number of results to return
+     * @param limit    the maximum number of results to return
      * @return ranked list of memories (most relevant first)
      */
     public List<Memory> rankByRelevance(String query, List<Memory> memories, int limit) {
@@ -49,7 +50,11 @@ public final class MemoryRankingService {
             return List.of();
         }
 
-        String queryLower = query.toLowerCase();
+        // Sprint-9: Use the shared QueryNormalizer so that "who is darshan"
+        // ranks memories whose title/content is "darshan" identically to
+        // how it would be matched in the Knowledge kernel.
+        final String normalized = QueryNormalizer.normalize(query);
+        final String queryLower = normalized.isEmpty() ? query.toLowerCase() : normalized;
 
         return memories.stream()
                 .sorted((a, b) -> {
@@ -74,18 +79,33 @@ public final class MemoryRankingService {
      * </ul>
      *
      * @param queryLower the lowercase query
-     * @param memory the memory to score
+     * @param memory     the memory to score
      * @return relevance score (0-100)
      */
     private double calculateRelevanceScore(String queryLower, Memory memory) {
         double score = 0.0;
 
-        // Text similarity (0-50 points)
-        String text = memory.content().text().toLowerCase();
-        if (text.equals(queryLower)) {
-            score += 50.0; // Exact match
-        } else if (text.contains(queryLower)) {
-            score += 30.0; // Contains query
+        // Sprint-9: Check both content text and title (metadata.source).
+        // Title match gets a bonus since the title is the primary identifier.
+        String text = memory.content().text() == null
+                ? "" : memory.content().text().toLowerCase();
+        String title = memory.metadata().source() == null
+                ? "" : memory.metadata().source().toLowerCase();
+
+        boolean titleExact = title.equals(queryLower);
+        boolean titleContains = title.contains(queryLower);
+        boolean textExact = text.equals(queryLower);
+        boolean textContains = text.contains(queryLower);
+
+        // Sprint-9: Title exact match gets highest priority (primary identifier)
+        if (titleExact) {
+            score += 50.0;
+        } else if (titleContains) {
+            score += 35.0; // Title contains query
+        } else if (textExact) {
+            score += 40.0; // Content exact match (slightly less than title)
+        } else if (textContains) {
+            score += 30.0; // Content contains query
         } else {
             // Check for word overlap
             String[] queryWords = queryLower.split("\\s+");
@@ -128,9 +148,9 @@ public final class MemoryRankingService {
     /**
      * Ranks memories by similarity to a text.
      *
-     * @param text the reference text
+     * @param text     the reference text
      * @param memories the memories to rank
-     * @param limit the maximum number of results
+     * @param limit    the maximum number of results
      * @return ranked memories
      */
     public List<Memory> rankBySimilarity(String text, List<Memory> memories, int limit) {
@@ -138,7 +158,9 @@ public final class MemoryRankingService {
             return List.of();
         }
 
-        String textLower = text.toLowerCase();
+        // Sprint-9: Apply query normalization for consistency with search path.
+        final String normalized = QueryNormalizer.normalize(text);
+        final String textLower = normalized.isEmpty() ? text.toLowerCase() : normalized;
 
         return memories.stream()
                 .sorted((a, b) -> {

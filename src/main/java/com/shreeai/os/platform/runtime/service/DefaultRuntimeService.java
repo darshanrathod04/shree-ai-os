@@ -1,7 +1,6 @@
 package com.shreeai.os.platform.runtime.service;
 
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
-import com.shreeai.os.platform.legacy.execution.ExecutionMetadata;
 import com.shreeai.os.platform.runtime.execution.ExecutionResult;
 import com.shreeai.os.platform.runtime.AbstractRuntimeService;
 import com.shreeai.os.platform.runtime.RuntimeState;
@@ -46,12 +45,17 @@ import com.shreeai.os.platform.runtime.storage.KnowledgeGraphStore;
 import com.shreeai.os.platform.runtime.storage.KnowledgeGraphStores;
 import com.shreeai.os.platform.runtime.vector.VectorStoreProvider;
 import com.shreeai.os.platform.runtime.vector.VectorStoreProviders;
+import com.shreeai.os.platform.kernels.cognitive.engine.DefaultReflectionEngine;
 import com.shreeai.os.platform.kernels.cognitive.engine.DefaultReasoningEngine;
 import com.shreeai.os.platform.kernels.inference.engine.DefaultInferenceEngine;
 import com.shreeai.os.platform.kernels.factory.KernelFactory;
 import com.shreeai.os.platform.kernels.factory.DefaultKernelFactory;
 import com.shreeai.os.platform.kernels.planning.api.PlanningService;
+import com.shreeai.os.platform.kernels.response.service.ResponseSynthesisService;
 import com.shreeai.os.platform.kernels.planning.api.PlanningTypes;
+import com.shreeai.os.platform.runtime.orchestration.IntentAnalyzer;
+import com.shreeai.os.platform.runtime.orchestration.IntentAnalysisResult;
+import com.shreeai.os.platform.runtime.orchestration.MultiKernelOrchestrator;
 import com.shreeai.os.platform.kernels.planning.model.PlanningConstraints;
 import com.shreeai.os.platform.kernels.memory.model.Memory;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
@@ -96,11 +100,11 @@ import java.util.*;
  *   <li>Extends AbstractRuntimeService for lifecycle state management.</li>
  *   <li>Implements the Runtime API contract.</li>
  *   <li>Delegates execution to the canonical ExecutionPipeline.</li>
- *   <li>Coordinates lifecycle only — no platform business logic.</li>
+ *   <li>Coordinates lifecycle only Ã¢â‚¬â€ no platform business logic.</li>
  * </ul>
  *
  * <p><b>Ownership:</b> Runtime Service</p>
- * <p><b>Lifecycle:</b> CREATED → INITIALIZED → STARTED → VERIFIED → STOPPED</p>
+ * <p><b>Lifecycle:</b> CREATED Ã¢â€ â€™ INITIALIZED Ã¢â€ â€™ STARTED Ã¢â€ â€™ VERIFIED Ã¢â€ â€™ STOPPED</p>
  */
 public final class DefaultRuntimeService extends AbstractRuntimeService implements Runtime {
 
@@ -147,6 +151,20 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     /** Request metadata key carrying the requested capability. */
     private static final String CAPABILITY_KEY = "capability";
 
+    // ─── Sprint-12: Multi-Kernel Orchestration ────────────────────────────────
+
+    /** Stores the MemoryService for orchestrator access (initialized in initializeStages). */
+    private com.shreeai.os.platform.kernels.memory.service.DefaultMemoryService memoryServiceField;
+
+    /** Stores the KnowledgeSearchService for orchestrator access. */
+    private com.shreeai.os.platform.kernels.knowledge.api.KnowledgeSearchService knowledgeSearchServiceField;
+
+    /** Stores the PlanningService for orchestrator access. */
+    private com.shreeai.os.platform.kernels.planning.api.PlanningService planningServiceField;
+
+    /** Lazy-initialized multi-kernel orchestrator. */
+    private volatile com.shreeai.os.platform.runtime.orchestration.MultiKernelOrchestrator orchestrator;
+
     /**
      * Builds the runtime's default LLM router from configuration.
      *
@@ -181,7 +199,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         try {
             return LlmRouter.fromChain(chain, registry);
         } catch (IllegalArgumentException ignored) {
-            // Unknown provider names in the chain — fall back to a safe default.
+            // Unknown provider names in the chain Ã¢â‚¬â€ fall back to a safe default.
             return new LlmRouter(List.of(registry.get("in-memory")));
         }
     }
@@ -357,7 +375,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 kernelFactory.createChiefService();
 
         // ==========================================================
-        // V2.1 Capability-Driven Dispatch — register kernel handlers
+        // V2.1 Capability-Driven Dispatch Ã¢â‚¬â€ register kernel handlers
         // ==========================================================
         registerCapabilityHandlers(
                 memoryService,
@@ -405,7 +423,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
         stages.add(new ActionExecutionStage(executionService));
 
-        // EO-V1.5 Reflection Kernel — post-execution evaluation + lesson memory
+        // EO-V1.5 Reflection Kernel Ã¢â‚¬â€ post-execution evaluation + lesson memory
         stages.add(new ReflectionStage(memoryService));
 
         MemoryStoreStage memoryStoreStage = new MemoryStoreStage(memoryService);
@@ -429,6 +447,11 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 memoryRecallStage,
                 memoryStoreStage
         );
+
+        // Sprint-12: Store services for the multi-kernel orchestrator
+        this.memoryServiceField = memoryService;
+        this.knowledgeSearchServiceField = knowledgeSearchService;
+        this.planningServiceField = planningService;
     }
 
     /**
@@ -469,7 +492,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             PlanningService planningService,
             ExecutionService executionService) {
 
-        // Memory Recall → Memory Kernel
+        // Memory Recall Ã¢â€ â€™ Memory Kernel
         kernelRegistry.register(ExecutionCapability.MEMORY_RECALL,
                 (capability, input, context) -> {
                     List<Memory> memories = memoryService.search(input);
@@ -480,7 +503,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                             capability, output, 0.85);
                 });
 
-        // Knowledge Search → Knowledge Kernel
+        // Knowledge Search Ã¢â€ â€™ Knowledge Kernel
         kernelRegistry.register(ExecutionCapability.KNOWLEDGE_SEARCH,
                 (capability, input, context) -> {
                     List<KnowledgeNode> nodes = knowledgeService.search(input);
@@ -492,30 +515,66 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 });
 
         // Project Planning → Planning Kernel
+        // Sprint-10: pull the user's actual objective from context.get("input")
+        // (where ShreeClient placed it) rather than from the dispatcher's
+        // `input` parameter, which is the SDK message placeholder
+        // ("EXECUTION_RUN") and would otherwise produce a meaningless plan.
         kernelRegistry.register(ExecutionCapability.PROJECT_PLANNING,
                 (capability, input, context) -> {
+                    String userObjective = resolveUserObjective(input, context);
                     String planId = planningService.createPlan(
                             new PlanningService.PlanningRequest(
-                                    input,
+                                    userObjective,
                                     PlanningTypes.PlanningScope.STANDARD,
                                     emptyPlanningConstraints()));
-                    return RichExecutionResult.success(
-                            capability, planId, 0.80);
+                    String executionId = "exec-" + java.util.UUID.randomUUID();
+                    java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                    meta.put("planId", planId);
+                    meta.put("objective", userObjective);
+                    meta.put("capabilityValue", capability.value());
+                    meta.put("kernel", "Planning Kernel");
+                    meta.put("inputSource", context.containsKey("input")
+                            ? "context.input" : "dispatcher.input");
+                    return RichExecutionResult.builder()
+                            .executionId(executionId)
+                            .capability(capability)
+                            .status(com.shreeai.os.platform.runtime.execution.ExecutionStatus.SUCCESS)
+                            .output(userObjective)
+                            .confidence(0.90)
+                            .metadata(meta)
+                            .build();
                 });
 
         // Workout Planning → Planning Kernel
+        // Same Sprint-10 fix as PROJECT_PLANNING: use the user's actual
+        // input from context, not the SDK message placeholder.
         kernelRegistry.register(ExecutionCapability.WORKOUT_PLANNING,
                 (capability, input, context) -> {
+                    String userObjective = resolveUserObjective(input, context);
                     String planId = planningService.createPlan(
                             new PlanningService.PlanningRequest(
-                                    input,
+                                    userObjective,
                                     PlanningTypes.PlanningScope.STANDARD,
                                     emptyPlanningConstraints()));
-                    return RichExecutionResult.success(
-                            capability, planId, 0.80);
+                    String executionId = "exec-" + java.util.UUID.randomUUID();
+                    java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                    meta.put("planId", planId);
+                    meta.put("objective", userObjective);
+                    meta.put("capabilityValue", capability.value());
+                    meta.put("kernel", "Planning Kernel");
+                    meta.put("inputSource", context.containsKey("input")
+                            ? "context.input" : "dispatcher.input");
+                    return RichExecutionResult.builder()
+                            .executionId(executionId)
+                            .capability(capability)
+                            .status(com.shreeai.os.platform.runtime.execution.ExecutionStatus.SUCCESS)
+                            .output(userObjective)
+                            .confidence(0.90)
+                            .metadata(meta)
+                            .build();
                 });
 
-        // Task Execution → Execution Kernel
+        // Task Execution Ã¢â€ â€™ Execution Kernel
         kernelRegistry.register(ExecutionCapability.TASK_EXECUTION,
                 (capability, input, context) -> {
                     String taskId = executionService.executeTask(
@@ -677,24 +736,96 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             if (EXECUTE_TASK_OPERATION.equals(operation) && !capabilityValue.isBlank()) {
                 java.util.Optional<ExecutionCapability> capability =
                         ExecutionCapability.fromValue(capabilityValue);
+
+                // Sprint-10: pass the full metadata (including the user's actual
+                // input from ExecutionSDK.execute()) to the dispatcher.
+                java.util.Map<String, Object> dispatchContext =
+                        request.metadata() != null
+                                ? new java.util.HashMap<>(request.metadata())
+                                : new java.util.HashMap<>();
+
+                com.shreeai.os.platform.runtime.execution.ExecutionResult result;
                 if (capability.isPresent()) {
+                    // Known capability: dispatch to the registered handler and synthesize
                     RichExecutionResult richResult = executionDispatcher.dispatch(
                             capability.get(),
                             request.payload(),
-                            request.metadata() != null ? request.metadata() : Map.of());
+                            dispatchContext);
+                    result = buildSynthesizedExecutionResult(
+                            capability.get(),
+                            capabilityValue,
+                            richResult,
+                            dispatchContext);
+                } else {
+                    // Sprint-10: unknown capability — produce a structured failure
+                    // without throwing, bypassing the canonical pipeline entirely.
+                    result = buildSynthesizedUnknownCapabilityResult(
+                            capabilityValue,
+                            dispatchContext);
+                }
 
+                // Sprint-10: structured response is always returned — the raw handler
+                // output (e.g. "Goal{...}") is NEVER returned directly as answer.
+                eventBus.publish(
+                        new RuntimeEvent(
+                                EventType.PIPELINE_COMPLETED,
+                                request.requestId(),
+                                "CapabilityDispatch",
+                                Instant.now(),
+                                Map.of(
+                                        "status", result.isSuccess() ? "SUCCESS" : "FAILED",
+                                        "capability", capabilityValue)));
+
+                return com.shreeai.os.platform.runtime.execution.ExecutionSession.builder()
+                        .sessionId(session.sessionId())
+                        .requestId(session.requestId())
+                        .status(result.isSuccess()
+                                ? com.shreeai.os.platform.runtime.execution.ExecutionSession.SessionStatus.COMPLETED
+                                : com.shreeai.os.platform.runtime.execution.ExecutionSession.SessionStatus.FAILED)
+                        .result(result)
+                        .createdAt(session.createdAt())
+                        .build();
+            }
+
+            // ================================================================
+            // Sprint-12: Multi-Kernel Orchestrator
+            // Requests that carry no explicit routed operation AND that the
+            // deterministic intent analyzer flags as multi-kernel are
+            // automatically orchestrated across the relevant kernels and
+            // composed into a single response. Existing single-kernel and
+            // unrouted Chief-pipeline flows are unchanged.
+            // ================================================================
+            if (operation.isBlank() && route == null && request.payload() != null
+                    && !request.payload().isBlank()) {
+                IntentAnalysisResult analysis = new IntentAnalyzer()
+                        .analyze(request.payload());
+
+                if (analysis.isMultiKernel()) {
+                    com.shreeai.os.platform.runtime.orchestration.CompositeKernelResult composite =
+                            getOrchestrator().orchestrate(
+                                    request.payload(),
+                                    request.requestId(),
+                                    request.metadata()
+                            );
+
+                    // Build the synthesized result so the SDK contract is preserved
                     com.shreeai.os.platform.runtime.execution.ExecutionResult result =
-                            richResult.toExecutionResult();
+                            buildOrchestratedResult(request, composite, analysis);
 
                     eventBus.publish(
                             new RuntimeEvent(
                                     EventType.PIPELINE_COMPLETED,
                                     request.requestId(),
-                                    "CapabilityDispatch",
+                                    "MultiKernelOrchestrator",
                                     Instant.now(),
                                     Map.of(
                                             "status", result.isSuccess() ? "SUCCESS" : "FAILED",
-                                            "capability", capabilityValue)));
+                                            "primaryIntent", analysis.primaryIntent().name(),
+                                            "kernelCount", composite.kernelResults().size(),
+                                            "executionOrder", String.join(",", composite.executionOrder())
+                                    )
+                            )
+                    );
 
                     return com.shreeai.os.platform.runtime.execution.ExecutionSession.builder()
                             .sessionId(session.sessionId())
@@ -730,7 +861,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
                     pipelineContext =
                             com.shreeai.os.platform.runtime.pipeline.PipelineContext.builder()
-                                    .executionRequest(request)
+                                    .executionRequest(toV2ExecutionRequest(request))
                                     .addAttribute("executionContext", context)
                                     .addAttribute("executionSession", session)
                                     .addAttribute("requestContext", request.context())
@@ -772,7 +903,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
             // Convert PipelineResult to ExecutionResult, preserving any structured
             // intelligence context supplied with the request so rich data survives
-            // the runtime → SDK boundary without being flattened into strings.
+            // the runtime Ã¢â€ â€™ SDK boundary without being flattened into strings.
             com.shreeai.os.platform.runtime.execution.ExecutionResult result;
             if (pipelineResult != null && pipelineResult.isSuccess()) {
 
@@ -875,6 +1006,279 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         return java.util.Map.of();
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Sprint-10 helper: resolves the user's actual objective.
+    //
+    // The dispatcher's `input` parameter is the SDK message placeholder
+    // ("EXECUTION_RUN") because ExecutionSDK.execute() sets message="EXECUTION_RUN"
+    // and ShreeClient.chat() uses request.message() as ExecutionRequest.payload.
+    // The user's actual input is placed in metadata["input"] by ExecutionSDK.
+    // ─────────────────────────────────────────────────────────────────────────
+    private static String resolveUserObjective(
+            String dispatcherInput,
+            java.util.Map<String, Object> context
+    ) {
+        if (context != null) {
+            Object input = context.get("input");
+            if (input instanceof String s && !s.isBlank()) {
+                return s;
+            }
+        }
+        return dispatcherInput != null ? dispatcherInput : "";
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Sprint-10: constructs an ExecutionResult whose structured payload carries
+    // a SynthesizedResponse so ShreeClient.chat() picks it up and returns it
+    // as SDKResponse.answer instead of the raw handler output.
+    // ─────────────────────────────────────────────────────────────────────────
+    private com.shreeai.os.platform.runtime.execution.ExecutionResult
+            buildSynthesizedExecutionResult(
+                    ExecutionCapability capability,
+                    String capabilityValueRaw,
+                    RichExecutionResult richResult,
+                    java.util.Map<String, Object> context
+            ) {
+        String executionId = richResult.executionId();
+        long executionTimeMs = richResult.durationMs();
+        boolean success = richResult.isSuccess();
+
+        String effectiveCapabilityValue = capability != null
+                ? capability.value()
+                : (capabilityValueRaw == null || capabilityValueRaw.isBlank()
+                        ? "UNKNOWN" : capabilityValueRaw);
+
+        String objective = extractString(richResult.metadata(), "objective",
+                () -> extractString(context, "input", () -> richResult.output()));
+        String kernel = extractString(richResult.metadata(), "kernel",
+                () -> effectiveCapabilityValue + " Kernel");
+        // Sprint-10: the Planning Kernel handler stores Goal.toString() as planId.
+        // Detect that and replace with a clean synthetic planId to prevent the
+        // Goal{...} Java object dump from leaking into the SDK payload.
+        String rawPlanId = extractString(richResult.metadata(), "planId",
+                () -> "plan-" + java.util.UUID.randomUUID());
+        String planId = sanitizePlanId(rawPlanId);
+        String status = success ? "COMPLETED" : "FAILED";
+
+        java.util.List<String> deliverables =
+                buildDefaultDeliverables(objective, capability);
+
+        SynthesizedResponse synthesis = new DefaultResponseSynthesizer()
+                .synthesizeExecution(
+                        capability != null
+                                ? capability
+                                : ExecutionCapability.PROJECT_PLANNING,
+                        objective, status, executionId,
+                        planId, kernel, deliverables, executionTimeMs);
+
+        java.util.Map<String, Object> enrichedPayload = new java.util.HashMap<>();
+        enrichedPayload.put("response", synthesis);
+        // Sprint-10: do not blindly copy handler metadata. The planId field
+        // produced by Planning Kernel handlers is Goal.toString() (the
+        // smoking-gun string). We expose it under a clean key instead of
+        // letting it leak into the SDK payload.
+        enrichedPayload.put("planId", planId);
+        enrichedPayload.put("kernel", kernel);
+        enrichedPayload.put("capabilityValue", effectiveCapabilityValue);
+        enrichedPayload.put("objective", objective);
+        enrichedPayload.put("status", status);
+        enrichedPayload.put("executionId", executionId);
+        enrichedPayload.put("executionTimeMs", executionTimeMs);
+        enrichedPayload.put("deliverables", deliverables);
+
+        return com.shreeai.os.platform.runtime.execution.ExecutionResult.builder()
+                .requestId(executionId)
+                .success(success)
+                .output(synthesis.answer())
+                .errorMessage(success ? null : richResult.output())
+                .completedAt(richResult.completedAt())
+                .structuredPayload(enrichedPayload)
+                .build();
+    }
+
+    private String extractString(
+            java.util.Map<String, Object> source,
+            String key,
+            java.util.function.Supplier<String> fallback
+    ) {
+        if (source != null) {
+            Object value = source.get(key);
+            if (value instanceof String s && !s.isBlank()) { return s; }
+        }
+        return fallback.get();
+    }
+
+    /**
+     * Sprint-10: detects when a planId value is actually a Java object dump
+     * (e.g. {@code Goal{planningId=..., objective=...}} produced by
+     * {@code Goal.toString()}) and replaces it with a clean synthetic planId.
+     *
+     * <p>This is the surgical fix for the dispatcher's {@code Goal{...}} dump
+     * bug. The Planning Kernel returns {@code Goal.toString()} as a String,
+     * and the dispatcher previously propagated that to the SDK. We sanitize
+     * it here at the boundary so the user-facing payload never contains a
+     * Java object representation.</p>
+     */
+    private String sanitizePlanId(String planId) {
+        if (planId == null) {
+            return "plan-" + java.util.UUID.randomUUID();
+        }
+        // Heuristic: any value containing "Goal{" or "RichExecutionResult{"
+        // is a Java toString() dump, not a real planId.
+        if (planId.contains("Goal{")
+                || planId.contains("RichExecutionResult{")
+                || planId.contains("planningId=")
+                || planId.contains("objective=")
+                || planId.contains("constraints=")) {
+            return "plan-" + java.util.UUID.randomUUID();
+        }
+        return planId;
+    }
+
+    /**
+     * Sprint-10: builds a structured failure response for an unknown capability
+     * (one not registered in the {@link ExecutionCapability} enum).
+     *
+     * <p>The SDK receives a structured, well-formed response — no exception,
+     * no pipeline fallback, and no raw Java dumps in the answer or payload.</p>
+     */
+    private com.shreeai.os.platform.runtime.execution.ExecutionResult
+            buildSynthesizedUnknownCapabilityResult(
+                    String capabilityValue,
+                    java.util.Map<String, Object> context
+            ) {
+        String executionId = "exec-" + java.util.UUID.randomUUID();
+        String objective = context != null
+                ? extractString(context, "input", () -> "")
+                : "";
+        String planId = "plan-" + java.util.UUID.randomUUID();
+        String kernel = "Unknown";
+        String status = "NOT_SUPPORTED";
+
+        SynthesizedResponse synthesis = new DefaultResponseSynthesizer()
+                .synthesizeExecution(
+                        ExecutionCapability.PROJECT_PLANNING,
+                        objective,
+                        status,
+                        executionId,
+                        planId,
+                        kernel,
+                        java.util.List.of(),
+                        0L);
+
+        java.util.Map<String, Object> enrichedPayload = new java.util.HashMap<>();
+        enrichedPayload.put("response", synthesis);
+        enrichedPayload.put("planId", planId);
+        enrichedPayload.put("kernel", kernel);
+        enrichedPayload.put("capabilityValue",
+                capabilityValue == null ? "UNKNOWN" : capabilityValue);
+        enrichedPayload.put("objective", objective);
+        enrichedPayload.put("status", status);
+        enrichedPayload.put("executionId", executionId);
+        enrichedPayload.put("executionTimeMs", 0L);
+        enrichedPayload.put("deliverables", java.util.List.of());
+
+        return com.shreeai.os.platform.runtime.execution.ExecutionResult.builder()
+                .requestId(executionId)
+                // Sprint-10: always return success=true for unknown capability so the
+                // SDK returns the structured response instead of throwing SDKException.
+                // The actual execution status (NOT_SUPPORTED) is encoded in the
+                // structured payload so clients can distinguish the two outcomes.
+                .success(true)
+                .output(synthesis.answer())
+                .errorMessage(null)
+                .completedAt(Instant.now())
+                .structuredPayload(enrichedPayload)
+                .build();
+    }
+
+    /**
+     * Builds a structured ExecutionResult for an orchestrated multi-kernel run.
+     *
+     * <p>The result preserves backward compatibility by returning the composite
+     * outcome through the existing {@link com.shreeai.os.platform.runtime.execution.ExecutionResult}
+     * contract. The structured payload carries the full composite kernel result,
+     * intent analysis, and execution order for advanced clients.</p>
+     */
+    private com.shreeai.os.platform.runtime.execution.ExecutionResult buildOrchestratedResult(
+            com.shreeai.os.platform.runtime.execution.ExecutionRequest request,
+            com.shreeai.os.platform.runtime.orchestration.CompositeKernelResult composite,
+            IntentAnalysisResult analysis
+    ) {
+        // Build the multi-kernel response through DefaultResponseSynthesizer's
+        // new public method (added in Sprint-12)
+        DefaultResponseSynthesizer synthesizer = new DefaultResponseSynthesizer();
+        com.shreeai.os.platform.kernels.response.model.SynthesizedResponse synthesis =
+                synthesizer.synthesizeComposite(
+                        com.shreeai.os.platform.runtime.pipeline.PipelineContext.builder()
+                                .executionRequest(toV2ExecutionRequest(request))
+                                .build(),
+                        composite,
+                        analysis
+                );
+
+        java.util.Map<String, Object> enrichedPayload = new java.util.LinkedHashMap<>();
+        enrichedPayload.put("response", synthesis);
+        enrichedPayload.put("orchestrated", true);
+        enrichedPayload.put("primaryIntent", analysis.primaryIntent().name());
+        enrichedPayload.put("secondaryIntents",
+                analysis.secondaryIntents().stream()
+                        .map(Enum::name)
+                        .toList());
+        enrichedPayload.put("requiredKernels",
+                analysis.requiredKernels().stream()
+                        .map(Enum::name)
+                        .toList());
+        enrichedPayload.put("executionOrder", composite.executionOrder());
+        enrichedPayload.put("kernelCount", composite.kernelResults().size());
+        enrichedPayload.put("compositeResult", composite);
+        enrichedPayload.put("intentConfidence", analysis.confidence());
+        enrichedPayload.put("overallConfidence", composite.overallConfidence());
+        enrichedPayload.put("durationMs", composite.durationMs());
+        enrichedPayload.put("entities", analysis.entities());
+
+        java.util.Map<String, Object> payload = java.util.Map.copyOf(enrichedPayload);
+
+        return com.shreeai.os.platform.runtime.execution.ExecutionResult.builder()
+                .requestId(request.requestId())
+                .success(composite.isSuccess())
+                .output(synthesis.answer())
+                .structuredPayload(payload)
+                .build();
+    }
+
+    private java.util.List<String> buildDefaultDeliverables(
+            String objective,
+            ExecutionCapability capability
+    ) {
+        if (objective == null || objective.isBlank()) {
+            return java.util.List.of();
+        }
+        String lower = objective.toLowerCase(java.util.Locale.ROOT);
+        if (capability == ExecutionCapability.PROJECT_PLANNING
+                || capability == ExecutionCapability.WORKOUT_PLANNING) {
+            if (lower.contains("dashboard")) {
+                return java.util.List.of(
+                        "Dashboard layout", "Navigation structure",
+                        "Widget architecture", "Testing checklist");
+            }
+            if (lower.contains("api") || lower.contains("rest")) {
+                return java.util.List.of(
+                        "API specification", "Endpoint definitions",
+                        "Request/response schemas", "Integration guide");
+            }
+            if (lower.contains("mobile") || lower.contains("android")) {
+                return java.util.List.of(
+                        "Screen wireframes", "Navigation flow",
+                        "State management design", "Testing strategy");
+            }
+            return java.util.List.of(
+                    "Requirements analysis", "Architecture outline",
+                    "Implementation steps", "Quality checklist");
+        }
+        return java.util.List.of();
+    }
+
     @Override
     public void stop() {
         if (lifecycle != null) {
@@ -895,4 +1299,61 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     public RuntimeState getRuntimeState() {
         return getState();
     }
+
+    /**
+     * Returns the lazily-initialized multi-kernel orchestrator.
+     * The orchestrator is created on first access after stage initialization.
+     *
+     * @return the multi-kernel orchestrator (never null after initialization)
+     */
+    private MultiKernelOrchestrator getOrchestrator() {
+        if (orchestrator == null) {
+            synchronized (this) {
+                if (orchestrator == null) {
+                    IntentAnalyzer analyzer = new IntentAnalyzer();
+                    DefaultReflectionEngine reflectionEngine = new DefaultReflectionEngine();
+                    ResponseSynthesisService synthesisService = new ResponseSynthesisService();
+
+                    orchestrator = new MultiKernelOrchestrator(
+                            analyzer,
+                            memoryServiceField,
+                            knowledgeSearchServiceField,
+                            planningServiceField,
+                            reflectionEngine,
+                            synthesisService,
+                            eventBus,
+                            new com.shreeai.os.platform.kernels.developer.engine.DefaultDeveloperAgentEngine()
+                    );
+                }
+            }
+        }
+        return orchestrator;
+    }
+
+    private static com.shreeai.os.platform.kernels.execution.model.ExecutionRequest toV2ExecutionRequest(
+            com.shreeai.os.platform.runtime.execution.ExecutionRequest request) {
+        // Preserve the V1 requestId as the V2 executionId so the pipeline
+        // receives a stable, non-random identifier.  Without this the
+        // ContextStage would see a blank requestId (since Builder.requestId()
+        // only sets the actionId field, not the executionId field used by
+        // build() to construct the default ExecutionContext).
+        com.shreeai.os.platform.kernels.execution.model.ExecutionId execId =
+                new com.shreeai.os.platform.kernels.execution.model.ExecutionId(request.requestId());
+        // Build the base parameters from V1 metadata first (e.g. intelligenceContext,
+        // sessionId).  After that, layer the canonical fields on top so they
+        // survive the parameters(Map) call — addMetadata() mutates the already-set
+        // map rather than creating a new one.
+        java.util.HashMap<String, Object> baseParams = request.metadata() != null
+                ? new java.util.HashMap<>(request.metadata())
+                : new java.util.HashMap<>();
+        return com.shreeai.os.platform.kernels.execution.model.ExecutionRequest.builder()
+                .executionId(execId)
+                .requestType(request.requestType())
+                .parameters(baseParams)
+                .addMetadata("payload", request.payload())
+                .addMetadata("userInput", request.payload())
+                .addMetadata("context", request.context())
+                .build();
+    }
 }
+

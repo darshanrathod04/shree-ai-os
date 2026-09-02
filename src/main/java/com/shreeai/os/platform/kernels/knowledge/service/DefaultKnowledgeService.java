@@ -19,6 +19,7 @@ import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeRelationshipType;
 import com.shreeai.os.platform.kernels.knowledge.model.UpdateKnowledgeRequest;
 import com.shreeai.os.platform.kernels.knowledge.validation.KnowledgeValidator;
+import com.shreeai.os.platform.kernels.knowledge.engine.QueryNormalizer;
 import com.shreeai.os.platform.kernels.knowledge.engine.search.DefaultKnowledgeSearchEngine;
 import com.shreeai.os.platform.kernels.knowledge.engine.search.KnowledgeSearchEngine;
 import com.shreeai.os.platform.runtime.embedding.EmbeddingProvider;
@@ -112,19 +113,29 @@ public final class DefaultKnowledgeService implements
      */
     private final AtomicReference<KnowledgeGraph> graphRef;
 
-    /** Durable graph store SPI (nullable — null keeps purely in-memory behavior). */
+    /**
+     * Durable graph store SPI (nullable — null keeps purely in-memory behavior).
+     */
     private final KnowledgeGraphStore graphStore;
 
-    /** Vector store SPI (nullable — null disables semantic vector retrieval). */
+    /**
+     * Vector store SPI (nullable — null disables semantic vector retrieval).
+     */
     private final VectorStore vectorStore;
 
-    /** Vector search engine SPI (nullable — null disables semantic vector retrieval). */
+    /**
+     * Vector search engine SPI (nullable — null disables semantic vector retrieval).
+     */
     private final VectorSearchEngine vectorSearchEngine;
 
-    /** Embedding provider SPI (nullable — null disables embedding production). */
+    /**
+     * Embedding provider SPI (nullable — null disables embedding production).
+     */
     private final EmbeddingProvider embeddingProvider;
 
-    /** Pure ingestion processing engine (never null). */
+    /**
+     * Pure ingestion processing engine (never null).
+     */
     private final KnowledgeIngestionEngine ingestionEngine;
 
     /**
@@ -437,6 +448,8 @@ public final class DefaultKnowledgeService implements
     @Override
     public Object[] queryKnowledge(Object query) {
         Objects.requireNonNull(query, "query must not be null");
+        // Normalize the query to enable proper matching
+        String normalized = QueryNormalizer.normalize(String.valueOf(query));
         // Delegate to engine
         return processingEngine.processClone(KnowledgeGraph.empty()).getGraph().getNodes().toArray();
     }
@@ -451,8 +464,10 @@ public final class DefaultKnowledgeService implements
     @Override
     public Object[] searchSemantic(String query) {
 
+        // Normalize the query to enable proper matching
+        String normalized = QueryNormalizer.normalize(query);
         return searchEngine
-                .semanticSearch(graphRef.get(), query)
+                .semanticSearch(graphRef.get(), normalized)
                 .toArray();
     }
 
@@ -618,14 +633,17 @@ public final class DefaultKnowledgeService implements
 
         Objects.requireNonNull(keyword, "keyword must not be null");
 
+        // Normalize the keyword to enable proper matching
+        String normalized = QueryNormalizer.normalize(keyword);
+
         List<KnowledgeNode> results =
-                searchEngine.keywordSearch(graphRef.get(), keyword);
+                searchEngine.keywordSearch(graphRef.get(), normalized);
 
         // Hybrid retrieval: when lexical search finds nothing, fall back to
         // semantic vector retrieval so paraphrased queries still match
         // ingested documents.
         if (results.isEmpty()) {
-            List<KnowledgeNode> semantic = semanticVectorSearch(keyword, 10);
+            List<KnowledgeNode> semantic = semanticVectorSearch(normalized, 10);
             if (!semantic.isEmpty()) {
                 return semantic;
             }

@@ -2,6 +2,7 @@ package com.shreeai.os.platform.kernels.planning.service;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,6 +18,7 @@ import com.shreeai.os.platform.kernels.planning.error.SchedulingException;
 import com.shreeai.os.platform.kernels.planning.error.TaskPlanningException;
 import com.shreeai.os.platform.kernels.planning.engine.PlanningProcessingEngine;
 import com.shreeai.os.platform.kernels.planning.model.Goal;
+import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
 import com.shreeai.os.platform.kernels.planning.model.PlanningObjective;
 import com.shreeai.os.platform.kernels.planning.model.Priority;
 import com.shreeai.os.platform.kernels.planning.model.Schedule;
@@ -138,29 +140,32 @@ public final class DefaultPlanningService implements PlanningService {
                         ? planningRequest.constraints().metadata()
                         : Map.of();
 
+        // Build the PlanningObjective used for validation
+        PlanningObjective validationObjective = buildObjective(
+                planningRequest, objectiveMetadata);
+
         // Validate request
         PlanningValidationResult validationResult = validator.validatePlanningObjective(
-                new PlanningObjective(
-                        new com.shreeai.os.platform.kernels.planning.model.PlanningId(planningRequest.objectiveId()),
-                        planningRequest.objectiveId(),
-                        planningRequest.planningScope().name(),
-                        objectiveMetadata
-                )
+                validationObjective
         );
         if (!validationResult.isValid()) {
             throw createValidationException(validationResult, PlanningErrorCode.GOAL_PLANNING_ERROR);
         }
 
         try {
+            // Sprint-11: produce a domain-aware PlanBlueprint and embed it in
+            // the objective metadata so downstream stages (PlanningStage →
+            // DefaultResponseSynthesizer) can render rich structured plans.
+            Map<String, Object> enrichedMetadata = new LinkedHashMap<>(objectiveMetadata);
+            PlanBlueprint blueprint = processingEngine.processDomainPlanning(validationObjective);
+            enrichedMetadata.put("planBlueprint", blueprint);
+            enrichedMetadata.put("planBlueprintDomain", blueprint.metadata().getOrDefault("domain", "GENERAL"));
+
+            PlanningObjective enrichedObjective = buildObjective(
+                    planningRequest, enrichedMetadata);
+
             // Delegate to processing engine, preserving the semantic metadata
-            return processingEngine.processGoalPlanning(
-                    new PlanningObjective(
-                            new com.shreeai.os.platform.kernels.planning.model.PlanningId(planningRequest.objectiveId()),
-                            planningRequest.objectiveId(),
-                            planningRequest.planningScope().name(),
-                            objectiveMetadata
-                    )
-            ).toString();
+            return processingEngine.processGoalPlanning(enrichedObjective).toString();
         } catch (PlanningException e) {
             // Re-throw PlanningException as-is
             throw e;
@@ -172,6 +177,22 @@ public final class DefaultPlanningService implements PlanningService {
                     e
             ), e);
         }
+    }
+
+    /**
+     * Builds a {@link PlanningObjective} from a request and metadata map.
+     * Centralized to keep the validation and processing call sites in sync.
+     */
+    private PlanningObjective buildObjective(
+            PlanningService.PlanningRequest planningRequest,
+            Map<String, Object> metadata
+    ) {
+        return new PlanningObjective(
+                new com.shreeai.os.platform.kernels.planning.model.PlanningId(planningRequest.objectiveId()),
+                planningRequest.objectiveId(),
+                planningRequest.planningScope().name(),
+                metadata
+        );
     }
 
 
