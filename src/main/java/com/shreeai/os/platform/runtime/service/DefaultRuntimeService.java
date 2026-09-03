@@ -136,6 +136,29 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     /** Maximum autonomous re-executions advised by the reflection kernel. */
     private static final int MAX_AUTONOMOUS_RETRIES = 2;
 
+    // ─── Sprint-18: Autonomous Intelligence Layer ──────────────────────────────
+
+    /**
+     * The single entry point for all {@code ShreeAI.chat()} requests in Sprint 18.
+     * Routes every request, runs workspace diagnostics, and decides whether to
+     * proceed to kernel execution or surface a diagnostic response. Stateless and
+     * thread-safe; all state lives in the request or returned objects.
+     */
+    private final com.shreeai.os.platform.runtime.agents.ChiefIntelligenceAgent chiefIntelligenceAgent =
+            new com.shreeai.os.platform.runtime.agents.ChiefIntelligenceAgent();
+
+    /** Request metadata key for the chief decision id (Sprint 18). */
+    private static final String CHIEF_DECISION_ID_KEY = "chiefDecisionId";
+
+    /** Request metadata key for the chief execution plan id (Sprint 18). */
+    private static final String CHIEF_PLAN_ID_KEY = "chiefPlanId";
+
+    /** Request metadata key for the chief's primary kernel (Sprint 18). */
+    private static final String CHIEF_PRIMARY_KERNEL_KEY = "chiefPrimaryKernel";
+
+    /** Request metadata key for the chief's diagnostic status (Sprint 18). */
+    private static final String CHIEF_DIAGNOSTIC_STATUS_KEY = "chiefDiagnosticStatus";
+
     /**
      * Event-driven knowledge ingestion service, set during
      * {@link #initializeStages()} and consumed via {@link #bindEventBus(RuntimeEventBus)}.
@@ -839,6 +862,150 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 }
             }
 
+            // ─── Sprint-18: Chief Intelligence Agent pre-flight ─────────────────
+            // Every default (unrouted) chat request passes through the
+            // ChiefIntelligenceAgent, which: (1) routes the request into an
+            // ExecutionPlan, (2) diagnoses the workspace, and (3) either
+            // short-circuits with a diagnostic response when unhealthy, or
+            // enriches request metadata with the chief's decision so downstream
+            // stages retain observability. The canonical pipeline still runs
+            // when the workspace is healthy.
+
+            com.shreeai.os.platform.kernels.response.model.SynthesizedResponse chiefResponse = null;
+            java.util.Map<String, Object> chiefMeta = java.util.Map.of();
+            // Sprint-18: chief metadata captured here is injected into the
+            // pipeline context's attemptMetadata (request.metadata() is
+            // unmodifiable). Keys use the CHIEF_*_KEY constants for consistency.
+            java.util.Map<String, Object> chiefMetadataForPipeline = new java.util.LinkedHashMap<>();
+            String chiefDecisionIdCaptured = null;
+
+            if (operation.isBlank() && route == null && request.payload() != null
+                    && !request.payload().isBlank()) {
+                // Sprint-18: wrap the chief pre-flight in a try/catch so a transient
+                // analysis error never blocks the canonical pipeline. The chief is
+                // observability + diagnostic, not a hard pre-condition.
+                try {
+                    chiefResponse = chiefIntelligenceAgent.route(request);
+                    chiefMeta = chiefResponse.structuredData() != null
+                            ? chiefResponse.structuredData()
+                            : java.util.Map.of();
+                } catch (RuntimeException chiefError) {
+                    String reason = chiefError.getMessage() != null
+                            ? chiefError.getMessage()
+                            : chiefError.getClass().getSimpleName();
+                    eventBus.publish(new RuntimeEvent(
+                            EventType.PIPELINE_FAILED,
+                            request.requestId(),
+                            "ChiefIntelligenceAgent",
+                            Instant.now(),
+                            Map.of(
+                                    "status", "CHIEF_SKIPPED",
+                                    "reason", reason
+                            )
+                    ));
+                    chiefResponse = null;
+                    chiefMeta = java.util.Map.of();
+                }
+
+                Object isHealthyObj = chiefMeta.get("isHealthy");
+                boolean isHealthy = isHealthyObj instanceof Boolean b && b;
+                Object hasFailuresObj = chiefMeta.get("hasFailures");
+                boolean hasFailures = hasFailuresObj instanceof Boolean bf && bf;
+
+                // Sprint-18: only short-circuit when a CRITICAL check has failed.
+                // Soft warnings (WARN) and PROJECT/MEMORY unavailability are
+                // recoverable — they are not pre-flight blockers, just signals
+                // that the canonical pipeline may return lower-confidence
+                // results. We only abort the request when EXECUTION is FAIL
+                // (the engine itself is down) or WORKSPACE is FAIL (no
+                // operating environment at all).
+                Object criticalFailureObj = chiefMeta.get("criticalFailure");
+                boolean criticalFailure = criticalFailureObj instanceof Boolean cf && cf;
+                if (criticalFailure) {
+                    // Workspace unhealthy — short-circuit with diagnostic response
+                    java.util.Map<String, Object> chiefPayload = new java.util.LinkedHashMap<>();
+                    chiefPayload.put("response", chiefResponse);
+                    chiefPayload.put("source", "ChiefIntelligenceAgent");
+                    chiefPayload.put("isHealthy", isHealthy);
+                    chiefPayload.put("hasFailures", hasFailures);
+                    Object capturedDecision = chiefMeta.get("chiefDecisionId");
+                    if (capturedDecision != null) {
+                        String v = String.valueOf(capturedDecision);
+                        if (!v.isEmpty()) {
+                            chiefPayload.put(CHIEF_DECISION_ID_KEY, v);
+                        }
+                    }
+                    Object capturedPlan = chiefMeta.get("executionPlanId");
+                    if (capturedPlan != null) {
+                        String v = String.valueOf(capturedPlan);
+                        if (!v.isEmpty()) {
+                            chiefPayload.put(CHIEF_PLAN_ID_KEY, v);
+                        }
+                    }
+
+                    com.shreeai.os.platform.runtime.execution.ExecutionResult diagResult =
+                            com.shreeai.os.platform.runtime.execution.ExecutionResult.builder()
+                                    .requestId(request.requestId())
+                                    .success(false)
+                                    .output(chiefResponse.answer())
+                                    .structuredPayload(java.util.Map.copyOf(chiefPayload))
+                                    .build();
+
+                    eventBus.publish(new RuntimeEvent(
+                            EventType.PIPELINE_COMPLETED,
+                            request.requestId(),
+                            "ChiefIntelligenceAgent",
+                            Instant.now(),
+                            Map.of(
+                                    "status", "DIAGNOSTIC",
+                                    "isHealthy", isHealthy,
+                                    "hasFailures", hasFailures)));
+
+                    return com.shreeai.os.platform.runtime.execution.ExecutionSession.builder()
+                            .sessionId(session.sessionId())
+                            .requestId(session.requestId())
+                            .status(com.shreeai.os.platform.runtime.execution.ExecutionSession.SessionStatus.FAILED)
+                            .result(diagResult)
+                            .createdAt(session.createdAt())
+                            .build();
+                }
+
+                // Healthy — capture chief routing decision into a deferred payload
+                // for later injection into the pipeline context (request.metadata()
+                // is unmodifiable, so we cannot mutate it directly here).
+                if (!chiefMeta.isEmpty()) {
+                    Object decisionObj = chiefMeta.get("chiefDecisionId");
+                    Object planObj = chiefMeta.get("executionPlanId");
+                    if (decisionObj != null) {
+                        String v = String.valueOf(decisionObj);
+                        chiefDecisionIdCaptured = v;
+                        if (!v.isEmpty()) {
+                            // Stash for the canonical pipeline metadata
+                            chiefMetadataForPipeline.putIfAbsent(
+                                    CHIEF_DECISION_ID_KEY, v);
+                        }
+                    }
+                    if (planObj != null) {
+                        String v = String.valueOf(planObj);
+                        if (!v.isEmpty()) {
+                            chiefMetadataForPipeline.putIfAbsent(
+                                    CHIEF_PLAN_ID_KEY, v);
+                        }
+                    }
+                    chiefMetadataForPipeline.putIfAbsent(
+                            CHIEF_DIAGNOSTIC_STATUS_KEY,
+                            isHealthy ? "HEALTHY" : "DEGRADED");
+                    Object primaryKernel = chiefMeta.get("primaryKernel");
+                    if (primaryKernel != null) {
+                        String v = String.valueOf(primaryKernel);
+                        if (!v.isEmpty()) {
+                            chiefMetadataForPipeline.putIfAbsent(
+                                    CHIEF_PRIMARY_KERNEL_KEY, v);
+                        }
+                    }
+                }
+            }
+
             // Execute the canonical pipeline with reflection-driven autonomous retry
             com.shreeai.os.platform.runtime.pipeline.PipelineContext pipelineContext = null;
             PipelineResult pipelineResult = null;
@@ -857,6 +1024,13 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                     if (attempt > 1) {
                         attemptMetadata.put("retryAttempt", attempt - 1);
                         attemptMetadata.put("reflectionLessons", retryLessons);
+                    }
+
+                    // Sprint-18: inject chief intelligence routing metadata into the
+                    // pipeline context. chiefMetadataForPipeline is empty if the chief
+                    // pre-flight was skipped, so this is a no-op in those cases.
+                    if (!chiefMetadataForPipeline.isEmpty()) {
+                        chiefMetadataForPipeline.forEach(attemptMetadata::putIfAbsent);
                     }
 
                     pipelineContext =
@@ -926,6 +1100,102 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                     structured.put("routedStages", route.stageNames());
                 }
 
+                // ─── Phase 2.2: Evidence Mode ─────────────────────────────────────
+                // Extract structured evidence from the populated pipeline state
+                // and inject the evidence bundle + verification report into the
+                // structured payload. This is the runtime-level Evidence Mode
+                // requirement: every chat response must carry evidence so the
+                // SDK surface can answer "what is this answer grounded in?"
+                //
+                // Root cause (pre-fix): ChiefIntelligenceAgent.route() was called
+                // BEFORE the pipeline ran, so EvidenceAgent extracted from an
+                // empty state. The generated response was then discarded.
+                // Fix: extract evidence AFTER the pipeline populates the state.
+                if (pipelineResult != null && pipelineResult.getExecutionState() != null) {
+                    Map<String, Object> pipelineStateMeta =
+                            pipelineResult.getExecutionState().getMetadata();
+                    if (pipelineStateMeta != null && !pipelineStateMeta.isEmpty()) {
+                        try {
+                            com.shreeai.os.platform.runtime.agents.EvidenceAgent evidenceAgent =
+                                    new com.shreeai.os.platform.runtime.agents.EvidenceAgent();
+                            // Use extractFromMetadata() to read from the pipeline state
+                            // which now contains knowledgeResults, reasoningConclusion, etc.
+                            com.shreeai.os.platform.runtime.model.EvidenceBundle evidenceBundle =
+                                    evidenceAgent.extractFromMetadata(pipelineStateMeta);
+                            if (evidenceBundle != null && !evidenceBundle.isEmpty()) {
+                                com.shreeai.os.platform.runtime.agents.VerificationAgent verificationAgent =
+                                        new com.shreeai.os.platform.runtime.agents.VerificationAgent();
+                                com.shreeai.os.platform.runtime.model.VerificationReport verificationReport =
+                                        verificationAgent.verify(evidenceBundle);
+
+                                // Build a serializable evidence summary for the API response
+                                java.util.List<java.util.Map<String, Object>> evidenceSummary =
+                                        new java.util.ArrayList<>();
+                                for (com.shreeai.os.platform.runtime.model.EvidenceItem item
+                                        : evidenceBundle.items()) {
+                                    java.util.Map<String, Object> itemMap = new java.util.LinkedHashMap<>();
+                                    itemMap.put("itemId", item.itemId());
+                                    itemMap.put("sourceType", item.sourceType().name());
+                                    itemMap.put("title", item.title());
+                                    itemMap.put("content", item.content());
+                                    itemMap.put("confidenceHint", item.confidenceHint());
+                                    itemMap.put("citations", item.citations());
+                                    itemMap.put("attributes", item.attributes());
+                                    evidenceSummary.add(itemMap);
+                                }
+
+                                structured.put("evidence", evidenceSummary);
+                                structured.put("evidenceCount", evidenceBundle.size());
+                                structured.put("evidenceBundleId", evidenceBundle.bundleId());
+
+                                // Phase 2.2: Re-synthesize the answer using
+                                // NaturalResponseAgent so the response text
+                                // is grounded in the actual evidence items,
+                                // not the generic DefaultResponseSynthesizer output.
+                                com.shreeai.os.platform.runtime.agents.NaturalResponseAgent naturalAgent =
+                                        new com.shreeai.os.platform.runtime.agents.NaturalResponseAgent();
+                                com.shreeai.os.platform.kernels.response.model.SynthesizedResponse evidenceBackedResponse =
+                                        naturalAgent.generate(verificationReport, request);
+
+                                response = evidenceBackedResponse;
+                                structured.put("response", response);
+                                structured.put("confidence", verificationReport.confidence());
+                                structured.put("verificationTier",
+                                        verificationReport.tier().name());
+                                structured.put("verificationConfidence",
+                                        verificationReport.confidence());
+                                structured.put("citationCount",
+                                        verificationReport.citations().size());
+                                if (!verificationReport.citations().isEmpty()) {
+                                    structured.put("citations",
+                                            verificationReport.citations());
+                                }
+                                if (!verificationReport.gaps().isEmpty()) {
+                                    structured.put("gaps",
+                                            verificationReport.gaps());
+                                }
+                            }
+                        } catch (RuntimeException evidenceError) {
+                            // Evidence extraction is best-effort: never fail
+                            // the request just because evidence grounding
+                            // could not be applied. Log via event bus.
+                            eventBus.publish(new RuntimeEvent(
+                                    EventType.PIPELINE_FAILED,
+                                    request.requestId(),
+                                    "EvidenceMode",
+                                    Instant.now(),
+                                    Map.of(
+                                            "status", "EVIDENCE_SKIPPED",
+                                            "reason",
+                                            evidenceError.getMessage() != null
+                                                    ? evidenceError.getMessage()
+                                                    : evidenceError.getClass().getSimpleName()
+                                    )
+                            ));
+                        }
+                    }
+                }
+
                 Map<String, Object> payload = Map.copyOf(structured);
 
                 result = ExecutionResult.builder()
@@ -969,6 +1239,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
 
         } catch (Exception e) {
+            String reason = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
             eventBus.publish(
                     new RuntimeEvent(
                             EventType.PIPELINE_FAILED,
@@ -976,11 +1247,11 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                             "Pipeline",
                             Instant.now(),
                             Map.of(
-                                    "reason", e.getMessage()
+                                    "reason", reason
                             )
                     )
             );
-            throw new RuntimeException("Execution failed: " + e.getMessage(), e);
+            throw new RuntimeException("Execution failed: " + reason, e);
         }
     }
 
