@@ -1,0 +1,112 @@
+﻿{
+    "Timestamp":  "2026-09-03T03:34:41",
+    "TrustScore":  100,
+    "Passed":  10,
+    "Failed":  0,
+    "Total":  10,
+    "TotalTimeMs":  3529,
+    "ServerEndpoint":  "http://127.0.0.1:8080/api/v1/chat",
+    "Authentication":  "user:4c04c2fb-bb64-4067-8b74-80aa2822121f",
+    "Scenarios":  [
+                      {
+                          "Name":  "S01",
+                          "Message":  "Explain WorkspaceController in the codebase",
+                          "Status":  200,
+                          "LatencyMs":  857,
+                          "ResponseLength":  968,
+                          "ResponsePreview":  "{\"structuredPayload\":{\"intelligenceContext\":{\"contextId\":\"ctx-req-52a6e8cf-fb47-40d6-b2fe-4f41d34880db\",\"request\":{\"requestId\":\"req-52a6e8cf-fb47-40d6-b2fe-4f41d34880db\",\"userInput\":\"Explain WorkspaceController in the codebase\",\"intent\":null,\"objective\":null,\"constraints\":{},\"userId\":null,\"sessionId\":null,\"project\":null,\"evidence\":[],\"metadata\":{},\"requestedAt\":\"2026-09-02T22:04:38.749073500Z\"},\"p",
+                          "Error":  null,
+                          "Passed":  true
+                      },
+                      {
+                          "Name":  "S02",
+                          "Message":  "What is ProjectSDK and where is it defined?",
+                          "Status":  200,
+                          "LatencyMs":  193,
+                          "ResponseLength":  968,
+                          "ResponsePreview":  "{\"structuredPayload\":{\"intelligenceContext\":{\"contextId\":\"ctx-req-1763ba4f-56e4-4d6c-9fe7-737b4d924c39\",\"request\":{\"requestId\":\"req-1763ba4f-56e4-4d6c-9fe7-737b4d924c39\",\"userInput\":\"What is ProjectSDK and where is it defined?\",\"intent\":null,\"objective\":null,\"constraints\":{},\"userId\":null,\"sessionId\":null,\"project\":null,\"evidence\":[],\"metadata\":{},\"requestedAt\":\"2026-09-02T22:04:39.374527900Z\"},\"p",
+                          "Error":  null,
+                          "Passed":  true
+                      },
+                      {
+                          "Name":  "S03",
+                          "Message":  "List all REST endpoints in the codebase",
+                          "Status":  200,
+                          "LatencyMs":  153,
+                          "ResponseLength":  952,
+                          "ResponsePreview":  "{\"structuredPayload\":{\"intelligenceContext\":{\"contextId\":\"ctx-req-ed47f223-b825-4a25-8b82-915a460ce223\",\"request\":{\"requestId\":\"req-ed47f223-b825-4a25-8b82-915a460ce223\",\"userInput\":\"List all REST endpoints in the codebase\",\"intent\":null,\"objective\":null,\"constraints\":{},\"userId\":null,\"sessionId\":null,\"project\":null,\"evidence\":[],\"metadata\":{},\"requestedAt\":\"2026-09-02T22:04:39.659202300Z\"},\"proje",
+                          "Error":  null,
+                          "Passed":  true
+                      },
+                      {
+                          "Name":  "S04",
+                          "Message":  "Which classes depend on DefaultRuntimeService?",
+                          "Status":  200,
+                          "LatencyMs":  144,
+                          "ResponseLength":  980,
+                          "ResponsePreview":  "{\"structuredPayload\":{\"intelligenceContext\":{\"contextId\":\"ctx-req-da570671-c9f4-4657-ab4f-e65c13e84922\",\"request\":{\"requestId\":\"req-da570671-c9f4-4657-ab4f-e65c13e84922\",\"userInput\":\"Which classes depend on DefaultRuntimeService?\",\"intent\":null,\"objective\":null,\"constraints\":{},\"userId\":null,\"sessionId\":null,\"project\":null,\"evidence\":[],\"metadata\":{},\"requestedAt\":\"2026-09-02T22:04:40.037304900Z\"}",
+                          "Error":  null,
+                          "Passed":  true
+                      },
+                      {
+                          "Name":  "S05",
+                          "Message":  "Explain DeveloperWorkflowService and its responsibilities",
+                          "Status":  200,
+                          "LatencyMs":  121,
+                          "ResponseLength":  1024,
+                          "ResponsePreview":  "{\"structuredPayload\":{\"intelligenceContext\":{\"contextId\":\"ctx-req-d05bc883-3128-44e3-bc59-2fe5ef1d181f\",\"request\":{\"requestId\":\"req-d05bc883-3128-44e3-bc59-2fe5ef1d181f\",\"userInput\":\"Explain DeveloperWorkflowService and its responsibilities\",\"intent\":null,\"objective\":null,\"constraints\":{},\"userId\":null,\"sessionId\":null,\"project\":null,\"evidence\":[],\"metadata\":{},\"requestedAt\":\"2026-09-02T22:04:40.3",
+                          "Error":  null,
+                          "Passed":  true
+                      },
+                      {
+                          "Name":  "S06",
+                          "Message":  "Show the project structure of the shree-ai-os module",
+                          "Status":  200,
+                          "LatencyMs":  106,
+                          "ResponseLength":  1001,
+                          "ResponsePreview":  "{\"structuredPayload\":{\"intelligenceContext\":{\"contextId\":\"ctx-req-f53f9c19-e69b-4287-ba83-78b33d5a4df2\",\"request\":{\"requestId\":\"req-f53f9c19-e69b-4287-ba83-78b33d5a4df2\",\"userInput\":\"Show the project structure of the shree-ai-os module\",\"intent\":null,\"objective\":null,\"constraints\":{},\"userId\":null,\"sessionId\":null,\"project\":null,\"evidence\":[],\"metadata\":{},\"requestedAt\":\"2026-09-02T22:04:40.554623",
+                          "Error":  null,
+                          "Passed":  true
+                      },
+                      {
+                          "Name":  "S07",
+                          "Message":  "Find any circular dependencies in the runtime package",
+                          "Status":  200,
+                          "LatencyMs":  44,
+                          "ResponseLength":  1008,
+                          "ResponsePreview":  "{\"structuredPayload\":{\"intelligenceContext\":{\"contextId\":\"ctx-req-1d2341e9-6108-46d5-9f49-097d2767f3b7\",\"request\":{\"requestId\":\"req-1d2341e9-6108-46d5-9f49-097d2767f3b7\",\"userInput\":\"Find any circular dependencies in the runtime package\",\"intent\":null,\"objective\":null,\"constraints\":{},\"userId\":null,\"sessionId\":null,\"project\":null,\"evidence\":[],\"metadata\":{},\"requestedAt\":\"2026-09-02T22:04:40.73205",
+                          "Error":  null,
+                          "Passed":  true
+                      },
+                      {
+                          "Name":  "S08",
+                          "Message":  "What is the impact of changing ProjectSDK class?",
+                          "Status":  200,
+                          "LatencyMs":  41,
+                          "ResponseLength":  988,
+                          "ResponsePreview":  "{\"structuredPayload\":{\"intelligenceContext\":{\"contextId\":\"ctx-req-ae477609-e7b3-475f-ac3b-d2b1ae3da389\",\"request\":{\"requestId\":\"req-ae477609-e7b3-475f-ac3b-d2b1ae3da389\",\"userInput\":\"What is the impact of changing ProjectSDK class?\",\"intent\":null,\"objective\":null,\"constraints\":{},\"userId\":null,\"sessionId\":null,\"project\":null,\"evidence\":[],\"metadata\":{},\"requestedAt\":\"2026-09-02T22:04:40.872199900Z",
+                          "Error":  null,
+                          "Passed":  true
+                      },
+                      {
+                          "Name":  "S09",
+                          "Message":  "Explain BootManager and how it initializes the system",
+                          "Status":  200,
+                          "LatencyMs":  40,
+                          "ResponseLength":  1008,
+                          "ResponsePreview":  "{\"structuredPayload\":{\"intelligenceContext\":{\"contextId\":\"ctx-req-dad6b17b-471d-4636-aead-dc9174a9c501\",\"request\":{\"requestId\":\"req-dad6b17b-471d-4636-aead-dc9174a9c501\",\"userInput\":\"Explain BootManager and how it initializes the system\",\"intent\":null,\"objective\":null,\"constraints\":{},\"userId\":null,\"sessionId\":null,\"project\":null,\"evidence\":[],\"metadata\":{},\"requestedAt\":\"2026-09-02T22:04:40.98680",
+                          "Error":  null,
+                          "Passed":  true
+                      },
+                      {
+                          "Name":  "S10",
+                          "Message":  "Compare WorkspaceController and ReviewController",
+                          "Status":  200,
+                          "LatencyMs":  68,
+                          "ResponseLength":  988,
+                          "ResponsePreview":  "{\"structuredPayload\":{\"intelligenceContext\":{\"contextId\":\"ctx-req-372afe3f-bf16-4f62-8e86-134d60ac47d5\",\"request\":{\"requestId\":\"req-372afe3f-bf16-4f62-8e86-134d60ac47d5\",\"userInput\":\"Compare WorkspaceController and ReviewController\",\"intent\":null,\"objective\":null,\"constraints\":{},\"userId\":null,\"sessionId\":null,\"project\":null,\"evidence\":[],\"metadata\":{},\"requestedAt\":\"2026-09-02T22:04:41.139405900Z",
+                          "Error":  null,
+                          "Passed":  true
+                      }
+                  ]
+}

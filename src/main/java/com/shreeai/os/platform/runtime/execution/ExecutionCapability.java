@@ -67,7 +67,7 @@ public enum ExecutionCapability {
         if (value == null || value.isBlank()) {
             return java.util.Optional.empty();
         }
-        String normalized = value.trim().toUpperCase(Locale.ROOT);
+        String normalized = value.trim().toUpperCase(Locale.ROOT).replace("-", "_");
         for (ExecutionCapability capability : values()) {
             if (capability.value.equals(normalized)) {
                 return java.util.Optional.of(capability);

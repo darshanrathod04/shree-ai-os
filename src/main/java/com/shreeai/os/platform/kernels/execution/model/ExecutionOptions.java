@@ -146,7 +146,15 @@ public final class ExecutionOptions {
      * @param obj the reference object with which to compare
      * @return {@code true} if this object is equal to the {@code obj} argument
      */
-    @Override
+    /**
+     * Returns a default {@code ExecutionOptions}.
+     *
+     * @return a default execution options instance
+     */
+    public static ExecutionOptions defaults() {
+        return new ExecutionOptions(30000L, 3, 1000L, false, false, new HashMap<>());
+    }
+
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;

@@ -1,6 +1,7 @@
 package com.shreeai.os.platform.kernels.planning.engine;
 
 import com.shreeai.os.platform.kernels.planning.model.Goal;
+import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
 import com.shreeai.os.platform.kernels.planning.model.PlanningObjective;
 import com.shreeai.os.platform.kernels.planning.model.Priority;
 import com.shreeai.os.platform.kernels.planning.model.Schedule;
@@ -163,4 +164,19 @@ public interface PlanningProcessingEngine {
      * @return a validation result
      */
     Object processPlanValidation(ValidationCriteria criteria);
+
+    /**
+     * Processes a domain-aware planning operation.
+     *
+     * <p>Sprint-11 enhancement: uses {@link com.shreeai.os.platform.kernels.planning.analyzer.PlanningAnalyzer}
+     * to extract structured intent (domain, complexity, type, duration) and a
+     * {@link com.shreeai.os.platform.kernels.planning.engine.planners.DomainPlannerRegistry}
+     * to generate a rich plan blueprint with phases, milestones, deliverables,
+     * dependencies, success criteria, risks, and success metrics.</p>
+     *
+     * @param objective the planning objective (must not be {@code null})
+     * @return a fully-populated {@link PlanBlueprint}
+     * @since Sprint-11
+     */
+    PlanBlueprint processDomainPlanning(PlanningObjective objective);
 }

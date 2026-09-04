@@ -1,9 +1,9 @@
 package com.shreeai.os.platform.validation.rules;
 
-import com.shreeai.os.platform.legacy.capability.CapabilityRegistry;
-import com.shreeai.os.platform.legacy.cognition.Thought;
-import com.shreeai.os.platform.legacy.context.ConversationSession;
-import com.shreeai.os.platform.legacy.production.ResolvedContext;
+import com.shreeai.os.platform.kernels.cognitive.model.Thought;
+import com.shreeai.os.platform.kernels.context.model.ConversationSession;
+import com.shreeai.os.platform.kernels.context.model.ResolvedContext;
+import com.shreeai.os.platform.kernels.execution.service.CapabilityRegistry;
 import com.shreeai.os.platform.validation.ValidationOutcome;
 import com.shreeai.os.platform.validation.ValidationRule;
 import org.springframework.core.annotation.Order;

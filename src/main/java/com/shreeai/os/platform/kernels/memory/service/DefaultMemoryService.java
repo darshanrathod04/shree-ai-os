@@ -29,6 +29,7 @@ import com.shreeai.os.platform.kernels.memory.model.MemoryType;
 import com.shreeai.os.platform.kernels.memory.model.UpdateMemoryRequest;
 import com.shreeai.os.platform.kernels.memory.validator.MemoryValidator;
 import com.shreeai.os.platform.core.registry.validator.ValidationResult;
+import com.shreeai.os.platform.kernels.knowledge.engine.QueryNormalizer;
 
 import java.time.Instant;
 import java.util.List;
@@ -90,20 +91,22 @@ public final class DefaultMemoryService implements
         MemoryImportExportService,
         MemoryStatisticsService {
 
-        private final MemoryValidator validator;
+    private final MemoryValidator validator;
     private final MemoryProcessingEngine processingEngine;
     private final MemoryLifecycleService lifecycleService;
     private final ConcurrentHashMap<MemoryId, Memory> memories;
-    /** Versioning ledger retaining superseded memory versions. */
+    /**
+     * Versioning ledger retaining superseded memory versions.
+     */
     private final MemoryVersionLedger versionLedger = new MemoryVersionLedger();
 
-        /**
+    /**
      * Constructs a new {@code DefaultMemoryService} with the given dependencies.
      *
      * <p>Constructor injection is the only allowed injection mechanism.</p>
      *
-     * @param validator         the memory validator (must not be null)
-     * @param processingEngine  the memory processing engine (must not be null)
+     * @param validator        the memory validator (must not be null)
+     * @param processingEngine the memory processing engine (must not be null)
      * @throws NullPointerException if any parameter is null
      */
     public DefaultMemoryService(MemoryValidator validator, MemoryProcessingEngine processingEngine) {
@@ -114,9 +117,9 @@ public final class DefaultMemoryService implements
      * Constructs a new {@code DefaultMemoryService} with the given dependencies
      * and an explicit lifecycle policy service.
      *
-     * @param validator          the memory validator (must not be null)
-     * @param processingEngine   the memory processing engine (must not be null)
-     * @param lifecycleService   the memory lifecycle service (must not be null)
+     * @param validator        the memory validator (must not be null)
+     * @param processingEngine the memory processing engine (must not be null)
+     * @param lifecycleService the memory lifecycle service (must not be null)
      * @throws NullPointerException if any parameter is null
      */
     public DefaultMemoryService(
@@ -127,6 +130,38 @@ public final class DefaultMemoryService implements
         this.processingEngine = Objects.requireNonNull(processingEngine, "processingEngine must not be null");
         this.lifecycleService = Objects.requireNonNull(lifecycleService, "lifecycleService must not be null");
         this.memories = new ConcurrentHashMap<>();
+    }
+
+    /**
+     * Sprint-9: Factory that creates a {@code DefaultMemoryService} wired with
+     * in-memory defaults, mirroring the
+     * {@code DefaultKnowledgeService.withInMemoryDefaults} pattern.
+     *
+     * <p>Intended for tests and developer-facing entry points that need a
+     * working memory kernel without a dependency-injection container.</p>
+     *
+     * @param processingEngine the processing engine (never {@code null})
+     * @return a fully-wired {@code DefaultMemoryService}
+     */
+    public static DefaultMemoryService withInMemoryDefaults(MemoryProcessingEngine processingEngine) {
+        Objects.requireNonNull(processingEngine, "processingEngine must not be null");
+        return new DefaultMemoryService(
+                new MemoryValidator(),
+                processingEngine,
+                new MemoryLifecycleService());
+    }
+
+    /**
+     * Sprint-9: Test-only accessor for the underlying in-memory store.
+     *
+     * <p>Allows tests to seed memories directly without going through the
+     * full {@link #createMemory} validation pipeline. Returns the live
+     * map; callers should not mutate it outside of test code.</p>
+     *
+     * @return the in-memory memory map (never {@code null})
+     */
+    public java.util.Map<MemoryId, Memory> getMemoriesForTest() {
+        return memories;
     }
 
     // -----------------------------------------------------------------------
@@ -319,7 +354,7 @@ public final class DefaultMemoryService implements
      * @param id the memory id (must not be null)
      * @return the previous version, or empty when the memory has no history
      */
-        public Optional<Memory> previousVersion(MemoryId id) {
+    public Optional<Memory> previousVersion(MemoryId id) {
         Objects.requireNonNull(id, "id must not be null");
         return versionLedger.previousVersion(id);
     }
@@ -415,7 +450,7 @@ public final class DefaultMemoryService implements
      */
     public List<Memory> consolidateMemories() {
         return lifecycleService.consolidate(memories.values().stream()
-                .collect(java.util.stream.Collectors.toUnmodifiableList()))
+                        .collect(java.util.stream.Collectors.toUnmodifiableList()))
                 .stream()
                 .map(this::applyConsolidatedChange)
                 .collect(java.util.stream.Collectors.toUnmodifiableList());
@@ -484,25 +519,40 @@ public final class DefaultMemoryService implements
     @Override
     public List<Memory> search(String query) {
         Objects.requireNonNull(query, "query must not be null");
-        
+
+        // Sprint-9: Normalize query (strip interrogative prefixes such as
+        // "who is", "what is", "tell me about", "explain") so natural-language
+        // queries like "who is darshan" can retrieve memories whose title or
+        // content is just "darshan".
+        String normalized = QueryNormalizer.normalize(query);
+        final String needle = normalized.isEmpty() ? query.toLowerCase() : normalized;
+
         // Prepare search via engine
-        MemorySearchRequest searchRequest = new MemorySearchRequest(query, null, null, null);
+        MemorySearchRequest searchRequest = new MemorySearchRequest(needle, null, null, null);
         MemoryProcessingResult result = processingEngine.prepareSearch(searchRequest);
-        
-        // Execute search (service responsibility)
+
+        // Execute search (service responsibility) — match against both content
+        // and title metadata so title-based retrieval works.
         return memories.values().stream()
-                .filter(m -> m.content().text().toLowerCase().contains(query.toLowerCase()))
+                .filter(m -> {
+                    String text = m.content().text() == null ? "" : m.content().text().toLowerCase();
+                    if (text.contains(needle)) {
+                        return true;
+                    }
+                    String title = m.metadata().source() == null ? "" : m.metadata().source().toLowerCase();
+                    return title.contains(needle);
+                })
                 .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
     public List<Memory> searchByTags(Set<String> tags) {
         Objects.requireNonNull(tags, "tags must not be null");
-        
+
         // Prepare search via engine
         MemorySearchRequest searchRequest = new MemorySearchRequest("", null, null, tags);
         MemoryProcessingResult result = processingEngine.prepareSearch(searchRequest);
-        
+
         // Execute search (service responsibility)
         return memories.values().stream()
                 .filter(m -> tags.stream().anyMatch(tag -> m.metadata().tags().contains(tag)))
@@ -513,11 +563,11 @@ public final class DefaultMemoryService implements
     public List<Memory> searchByDate(java.time.Instant from, java.time.Instant to) {
         Objects.requireNonNull(from, "from must not be null");
         Objects.requireNonNull(to, "to must not be null");
-        
+
         // Prepare search via engine
         MemorySearchRequest searchRequest = new MemorySearchRequest("", from, to, null);
         MemoryProcessingResult result = processingEngine.prepareSearch(searchRequest);
-        
+
         // Execute search (service responsibility)
         return memories.values().stream()
                 .filter(m -> !m.createdAt().isBefore(from) && !m.createdAt().isAfter(to))
@@ -527,11 +577,11 @@ public final class DefaultMemoryService implements
     @Override
     public List<Memory> searchBySimilarity(String text) {
         Objects.requireNonNull(text, "text must not be null");
-        
+
         // Prepare search via engine
         MemorySearchRequest searchRequest = new MemorySearchRequest(text, null, null, null);
         MemoryProcessingResult result = processingEngine.prepareSearch(searchRequest);
-        
+
         // Execute search (service responsibility) - simplified similarity
         return memories.values().stream()
                 .filter(m -> m.content().text().toLowerCase().contains(text.toLowerCase()))

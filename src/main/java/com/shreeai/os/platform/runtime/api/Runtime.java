@@ -91,4 +91,22 @@ public interface Runtime {
      * @throws IllegalStateException if shutdown is not possible from the current state
      */
     void shutdown();
+
+    /**
+     * Binds the given SDK event bus to this Runtime so runtime-side event
+     * consumers (e.g. the knowledge ingestion consumer) can act on SDK
+     * published events.
+     *
+     * <p>This is an additive, non-breaking extension point: the default
+     * implementation is a no-op, so every existing Runtime implementation
+     * remains source- and binary-compatible. The default
+     * {@code DefaultRuntimeService} subscribes its event-driven kernel
+     * consumers here.</p>
+     *
+     * @param eventBus the SDK event bus to bind (may be null; implementations
+     *                 MUST tolerate null by doing nothing)
+     */
+    default void bindEventBus(com.shreeai.os.platform.sdk.events.RuntimeEventBus eventBus) {
+        // no-op by default — additive extension point
+    }
 }

@@ -1,10 +1,11 @@
 package com.shreeai.os.platform.validation.rules;
 
-import com.shreeai.os.platform.legacy.capability.Capability;
-import com.shreeai.os.platform.legacy.capability.CapabilityRegistry;
-import com.shreeai.os.platform.legacy.cognition.Thought;
-import com.shreeai.os.platform.legacy.context.ConversationSession;
-import com.shreeai.os.platform.legacy.production.ResolvedContext;
+import com.shreeai.os.platform.kernels.cognitive.model.Thought;
+import com.shreeai.os.platform.kernels.context.model.ConversationSession;
+import com.shreeai.os.platform.kernels.context.model.ResolvedContext;
+import com.shreeai.os.platform.kernels.execution.model.Capability;
+import com.shreeai.os.platform.kernels.execution.model.CapabilityHealthStatus;
+import com.shreeai.os.platform.kernels.execution.service.CapabilityRegistry;
 import com.shreeai.os.platform.validation.ValidationOutcome;
 import com.shreeai.os.platform.validation.ValidationRule;
 import org.springframework.core.annotation.Order;
@@ -53,20 +54,21 @@ public class CapabilityRule implements ValidationRule {
         }
 
         try {
-            var match = capabilityRegistry.findBestCapability(intent);
-            if (match == null || match.getCapability() == null) {
+            var matchOpt = capabilityRegistry.findBestCapability(intent);
+            if (matchOpt.isEmpty()) {
                 warnings.add("Unknown Capability: No capability registered for intent '" + intent + "'");
                 return ValidationOutcome.successWithWarnings(warnings, "Capability not found");
             }
+            var match = matchOpt.get();
 
             Capability capability = match.getCapability();
-            Capability.HealthStatus health = capability.getHealthStatus();
+            CapabilityHealthStatus health = capability.getHealthStatus();
 
-            if (health == Capability.HealthStatus.UNHEALTHY) {
+            if (health == CapabilityHealthStatus.UNHEALTHY) {
                 warnings.add("Capability Unhealthy: " + capability.getName() + " is marked as unhealthy");
-            } else if (health == Capability.HealthStatus.DEGRADED) {
+            } else if (health == CapabilityHealthStatus.DEGRADED) {
                 warnings.add("Capability Degraded: " + capability.getName() + " is in degraded state");
-            } else if (health == Capability.HealthStatus.UNKNOWN) {
+            } else if (health == CapabilityHealthStatus.UNKNOWN) {
                 warnings.add("Capability Unknown: Health status unknown for " + capability.getName());
             }
 
