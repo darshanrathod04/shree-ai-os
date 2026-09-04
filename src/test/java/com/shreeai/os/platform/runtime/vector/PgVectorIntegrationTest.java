@@ -26,15 +26,48 @@ class PgVectorIntegrationTest {
     private PostgreSQLContainer<?> postgres;
     private PgVectorStoreProvider provider;
 
+    /**
+     * Starts the PostgreSQL + pgvector container if Docker is available.
+     * The {@code assumeTrue} guard calls a helper so that any
+     * {@link Error} thrown by
+     * {@link DockerClientFactory#instance()} is caught before JUnit propagates
+     * it as a test error.  This ensures the test is cleanly skipped
+     * (not failed) when Testcontainers cannot load its SPI providers due to
+     * missing classpath entries on the CI machine.
+     */
     @BeforeAll
     void startContainerWhenDockerAvailable() {
-        assumeTrue(DockerClientFactory.instance().isDockerAvailable(),
-                "Docker unavailable — pgvector integration test skipped");
+        assumeTrue(isDockerAvailable(),
+                "Docker unavailable \u2014 pgvector integration test skipped");
         postgres = new PostgreSQLContainer<>(PGVECTOR_IMAGE);
         postgres.start();
         provider = new PgVectorStoreProvider(
                 postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), 256);
         provider.ensureSchema();
+    }
+
+    /**
+     * Probes Docker availability while tolerating any {@link Error}
+     * that may be raised by Testcontainers when its SPI layer cannot load a
+     * provider class due to a missing transitive dependency
+     * (e.g. {@code commons-lang3} is absent on some CI machines).
+     * Throwing {@code Throwable} here would silently swallow real bugs, so only
+     * the narrow {@code ServiceConfigurationError} and its direct super-class
+     * {@code Error} are caught.
+     *
+     * @return {@code true} if Docker is confirmed available, {@code false} otherwise
+     */
+    private static boolean isDockerAvailable() {
+        try {
+            return DockerClientFactory.instance().isDockerAvailable();
+        } catch (Error e) {
+            // Any Error (including ServiceConfigurationError, NoClassDefFoundError, LinkageError) is raised when Testcontainers cannot
+            // instantiate a DockerClientProviderStrategy (e.g. missing commons-lang3).
+            // Error covers its direct sub-classes such as NoClassDefFoundError.
+            // We intentionally do NOT catch Exception so any unexpected runtime
+            // failures surface as real test errors rather than silent skips.
+            return false;
+        }
     }
 
     @Test

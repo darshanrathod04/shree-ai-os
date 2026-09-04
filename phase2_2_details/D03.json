@@ -1,0 +1,74 @@
+﻿{
+    "ScenarioId":  "D03",
+    "Message":  "List all REST controllers in the codebase",
+    "Status":  200,
+    "LatencyMs":  234,
+    "Pass":  true,
+    "Checks":  [
+                   {
+                       "Check":  "C1-HTTP-200",
+                       "Pass":  true,
+                       "Detail":  "Status=200"
+                   },
+                   {
+                       "Check":  "C2-Body-NonEmpty",
+                       "Pass":  true,
+                       "Detail":  "Len=4503"
+                   },
+                   {
+                       "Check":  "C3-StructuredPayload",
+                       "Pass":  true,
+                       "Detail":  "Present"
+                   },
+                   {
+                       "Check":  "C4-Evidence-Present",
+                       "Pass":  true,
+                       "Detail":  "1 item(s)"
+                   },
+                   {
+                       "Check":  "C5-Evidence-SourceType",
+                       "Pass":  true,
+                       "Detail":  "REASONING"
+                   },
+                   {
+                       "Check":  "C6-Confidence-Valid",
+                       "Pass":  true,
+                       "Detail":  "60%"
+                   },
+                   {
+                       "Check":  "C7-VerificationTier",
+                       "Pass":  true,
+                       "Detail":  "INFERRED"
+                   },
+                   {
+                       "Check":  "C8-Answer-Present",
+                       "Pass":  true,
+                       "Detail":  "648 chars"
+                   },
+                   {
+                       "Check":  "C9-Answer-NotTemplate",
+                       "Pass":  true,
+                       "Detail":  "Evidence-grounded answer"
+                   },
+                   {
+                       "Check":  "C10-Evidence-Content",
+                       "Pass":  true,
+                       "Detail":  "Evidence-grounded assessment: List all REST controllers in the codebase The supp"
+                   }
+               ],
+    "Answer":  "# Inferred Answer\n\n**Question:** List all REST controllers in the codebase\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: List all REST controllers in the codebase The supplied evidence describes a structured layered application including Controller layer. While the structure and technologies are evidence-supported, source-level defects cannot be determined from the supplied evidence alone. The assessment is grounded in information explicitly supplied by the requester; external verification is limited.\n\nCitations: [1], [2]\n\n**Confidence:** 60% (INFERRED)\n\n*This answer is inferred from reasoning and may not be fully verified.*\n\n",
+    "Evidence":  {
+                     "confidenceHint":  0.71810990338164249,
+                     "itemId":  "evi-bb9f1d33-775c-4d7f-9132-69491ad0633f",
+                     "content":  "Evidence-grounded assessment: List all REST controllers in the codebase The supplied evidence describes a structured layered application including Controller layer. While the structure and technologies are evidence-supported, source-level defects cannot be determined from the supplied evidence alone. The assessment is grounded in information explicitly supplied by the requester; external verification is limited.",
+                     "sourceType":  "REASONING",
+                     "citations":  {
+
+                                   },
+                     "title":  "Reasoning Conclusion"
+                 },
+    "Confidence":  0.6,
+    "VerificationTier":  "INFERRED",
+    "Error":  null,
+    "RuntimeClass":  "N/A (all checks passed)"
+}

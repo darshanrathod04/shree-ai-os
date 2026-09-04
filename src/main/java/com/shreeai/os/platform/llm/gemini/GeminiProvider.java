@@ -129,15 +129,13 @@ public final class GeminiProvider implements LlmProvider {
                 || model.isBlank()
                 || "default".equalsIgnoreCase(model)
                 || safeModelPrefix(model)) {
-            return "gemini-3.6-flash";
+            return "gemini-2.0-flash";
         }
         return model;
     }
 
     private static boolean safeModelPrefix(String model) {
         return model.startsWith("shree-")
-                || model.equals("gemini-2.0-flash")
-                || model.equals("gemini-2.5-flash")
                 || !model.startsWith("gemini");
     }
 

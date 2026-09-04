@@ -13,9 +13,11 @@ import com.shreeai.os.platform.sdk.events.EventManager;
 import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 /**
  * <b>ShreeClient</b>
@@ -194,9 +196,12 @@ public final class ShreeClient {
     /**
      * Streams a chat response using the canonical SDK streaming contract.
      *
-     * <p>Current implementation streams the completed Runtime response in
-     * incremental chunks. The public API will remain unchanged when the
-     * Runtime later supports true token streaming.</p>
+     * <p>When the underlying Runtime supports {@code streamText(String)} the
+     * SDK forwards provider token fragments directly to {@link StreamingListener#onToken}
+     * — true LLM provider streaming, not a word-splitting simulation.</p>
+     *
+     * <p>Falls back to the legacy simulated path when the Runtime is null
+     * (test contexts) or does not support streaming.</p>
      *
      * @param message the user message
      * @param listener streaming callback
@@ -214,32 +219,24 @@ public final class ShreeClient {
 
                 listener.onStart();
 
-                SDKResponse response = chat(message);
-
-                String answer = response.answer();
-
-                if (answer == null) {
-                    answer = "";
+                if (runtime == null) {
+                    // Test / no-runtime fallback: word-split the synchronous result.
+                    deliverSimulatedStream(message, listener);
+                    return;
                 }
-
-                // Stream by words while preserving spaces
-                String[] words = answer.split("\\s+");
 
                 StringBuilder complete = new StringBuilder();
-
-                for (int i = 0; i < words.length; i++) {
-
-                    String chunk = words[i];
-
-                    if (i > 0) {
-                        chunk = " " + chunk;
+                try (Stream<String> tokens = runtime.streamText(message)) {
+                    Iterator<String> it = tokens.iterator();
+                    while (it.hasNext()) {
+                        String token = it.next();
+                        if (token == null) {
+                            continue;
+                        }
+                        complete.append(token);
+                        listener.onToken(token);
                     }
-
-                    complete.append(chunk);
-
-                    listener.onToken(chunk);
                 }
-
                 listener.onComplete(complete.toString());
 
             } catch (Throwable throwable) {
@@ -248,6 +245,31 @@ public final class ShreeClient {
             }
 
         });
+    }
+
+    /**
+     * Word-splitting simulation kept for tests / legacy runtimes that do not
+     * expose {@code streamText}. Production calls always go through the live
+     * provider stream path in {@link #chatStream}.
+     */
+    private void deliverSimulatedStream(String message, StreamingListener listener) {
+        SDKResponse response = chat(message);
+        String answer = response.answer();
+        if (answer == null) {
+            answer = "";
+        }
+
+        String[] words = answer.split("\\s+");
+        StringBuilder complete = new StringBuilder();
+        for (int i = 0; i < words.length; i++) {
+            String chunk = words[i];
+            if (i > 0) {
+                chunk = " " + chunk;
+            }
+            complete.append(chunk);
+            listener.onToken(chunk);
+        }
+        listener.onComplete(complete.toString());
     }
 
     /* ==========================================================
@@ -269,5 +291,20 @@ public final class ShreeClient {
     }
     public EventManager events() {
         return new EventManager(eventBus);
+    }
+
+    /**
+     * Passes the {@link com.shreeai.os.platform.services.ByokSettingsService} to the
+     * underlying runtime so that {@link com.shreeai.os.platform.sdk.SettingsSDK} saves
+     * can rebuild the LLM router chain.
+     *
+     * <p>Called by {@link ShreeAI} immediately after both the runtime and
+     * {@code ByokSettingsService} are constructed.</p>
+     */
+    void syncByokSettings(com.shreeai.os.platform.services.ByokSettingsService byokSettingsService) {
+        if (runtime instanceof com.shreeai.os.platform.runtime.service.DefaultRuntimeService drs
+                && byokSettingsService != null) {
+            drs.setByokSettingsService(byokSettingsService);
+        }
     }
 }

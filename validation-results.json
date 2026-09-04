@@ -1,0 +1,72 @@
+﻿[
+    {
+        "Status":  0,
+        "Body":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Name":  "S1 WorkspaceController",
+        "Error":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Ms":  368
+    },
+    {
+        "Status":  0,
+        "Body":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Name":  "S2 ProjectSDK",
+        "Error":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Ms":  3
+    },
+    {
+        "Status":  0,
+        "Body":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Name":  "S3 REST endpoints",
+        "Error":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Ms":  5
+    },
+    {
+        "Status":  0,
+        "Body":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Name":  "S4 DefaultRuntimeService deps",
+        "Error":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Ms":  4
+    },
+    {
+        "Status":  0,
+        "Body":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Name":  "S5 DeveloperWorkflowService",
+        "Error":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Ms":  4
+    },
+    {
+        "Status":  0,
+        "Body":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Name":  "S6 project structure",
+        "Error":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Ms":  4
+    },
+    {
+        "Status":  0,
+        "Body":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Name":  "S7 circular deps",
+        "Error":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Ms":  5
+    },
+    {
+        "Status":  0,
+        "Body":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Name":  "S8 ProjectSDK impact",
+        "Error":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Ms":  3
+    },
+    {
+        "Status":  0,
+        "Body":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Name":  "S9 BootManager",
+        "Error":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Ms":  3
+    },
+    {
+        "Status":  0,
+        "Body":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Name":  "S10 Controller comparison",
+        "Error":  "The server committed a protocol violation. Section=ResponseStatusLine",
+        "Ms":  2
+    }
+]

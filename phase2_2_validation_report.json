@@ -1,0 +1,705 @@
+﻿{
+    "Timestamp":  "2026-09-03T10:33:40",
+    "TrustScore":  100,
+    "Passed":  10,
+    "Failed":  0,
+    "Total":  10,
+    "TotalTimeMs":  5803,
+    "ServerEndpoint":  "http://127.0.0.1:8080/api/v1/chat",
+    "Phase":  "Phase 2.2 Batch 2",
+    "ValidationMode":  "Evidence Mode",
+    "Scenarios":  [
+                      {
+                          "ScenarioId":  "D01",
+                          "Message":  "Explain WorkspaceController in the codebase",
+                          "Status":  200,
+                          "LatencyMs":  1795,
+                          "Pass":  true,
+                          "Confidence":  0.6,
+                          "VerificationTier":  "INFERRED",
+                          "EvidenceCount":  6,
+                          "Checks":  [
+                                         {
+                                             "Check":  "C1-HTTP-200",
+                                             "Pass":  true,
+                                             "Detail":  "Status=200"
+                                         },
+                                         {
+                                             "Check":  "C2-Body-NonEmpty",
+                                             "Pass":  true,
+                                             "Detail":  "Len=4521"
+                                         },
+                                         {
+                                             "Check":  "C3-StructuredPayload",
+                                             "Pass":  true,
+                                             "Detail":  "Present"
+                                         },
+                                         {
+                                             "Check":  "C4-Evidence-Present",
+                                             "Pass":  true,
+                                             "Detail":  "1 item(s)"
+                                         },
+                                         {
+                                             "Check":  "C5-Evidence-SourceType",
+                                             "Pass":  true,
+                                             "Detail":  "REASONING"
+                                         },
+                                         {
+                                             "Check":  "C6-Confidence-Valid",
+                                             "Pass":  true,
+                                             "Detail":  "60%"
+                                         },
+                                         {
+                                             "Check":  "C7-VerificationTier",
+                                             "Pass":  true,
+                                             "Detail":  "INFERRED"
+                                         },
+                                         {
+                                             "Check":  "C8-Answer-Present",
+                                             "Pass":  true,
+                                             "Detail":  "652 chars"
+                                         },
+                                         {
+                                             "Check":  "C9-Answer-NotTemplate",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded answer"
+                                         },
+                                         {
+                                             "Check":  "C10-Evidence-Content",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded assessment: Explain WorkspaceController in the codebase The su"
+                                         }
+                                     ],
+                          "RuntimeClass":  "N/A (all checks passed)",
+                          "Error":  null,
+                          "AnswerPreview":  "# Inferred Answer\n\n**Question:** Explain WorkspaceController in the codebase\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: Explain WorkspaceController in the codebase The supplied eviden"
+                      },
+                      {
+                          "ScenarioId":  "D02",
+                          "Message":  "What is ProjectSDK and where is it defined?",
+                          "Status":  200,
+                          "LatencyMs":  279,
+                          "Pass":  true,
+                          "Confidence":  0.6,
+                          "VerificationTier":  "INFERRED",
+                          "EvidenceCount":  6,
+                          "Checks":  [
+                                         {
+                                             "Check":  "C1-HTTP-200",
+                                             "Pass":  true,
+                                             "Detail":  "Status=200"
+                                         },
+                                         {
+                                             "Check":  "C2-Body-NonEmpty",
+                                             "Pass":  true,
+                                             "Detail":  "Len=3141"
+                                         },
+                                         {
+                                             "Check":  "C3-StructuredPayload",
+                                             "Pass":  true,
+                                             "Detail":  "Present"
+                                         },
+                                         {
+                                             "Check":  "C4-Evidence-Present",
+                                             "Pass":  true,
+                                             "Detail":  "1 item(s)"
+                                         },
+                                         {
+                                             "Check":  "C5-Evidence-SourceType",
+                                             "Pass":  true,
+                                             "Detail":  "REASONING"
+                                         },
+                                         {
+                                             "Check":  "C6-Confidence-Valid",
+                                             "Pass":  true,
+                                             "Detail":  "60%"
+                                         },
+                                         {
+                                             "Check":  "C7-VerificationTier",
+                                             "Pass":  true,
+                                             "Detail":  "INFERRED"
+                                         },
+                                         {
+                                             "Check":  "C8-Answer-Present",
+                                             "Pass":  true,
+                                             "Detail":  "422 chars"
+                                         },
+                                         {
+                                             "Check":  "C9-Answer-NotTemplate",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded answer"
+                                         },
+                                         {
+                                             "Check":  "C10-Evidence-Content",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded assessment: What is ProjectSDK and where is it defined? The as"
+                                         }
+                                     ],
+                          "RuntimeClass":  "N/A (all checks passed)",
+                          "Error":  null,
+                          "AnswerPreview":  "# Inferred Answer\n\n**Question:** What is ProjectSDK and where is it defined?\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: What is ProjectSDK and where is it defined? The assessment is g"
+                      },
+                      {
+                          "ScenarioId":  "D03",
+                          "Message":  "List all REST controllers in the codebase",
+                          "Status":  200,
+                          "LatencyMs":  234,
+                          "Pass":  true,
+                          "Confidence":  0.6,
+                          "VerificationTier":  "INFERRED",
+                          "EvidenceCount":  6,
+                          "Checks":  [
+                                         {
+                                             "Check":  "C1-HTTP-200",
+                                             "Pass":  true,
+                                             "Detail":  "Status=200"
+                                         },
+                                         {
+                                             "Check":  "C2-Body-NonEmpty",
+                                             "Pass":  true,
+                                             "Detail":  "Len=4503"
+                                         },
+                                         {
+                                             "Check":  "C3-StructuredPayload",
+                                             "Pass":  true,
+                                             "Detail":  "Present"
+                                         },
+                                         {
+                                             "Check":  "C4-Evidence-Present",
+                                             "Pass":  true,
+                                             "Detail":  "1 item(s)"
+                                         },
+                                         {
+                                             "Check":  "C5-Evidence-SourceType",
+                                             "Pass":  true,
+                                             "Detail":  "REASONING"
+                                         },
+                                         {
+                                             "Check":  "C6-Confidence-Valid",
+                                             "Pass":  true,
+                                             "Detail":  "60%"
+                                         },
+                                         {
+                                             "Check":  "C7-VerificationTier",
+                                             "Pass":  true,
+                                             "Detail":  "INFERRED"
+                                         },
+                                         {
+                                             "Check":  "C8-Answer-Present",
+                                             "Pass":  true,
+                                             "Detail":  "648 chars"
+                                         },
+                                         {
+                                             "Check":  "C9-Answer-NotTemplate",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded answer"
+                                         },
+                                         {
+                                             "Check":  "C10-Evidence-Content",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded assessment: List all REST controllers in the codebase The supp"
+                                         }
+                                     ],
+                          "RuntimeClass":  "N/A (all checks passed)",
+                          "Error":  null,
+                          "AnswerPreview":  "# Inferred Answer\n\n**Question:** List all REST controllers in the codebase\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: List all REST controllers in the codebase The supplied evidence d"
+                      },
+                      {
+                          "ScenarioId":  "D04",
+                          "Message":  "Which classes depend on DefaultRuntimeService?",
+                          "Status":  200,
+                          "LatencyMs":  248,
+                          "Pass":  true,
+                          "Confidence":  0.6,
+                          "VerificationTier":  "INFERRED",
+                          "EvidenceCount":  6,
+                          "Checks":  [
+                                         {
+                                             "Check":  "C1-HTTP-200",
+                                             "Pass":  true,
+                                             "Detail":  "Status=200"
+                                         },
+                                         {
+                                             "Check":  "C2-Body-NonEmpty",
+                                             "Pass":  true,
+                                             "Detail":  "Len=4530"
+                                         },
+                                         {
+                                             "Check":  "C3-StructuredPayload",
+                                             "Pass":  true,
+                                             "Detail":  "Present"
+                                         },
+                                         {
+                                             "Check":  "C4-Evidence-Present",
+                                             "Pass":  true,
+                                             "Detail":  "1 item(s)"
+                                         },
+                                         {
+                                             "Check":  "C5-Evidence-SourceType",
+                                             "Pass":  true,
+                                             "Detail":  "REASONING"
+                                         },
+                                         {
+                                             "Check":  "C6-Confidence-Valid",
+                                             "Pass":  true,
+                                             "Detail":  "60%"
+                                         },
+                                         {
+                                             "Check":  "C7-VerificationTier",
+                                             "Pass":  true,
+                                             "Detail":  "INFERRED"
+                                         },
+                                         {
+                                             "Check":  "C8-Answer-Present",
+                                             "Pass":  true,
+                                             "Detail":  "655 chars"
+                                         },
+                                         {
+                                             "Check":  "C9-Answer-NotTemplate",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded answer"
+                                         },
+                                         {
+                                             "Check":  "C10-Evidence-Content",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded assessment: Which classes depend on DefaultRuntimeService? The"
+                                         }
+                                     ],
+                          "RuntimeClass":  "N/A (all checks passed)",
+                          "Error":  null,
+                          "AnswerPreview":  "# Inferred Answer\n\n**Question:** Which classes depend on DefaultRuntimeService?\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: Which classes depend on DefaultRuntimeService? The supplied "
+                      },
+                      {
+                          "ScenarioId":  "D05",
+                          "Message":  "Show the project structure of the shree-ai-os module",
+                          "Status":  200,
+                          "LatencyMs":  244,
+                          "Pass":  true,
+                          "Confidence":  0.6,
+                          "VerificationTier":  "INFERRED",
+                          "EvidenceCount":  6,
+                          "Checks":  [
+                                         {
+                                             "Check":  "C1-HTTP-200",
+                                             "Pass":  true,
+                                             "Detail":  "Status=200"
+                                         },
+                                         {
+                                             "Check":  "C2-Body-NonEmpty",
+                                             "Pass":  true,
+                                             "Detail":  "Len=3222"
+                                         },
+                                         {
+                                             "Check":  "C3-StructuredPayload",
+                                             "Pass":  true,
+                                             "Detail":  "Present"
+                                         },
+                                         {
+                                             "Check":  "C4-Evidence-Present",
+                                             "Pass":  true,
+                                             "Detail":  "1 item(s)"
+                                         },
+                                         {
+                                             "Check":  "C5-Evidence-SourceType",
+                                             "Pass":  true,
+                                             "Detail":  "REASONING"
+                                         },
+                                         {
+                                             "Check":  "C6-Confidence-Valid",
+                                             "Pass":  true,
+                                             "Detail":  "60%"
+                                         },
+                                         {
+                                             "Check":  "C7-VerificationTier",
+                                             "Pass":  true,
+                                             "Detail":  "INFERRED"
+                                         },
+                                         {
+                                             "Check":  "C8-Answer-Present",
+                                             "Pass":  true,
+                                             "Detail":  "440 chars"
+                                         },
+                                         {
+                                             "Check":  "C9-Answer-NotTemplate",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded answer"
+                                         },
+                                         {
+                                             "Check":  "C10-Evidence-Content",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded assessment: Show the project structure of the shree-ai-os modu"
+                                         }
+                                     ],
+                          "RuntimeClass":  "N/A (all checks passed)",
+                          "Error":  null,
+                          "AnswerPreview":  "# Inferred Answer\n\n**Question:** Show the project structure of the shree-ai-os module\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: Show the project structure of the shree-ai-os module T"
+                      },
+                      {
+                          "ScenarioId":  "D06",
+                          "Message":  "What would happen if we removed the Knowledge kernel?",
+                          "Status":  200,
+                          "LatencyMs":  382,
+                          "Pass":  true,
+                          "Confidence":  0.6,
+                          "VerificationTier":  "INFERRED",
+                          "EvidenceCount":  6,
+                          "Checks":  [
+                                         {
+                                             "Check":  "C1-HTTP-200",
+                                             "Pass":  true,
+                                             "Detail":  "Status=200"
+                                         },
+                                         {
+                                             "Check":  "C2-Body-NonEmpty",
+                                             "Pass":  true,
+                                             "Detail":  "Len=3231"
+                                         },
+                                         {
+                                             "Check":  "C3-StructuredPayload",
+                                             "Pass":  true,
+                                             "Detail":  "Present"
+                                         },
+                                         {
+                                             "Check":  "C4-Evidence-Present",
+                                             "Pass":  true,
+                                             "Detail":  "1 item(s)"
+                                         },
+                                         {
+                                             "Check":  "C5-Evidence-SourceType",
+                                             "Pass":  true,
+                                             "Detail":  "REASONING"
+                                         },
+                                         {
+                                             "Check":  "C6-Confidence-Valid",
+                                             "Pass":  true,
+                                             "Detail":  "60%"
+                                         },
+                                         {
+                                             "Check":  "C7-VerificationTier",
+                                             "Pass":  true,
+                                             "Detail":  "INFERRED"
+                                         },
+                                         {
+                                             "Check":  "C8-Answer-Present",
+                                             "Pass":  true,
+                                             "Detail":  "442 chars"
+                                         },
+                                         {
+                                             "Check":  "C9-Answer-NotTemplate",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded answer"
+                                         },
+                                         {
+                                             "Check":  "C10-Evidence-Content",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded assessment: What would happen if we removed the Knowledge kern"
+                                         }
+                                     ],
+                          "RuntimeClass":  "N/A (all checks passed)",
+                          "Error":  null,
+                          "AnswerPreview":  "# Inferred Answer\n\n**Question:** What would happen if we removed the Knowledge kernel?\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: What would happen if we removed the Knowledge kernel?"
+                      },
+                      {
+                          "ScenarioId":  "D07",
+                          "Message":  "Identify the most complex class in the platform",
+                          "Status":  200,
+                          "LatencyMs":  436,
+                          "Pass":  true,
+                          "Confidence":  0.6,
+                          "VerificationTier":  "INFERRED",
+                          "EvidenceCount":  6,
+                          "Checks":  [
+                                         {
+                                             "Check":  "C1-HTTP-200",
+                                             "Pass":  true,
+                                             "Detail":  "Status=200"
+                                         },
+                                         {
+                                             "Check":  "C2-Body-NonEmpty",
+                                             "Pass":  true,
+                                             "Detail":  "Len=3177"
+                                         },
+                                         {
+                                             "Check":  "C3-StructuredPayload",
+                                             "Pass":  true,
+                                             "Detail":  "Present"
+                                         },
+                                         {
+                                             "Check":  "C4-Evidence-Present",
+                                             "Pass":  true,
+                                             "Detail":  "1 item(s)"
+                                         },
+                                         {
+                                             "Check":  "C5-Evidence-SourceType",
+                                             "Pass":  true,
+                                             "Detail":  "REASONING"
+                                         },
+                                         {
+                                             "Check":  "C6-Confidence-Valid",
+                                             "Pass":  true,
+                                             "Detail":  "60%"
+                                         },
+                                         {
+                                             "Check":  "C7-VerificationTier",
+                                             "Pass":  true,
+                                             "Detail":  "INFERRED"
+                                         },
+                                         {
+                                             "Check":  "C8-Answer-Present",
+                                             "Pass":  true,
+                                             "Detail":  "430 chars"
+                                         },
+                                         {
+                                             "Check":  "C9-Answer-NotTemplate",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded answer"
+                                         },
+                                         {
+                                             "Check":  "C10-Evidence-Content",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded assessment: Identify the most complex class in the platform Th"
+                                         }
+                                     ],
+                          "RuntimeClass":  "N/A (all checks passed)",
+                          "Error":  null,
+                          "AnswerPreview":  "# Inferred Answer\n\n**Question:** Identify the most complex class in the platform\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: Identify the most complex class in the platform The assessm"
+                      },
+                      {
+                          "ScenarioId":  "D08",
+                          "Message":  "What is the impact of changing ShreeClient?",
+                          "Status":  200,
+                          "LatencyMs":  188,
+                          "Pass":  true,
+                          "Confidence":  0.6,
+                          "VerificationTier":  "INFERRED",
+                          "EvidenceCount":  6,
+                          "Checks":  [
+                                         {
+                                             "Check":  "C1-HTTP-200",
+                                             "Pass":  true,
+                                             "Detail":  "Status=200"
+                                         },
+                                         {
+                                             "Check":  "C2-Body-NonEmpty",
+                                             "Pass":  true,
+                                             "Detail":  "Len=3135"
+                                         },
+                                         {
+                                             "Check":  "C3-StructuredPayload",
+                                             "Pass":  true,
+                                             "Detail":  "Present"
+                                         },
+                                         {
+                                             "Check":  "C4-Evidence-Present",
+                                             "Pass":  true,
+                                             "Detail":  "1 item(s)"
+                                         },
+                                         {
+                                             "Check":  "C5-Evidence-SourceType",
+                                             "Pass":  true,
+                                             "Detail":  "REASONING"
+                                         },
+                                         {
+                                             "Check":  "C6-Confidence-Valid",
+                                             "Pass":  true,
+                                             "Detail":  "60%"
+                                         },
+                                         {
+                                             "Check":  "C7-VerificationTier",
+                                             "Pass":  true,
+                                             "Detail":  "INFERRED"
+                                         },
+                                         {
+                                             "Check":  "C8-Answer-Present",
+                                             "Pass":  true,
+                                             "Detail":  "422 chars"
+                                         },
+                                         {
+                                             "Check":  "C9-Answer-NotTemplate",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded answer"
+                                         },
+                                         {
+                                             "Check":  "C10-Evidence-Content",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded assessment: What is the impact of changing ShreeClient? The as"
+                                         }
+                                     ],
+                          "RuntimeClass":  "N/A (all checks passed)",
+                          "Error":  null,
+                          "AnswerPreview":  "# Inferred Answer\n\n**Question:** What is the impact of changing ShreeClient?\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: What is the impact of changing ShreeClient? The assessment is g"
+                      },
+                      {
+                          "ScenarioId":  "D09",
+                          "Message":  "Explain the autonomous intelligence layer and its agents",
+                          "Status":  200,
+                          "LatencyMs":  188,
+                          "Pass":  true,
+                          "Confidence":  0.6,
+                          "VerificationTier":  "INFERRED",
+                          "EvidenceCount":  6,
+                          "Checks":  [
+                                         {
+                                             "Check":  "C1-HTTP-200",
+                                             "Pass":  true,
+                                             "Detail":  "Status=200"
+                                         },
+                                         {
+                                             "Check":  "C2-Body-NonEmpty",
+                                             "Pass":  true,
+                                             "Detail":  "Len=3258"
+                                         },
+                                         {
+                                             "Check":  "C3-StructuredPayload",
+                                             "Pass":  true,
+                                             "Detail":  "Present"
+                                         },
+                                         {
+                                             "Check":  "C4-Evidence-Present",
+                                             "Pass":  true,
+                                             "Detail":  "1 item(s)"
+                                         },
+                                         {
+                                             "Check":  "C5-Evidence-SourceType",
+                                             "Pass":  true,
+                                             "Detail":  "REASONING"
+                                         },
+                                         {
+                                             "Check":  "C6-Confidence-Valid",
+                                             "Pass":  true,
+                                             "Detail":  "60%"
+                                         },
+                                         {
+                                             "Check":  "C7-VerificationTier",
+                                             "Pass":  true,
+                                             "Detail":  "INFERRED"
+                                         },
+                                         {
+                                             "Check":  "C8-Answer-Present",
+                                             "Pass":  true,
+                                             "Detail":  "448 chars"
+                                         },
+                                         {
+                                             "Check":  "C9-Answer-NotTemplate",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded answer"
+                                         },
+                                         {
+                                             "Check":  "C10-Evidence-Content",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded assessment: Explain the autonomous intelligence layer and its "
+                                         }
+                                     ],
+                          "RuntimeClass":  "N/A (all checks passed)",
+                          "Error":  null,
+                          "AnswerPreview":  "# Inferred Answer\n\n**Question:** Explain the autonomous intelligence layer and its agents\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: Explain the autonomous intelligence layer and its "
+                      },
+                      {
+                          "ScenarioId":  "D10",
+                          "Message":  "Compare AiChatController and SdkDiagnosticsController",
+                          "Status":  200,
+                          "LatencyMs":  198,
+                          "Pass":  true,
+                          "Confidence":  0.6,
+                          "VerificationTier":  "INFERRED",
+                          "EvidenceCount":  6,
+                          "Checks":  [
+                                         {
+                                             "Check":  "C1-HTTP-200",
+                                             "Pass":  true,
+                                             "Detail":  "Status=200"
+                                         },
+                                         {
+                                             "Check":  "C2-Body-NonEmpty",
+                                             "Pass":  true,
+                                             "Detail":  "Len=4611"
+                                         },
+                                         {
+                                             "Check":  "C3-StructuredPayload",
+                                             "Pass":  true,
+                                             "Detail":  "Present"
+                                         },
+                                         {
+                                             "Check":  "C4-Evidence-Present",
+                                             "Pass":  true,
+                                             "Detail":  "1 item(s)"
+                                         },
+                                         {
+                                             "Check":  "C5-Evidence-SourceType",
+                                             "Pass":  true,
+                                             "Detail":  "REASONING"
+                                         },
+                                         {
+                                             "Check":  "C6-Confidence-Valid",
+                                             "Pass":  true,
+                                             "Detail":  "60%"
+                                         },
+                                         {
+                                             "Check":  "C7-VerificationTier",
+                                             "Pass":  true,
+                                             "Detail":  "INFERRED"
+                                         },
+                                         {
+                                             "Check":  "C8-Answer-Present",
+                                             "Pass":  true,
+                                             "Detail":  "672 chars"
+                                         },
+                                         {
+                                             "Check":  "C9-Answer-NotTemplate",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded answer"
+                                         },
+                                         {
+                                             "Check":  "C10-Evidence-Content",
+                                             "Pass":  true,
+                                             "Detail":  "Evidence-grounded assessment: Compare AiChatController and SdkDiagnosticsControl"
+                                         }
+                                     ],
+                          "RuntimeClass":  "N/A (all checks passed)",
+                          "Error":  null,
+                          "AnswerPreview":  "# Inferred Answer\n\n**Question:** Compare AiChatController and SdkDiagnosticsController\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: Compare AiChatController and SdkDiagnosticsController"
+                      }
+                  ],
+    "PerCheckSummary":  {
+                            "C8-Answer-Present":  {
+                                                      "Pass":  10,
+                                                      "Fail":  0
+                                                  },
+                            "C4-Evidence-Present":  {
+                                                        "Pass":  10,
+                                                        "Fail":  0
+                                                    },
+                            "C6-Confidence-Valid":  {
+                                                        "Pass":  10,
+                                                        "Fail":  0
+                                                    },
+                            "C10-Evidence-Content":  {
+                                                         "Pass":  10,
+                                                         "Fail":  0
+                                                     },
+                            "C1-HTTP-200":  {
+                                                "Pass":  10,
+                                                "Fail":  0
+                                            },
+                            "C9-Answer-NotTemplate":  {
+                                                          "Pass":  10,
+                                                          "Fail":  0
+                                                      },
+                            "C3-StructuredPayload":  {
+                                                         "Pass":  10,
+                                                         "Fail":  0
+                                                     },
+                            "C7-VerificationTier":  {
+                                                        "Pass":  10,
+                                                        "Fail":  0
+                                                    },
+                            "C2-Body-NonEmpty":  {
+                                                     "Pass":  10,
+                                                     "Fail":  0
+                                                 },
+                            "C5-Evidence-SourceType":  {
+                                                           "Pass":  10,
+                                                           "Fail":  0
+                                                       }
+                        }
+}
