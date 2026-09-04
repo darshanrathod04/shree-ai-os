@@ -32,4 +32,36 @@ public interface VectorSearchEngine {
      * @throws VectorRuntimeException if the search fails
      */
     List<VectorSearchResult> search(double[] queryEmbedding, int topK);
+
+    /**
+     * Performs a hybrid (vector + full-text) search using Reciprocal Rank Fusion
+     * (RRF). Both the embedding similarity and the tsvector full-text rank are
+     * combined so the result set captures both semantic and lexical relevance.
+     *
+     * <p>The RRF formula used is:</p>
+     * <pre>
+     * rrf_score = 1/(60 + vector_rank) + 1/(60 + text_rank)
+     * </pre>
+     *
+     * <p>Results are ordered by descending RRF score and limited to {@code topK}.
+     * If {@code textQuery} is null or blank, this method falls back to pure
+     * vector search.</p>
+     *
+     * @param queryEmbedding the query embedding (must not be null)
+     * @param textQuery      the natural-language text query (may be null or blank)
+     * @param topK           maximum number of results (must be &gt; 0)
+     * @return results ordered by descending RRF score (never null; may be empty)
+     * @throws VectorRuntimeException if the search fails
+     */
+    default List<VectorSearchResult> hybridSearch(
+            double[] queryEmbedding,
+            String textQuery,
+            int topK) {
+        // Default implementation: if no text query, fall back to pure vector.
+        if (textQuery == null || textQuery.isBlank()) {
+            return search(queryEmbedding, topK);
+        }
+        throw new UnsupportedOperationException(
+                "Hybrid search is not supported by this VectorSearchEngine implementation");
+    }
 }

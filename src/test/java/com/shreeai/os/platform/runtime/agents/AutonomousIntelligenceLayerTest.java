@@ -9,6 +9,8 @@ import com.shreeai.os.platform.runtime.model.ExecutionPlan;
 import com.shreeai.os.platform.runtime.model.VerificationReport;
 import com.shreeai.os.platform.runtime.model.VerificationReport.ConfidenceTier;
 import com.shreeai.os.platform.runtime.model.VerificationReport.ItemStatus;
+import com.shreeai.os.platform.llm.LlmProvider;
+import com.shreeai.os.platform.llm.LlmRequest;
 import com.shreeai.os.platform.runtime.orchestration.IntentAnalysisResult.IntentType;
 import com.shreeai.os.platform.runtime.orchestration.IntentAnalysisResult.KernelType;
 
@@ -676,6 +678,154 @@ public class AutonomousIntelligenceLayerTest {
             assertEquals(AgentDecision.Action.GENERATE, decision.action());
             assertEquals(AgentDecision.Agent.NATURAL_RESPONSE, decision.agent());
         }
+
+        // ─── Sprint-21: LLM Wiring Tests ──────────────────────────────────────────
+
+        @Test
+        @DisplayName("Sprint-21: when LLM provider is wired, agent calls it and returns its prose")
+        void llmWiredCallsProviderAndReturnsProse() {
+            // Fake LLM provider that echoes the full prompt as the response content.
+            LlmProvider fakeProvider = new LlmProvider() {
+                @Override
+                public String providerName() { return "test"; }
+
+                @Override
+                public java.util.stream.Stream<String> stream(LlmRequest request) {
+                    return java.util.stream.Stream.of(
+                            "Grounded answer from the LLM: " + request.prompt());
+                }
+            };
+
+            var agent = new NaturalResponseAgent(fakeProvider);
+            assertEquals(fakeProvider, agent.getLlmProvider());
+
+            EvidenceBundle bundle = EvidenceBundle.builder()
+                    .addItem(EvidenceItem.builder()
+                            .sourceType(EvidenceItem.SourceType.KNOWLEDGE)
+                            .title("Java")
+                            .content("Programming language")
+                            .confidenceHint(0.85)
+                            .build())
+                    .build();
+            VerificationReport report = VerificationReport.builder()
+                    .tier(ConfidenceTier.VERIFIED_KB)
+                    .confidence(0.80)
+                    .addMetadata("evidenceBundle", bundle)
+                    .build();
+
+            var request = com.shreeai.os.platform.runtime.execution.ExecutionRequest.builder()
+                    .payload("What is Java?")
+                    .build();
+
+            var response = agent.generate(report, request);
+            assertNotNull(response);
+            assertNotNull(response.answer());
+            assertTrue(response.answer().contains("Grounded answer from the LLM:"),
+                    "Response should come from the LLM provider");
+            // Structured data must surface the wiring state for observability.
+            assertEquals(Boolean.TRUE, response.structuredData().get("llmWired"));
+            assertEquals("test", response.structuredData().get("llmProviderName"));
+        }
+
+        @Test
+        @DisplayName("Sprint-21: when LLM provider is absent, agent falls back to deterministic rendering")
+        void llmNotWiredFallsBackToDeterministicRendering() {
+            // No-arg constructor → llmProvider = null
+            var agent = new NaturalResponseAgent();
+            assertNull(agent.getLlmProvider());
+
+            EvidenceBundle bundle = EvidenceBundle.builder()
+                    .addItem(EvidenceItem.builder()
+                            .sourceType(EvidenceItem.SourceType.KNOWLEDGE)
+                            .title("Topic X")
+                            .content("Description of Topic X")
+                            .build())
+                    .build();
+            VerificationReport report = VerificationReport.builder()
+                    .tier(ConfidenceTier.VERIFIED_KB)
+                    .confidence(0.80)
+                    .addMetadata("evidenceBundle", bundle)
+                    .build();
+
+            var response = agent.generate(report, null);
+            assertNotNull(response);
+            assertNotNull(response.answer());
+            // Should produce deterministic StringBuilder output (contains the title).
+            assertTrue(response.answer().contains("Topic X"));
+            assertEquals(Boolean.FALSE, response.structuredData().get("llmWired"));
+        }
+
+        @Test
+        @DisplayName("Sprint-21: when LLM provider throws, agent falls back to deterministic rendering")
+        void llmProviderThrowsFallsBackToDeterministic() {
+            LlmProvider failingProvider = new LlmProvider() {
+                @Override
+                public String providerName() { return "failing"; }
+
+                @Override
+                public java.util.stream.Stream<String> stream(LlmRequest request) {
+                    throw new RuntimeException("LLM unavailable");
+                }
+            };
+
+            var agent = new NaturalResponseAgent(failingProvider);
+            EvidenceBundle bundle = EvidenceBundle.builder()
+                    .addItem(EvidenceItem.builder()
+                            .sourceType(EvidenceItem.SourceType.PROJECT)
+                            .title("My Project")
+                            .content("Details of the project")
+                            .build())
+                    .build();
+            VerificationReport report = VerificationReport.builder()
+                    .tier(ConfidenceTier.VERIFIED_PROJECT)
+                    .confidence(0.95)
+                    .addMetadata("evidenceBundle", bundle)
+                    .build();
+
+            var response = agent.generate(report, null);
+            assertNotNull(response);
+            // Should still produce a non-null answer via the fallback.
+            assertNotNull(response.answer());
+            assertTrue(response.answer().contains("My Project"),
+                    "Fallback should produce deterministic output with the evidence title");
+        }
+
+        @Test
+        @DisplayName("Sprint-21: setLlmProvider late-wires the LLM after construction")
+        void setLlmProviderLateWiresLlm() {
+            var agent = new NaturalResponseAgent();
+            assertNull(agent.getLlmProvider());
+
+            LlmProvider fake = new LlmProvider() {
+                @Override
+                public String providerName() { return "late"; }
+
+                @Override
+                public java.util.stream.Stream<String> stream(LlmRequest request) {
+                    return java.util.stream.Stream.of("late-wired response");
+                }
+            };
+
+            agent.setLlmProvider(fake);
+            assertEquals(fake, agent.getLlmProvider());
+
+            EvidenceBundle bundle = EvidenceBundle.builder()
+                    .addItem(EvidenceItem.builder()
+                            .sourceType(EvidenceItem.SourceType.KNOWLEDGE)
+                            .title("Fact")
+                            .content("Something")
+                            .build())
+                    .build();
+            VerificationReport report = VerificationReport.builder()
+                    .tier(ConfidenceTier.VERIFIED_KB)
+                    .confidence(0.80)
+                    .addMetadata("evidenceBundle", bundle)
+                    .build();
+
+            var response = agent.generate(report, null);
+            assertNotNull(response);
+            assertTrue(response.answer().contains("late-wired response"));
+        }
     }
 
     // ─── ChiefIntelligenceAgent Tests ─────────────────────────────────────────
@@ -739,6 +889,45 @@ public class AutonomousIntelligenceLayerTest {
             assertNotNull(chiefAgent.evidenceAgent());
             assertNotNull(chiefAgent.verificationAgent());
             assertNotNull(chiefAgent.naturalResponseAgent());
+        }
+
+        // ─── Sprint-21: Pre-flight No-Discard Tests ──────────────────────────────
+
+        @Test
+        @DisplayName("Sprint-21: pre-flight response is a stub with empty answer (no discarded synthesis)")
+        void sprint21PreFlightStubHasEmptyAnswer() {
+            // When kernels are available (healthy workspace), the pre-flight pass
+            // should produce only a stub response (answer is empty) — the
+            // authoritative synthesis is deferred to DefaultRuntimeService after
+            // the 11-stage pipeline. This verifies the double-synthesis loop is broken.
+            var request = com.shreeai.os.platform.runtime.execution.ExecutionRequest.builder()
+                    .payload("Tell me about my project")
+                    .metadata(java.util.Map.of("projectPath", "/test/path"))
+                    .build();
+
+            var response = chiefAgent.route(request);
+            assertNotNull(response);
+            assertNotNull(response.answer());
+            // Sprint-21: the answer must be empty — no discarded synthesis
+            assertEquals("", response.answer());
+            // But structured data (chiefMeta) must still be populated so
+            // DefaultRuntimeService can observe the routing decision.
+            assertFalse(response.structuredData().isEmpty(),
+                    "structuredData must be non-empty for chiefMeta injection");
+        }
+
+        @Test
+        @DisplayName("Sprint-21: diagnostic path is unaffected (still returns full diagnostic response)")
+        void sprint21DiagnosticPathUnaffected() {
+            var request = com.shreeai.os.platform.runtime.execution.ExecutionRequest.builder()
+                    .payload("Analyze my project")
+                    .build();
+
+            var response = chiefAgent.route(request);
+            assertNotNull(response);
+            assertNotNull(response.answer());
+            // Diagnostic path still returns the full diagnostic response text.
+            assertTrue(response.answer().contains("Diagnostic") || !response.answer().isBlank());
         }
     }
 

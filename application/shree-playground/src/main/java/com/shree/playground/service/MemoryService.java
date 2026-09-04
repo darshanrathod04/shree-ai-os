@@ -94,31 +94,40 @@ public class MemoryService {
     // RECALL MEMORY
     // =====================================================
 
+    // =====================================================
+    // RECALL MEMORY
+    // =====================================================
+
     public SDKResponse recall(String query) {
 
-        String normalized = QueryNormalizer.normalize(query);
-        String needle = normalized.isEmpty()
-                ? (query == null ? "" : query.toLowerCase())
-                : normalized;
+        String safeQuery = query == null ? "" : query.trim();
+        String normalized = QueryNormalizer.normalize(safeQuery);
+        String needle = normalized.isEmpty() ? safeQuery.toLowerCase() : normalized;
+
+        // Split query into tokens to match across words
+        String[] tokens = needle.split("\\s+");
 
         Optional<MemoryRecord> memory = memoryStore.values().stream()
-                .filter(m ->
-                        m.title().toLowerCase().contains(needle) ||
-                                m.content().toLowerCase().contains(needle)
-                )
+                .filter(m -> {
+                    String titleLower = m.title().toLowerCase();
+                    String contentLower = m.content().toLowerCase();
+                    // Match either full needle or any individual token
+                    return titleLower.contains(needle) || contentLower.contains(needle)
+                            || Arrays.stream(tokens).anyMatch(t -> !t.isBlank() && (titleLower.contains(t) || contentLower.contains(t)));
+                })
                 .max(Comparator.comparing(MemoryRecord::createdAt));
 
         if (memory.isEmpty()) {
+            Map<String, Object> emptyPayload = new LinkedHashMap<>();
+            emptyPayload.put("query", safeQuery);
+            emptyPayload.put("memory", Optional.empty());
 
             return SDKResponse.builder()
-                    .answer("I couldn't recall any memory related to \"" + query + "\".")
+                    .answer("I couldn't recall any memory related to \"" + safeQuery + "\".")
                     .confidence(0.55)
                     .reasoningAvailable(true)
                     .metadata("operation:RECALL_MEMORY")
-                    .structuredPayload(Map.of(
-                            "query", query,
-                            "memory", null
-                    ))
+                    .structuredPayload(emptyPayload)
                     .timestamp(Instant.now())
                     .build();
         }
@@ -126,7 +135,7 @@ public class MemoryService {
         MemoryRecord m = memory.get();
 
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("query", query);
+        payload.put("query", safeQuery);
         payload.put("memory", m);
 
         String answer = """

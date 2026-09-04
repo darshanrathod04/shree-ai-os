@@ -66,7 +66,6 @@ import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 import com.shreeai.os.platform.sdk.events.RuntimeEvent;
 import com.shreeai.os.platform.sdk.events.EventType;
 import com.shreeai.os.platform.kernels.response.engine.DefaultResponseSynthesizer;
-import com.shreeai.os.platform.kernels.response.service.ResponseSynthesisService;
 import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
 import com.shreeai.os.platform.runtime.routing.RuntimeIntentRouter;
 import com.shreeai.os.platform.runtime.execution.ExecutionCapability;
@@ -165,6 +164,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
      */
     private volatile KnowledgeIngestionService knowledgeIngestionService;
 
+
     /** Request metadata key carrying the requested operation. */
     private static final String OPERATION_KEY = "operation";
 
@@ -207,22 +207,34 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             registry.put("openai", new OpenAiProvider(openAiKey));
         }
 
-        String geminiKey = firstNonBlank(System.getenv("GEMINI_API_KEY"), System.getenv("GOOGLE_API_KEY"));
+        String geminiKey = firstNonBlank(
+                System.getProperty("shree.ai.api-key"),
+                firstNonBlank(System.getenv("GEMINI_API_KEY"), System.getenv("GOOGLE_API_KEY")));
         if (geminiKey != null) {
             registry.put("gemini", new GeminiProvider(geminiKey));
         }
 
+        // Check both SHREE_LLM_CHAIN and LLM_CHAIN (and System properties)
         String chain = firstNonBlank(
                 System.getProperty("shree.llm.chain"),
-                System.getenv("LLM_CHAIN"));
-        if (chain == null) {
-            chain = "in-memory";
+                firstNonBlank(System.getenv("SHREE_LLM_CHAIN"), System.getenv("LLM_CHAIN")));
+
+        // SPRINT FIX: If no chain is explicitly passed, auto-select the best available provider!
+        if (chain == null || chain.isBlank()) {
+            if (geminiKey != null) {
+                chain = "gemini,in-memory";
+            } else if (openAiKey != null) {
+                chain = "openai,in-memory";
+            } else {
+                chain = "in-memory";
+            }
         }
+
+        System.out.println(">>> [SHREE RUNTIME] Active LLM Chain: " + chain);
 
         try {
             return LlmRouter.fromChain(chain, registry);
         } catch (IllegalArgumentException ignored) {
-            // Unknown provider names in the chain Ã¢â‚¬â€ fall back to a safe default.
             return new LlmRouter(List.of(registry.get("in-memory")));
         }
     }
@@ -343,8 +355,15 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         // in-memory by default; pgvector / neo4j when configured.
         // ==========================================================
 
-        EmbeddingProvider embeddingProvider = new LocalDeterministicEmbedder(
-                VectorStoreProviders.embeddingDimensions(System.getProperties()));
+        String embeddingProviderType = System.getProperty("shree.embedding.provider", "onnx");
+        EmbeddingProvider embeddingProvider;
+
+        if ("onnx".equalsIgnoreCase(embeddingProviderType)) {
+            embeddingProvider = new com.shreeai.os.platform.runtime.embedding.OnnxEmbeddingProvider();
+        } else {
+            embeddingProvider = new LocalDeterministicEmbedder(
+                    VectorStoreProviders.embeddingDimensions(System.getProperties()));
+        }
 
         KnowledgeGraphStore knowledgeGraphStore = KnowledgeGraphStores.selected();
         VectorStoreProvider vectorStoreProvider = VectorStoreProviders.selected();
@@ -1081,11 +1100,24 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             com.shreeai.os.platform.runtime.execution.ExecutionResult result;
             if (pipelineResult != null && pipelineResult.isSuccess()) {
 
-                SynthesizedResponse response =
-                        responseSynthesisService.synthesize(
-                                pipelineContext,
-                                pipelineResult.getExecutionState()
-                        );
+                // Sprint-21: the ResponseSynthesisService.synthesize() call is restored
+                // here (conditionally, only for routed operations) to preserve the
+                // structured domain output from the specialized kernels (Planning,
+                // Memory, etc.). The synthesizer was previously always called and
+                // its output always overwritten by NaturalResponseAgent — that
+                // double-pass is eliminated, but the synthesizer is still called
+                // FIRST so routed operations retain their structured answers.
+                SynthesizedResponse response;
+                if (pipelineContext != null) {
+                    response = responseSynthesisService.synthesize(
+                            pipelineContext,
+                            pipelineResult.getExecutionState()
+                    );
+                } else {
+                    // Defensive fallback: pipelineContext should never be null when
+                    // pipelineResult.isSuccess() is true, but guard anyway.
+                    response = buildEmptyBundleResponse(llmRouter, request);
+                }
 
                 Map<String, Object> structured = new LinkedHashMap<>();
 
@@ -1100,12 +1132,19 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                     structured.put("routedStages", route.stageNames());
                 }
 
-                // ─── Phase 2.2: Evidence Mode ─────────────────────────────────────
+                // ─── Sprint-21: Evidence Mode ───────────────────────────────────
                 // Extract structured evidence from the populated pipeline state
                 // and inject the evidence bundle + verification report into the
                 // structured payload. This is the runtime-level Evidence Mode
                 // requirement: every chat response must carry evidence so the
                 // SDK surface can answer "what is this answer grounded in?"
+                //
+                // Sprint-21: NaturalResponseAgent is wired with the runtime's
+                // LlmRouter. It replaces the synthesizer output ONLY in the
+                // canonical CHAT path (route == null) when evidence is present.
+                // Routed operations (Planning, Knowledge, Memory, etc.) retain
+                // the synthesizer output which carries domain-specific structured
+                // content (plan subtasks, knowledge summaries, etc.).
                 //
                 // Root cause (pre-fix): ChiefIntelligenceAgent.route() was called
                 // BEFORE the pipeline ran, so EvidenceAgent extracted from an
@@ -1123,58 +1162,69 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                             com.shreeai.os.platform.runtime.model.EvidenceBundle evidenceBundle =
                                     evidenceAgent.extractFromMetadata(pipelineStateMeta);
                             if (evidenceBundle != null && !evidenceBundle.isEmpty()) {
-                                com.shreeai.os.platform.runtime.agents.VerificationAgent verificationAgent =
-                                        new com.shreeai.os.platform.runtime.agents.VerificationAgent();
-                                com.shreeai.os.platform.runtime.model.VerificationReport verificationReport =
-                                        verificationAgent.verify(evidenceBundle);
+                                // Sprint-21: ONLY override the synthesizer output
+                                // in the canonical CHAT path (route == null)
+                                // when evidence is present. Routed operations
+                                // (Planning, Memory, etc.) keep the synthesizer
+                                // output which contains domain-specific content.
+                                if (route == null) {
+                                    com.shreeai.os.platform.runtime.agents.VerificationAgent verificationAgent =
+                                            new com.shreeai.os.platform.runtime.agents.VerificationAgent();
+                                    com.shreeai.os.platform.runtime.model.VerificationReport verificationReport =
+                                            verificationAgent.verify(evidenceBundle);
 
-                                // Build a serializable evidence summary for the API response
-                                java.util.List<java.util.Map<String, Object>> evidenceSummary =
-                                        new java.util.ArrayList<>();
-                                for (com.shreeai.os.platform.runtime.model.EvidenceItem item
-                                        : evidenceBundle.items()) {
-                                    java.util.Map<String, Object> itemMap = new java.util.LinkedHashMap<>();
-                                    itemMap.put("itemId", item.itemId());
-                                    itemMap.put("sourceType", item.sourceType().name());
-                                    itemMap.put("title", item.title());
-                                    itemMap.put("content", item.content());
-                                    itemMap.put("confidenceHint", item.confidenceHint());
-                                    itemMap.put("citations", item.citations());
-                                    itemMap.put("attributes", item.attributes());
-                                    evidenceSummary.add(itemMap);
+                                    // Build a serializable evidence summary for the API response
+                                    java.util.List<java.util.Map<String, Object>> evidenceSummary =
+                                            new java.util.ArrayList<>();
+                                    for (com.shreeai.os.platform.runtime.model.EvidenceItem item
+                                            : evidenceBundle.items()) {
+                                        java.util.Map<String, Object> itemMap = new java.util.LinkedHashMap<>();
+                                        itemMap.put("itemId", item.itemId());
+                                        itemMap.put("sourceType", item.sourceType().name());
+                                        itemMap.put("title", item.title());
+                                        itemMap.put("content", item.content());
+                                        itemMap.put("confidenceHint", item.confidenceHint());
+                                        itemMap.put("citations", item.citations());
+                                        itemMap.put("attributes", item.attributes());
+                                        evidenceSummary.add(itemMap);
+                                    }
+
+                                    structured.put("evidence", evidenceSummary);
+                                    structured.put("evidenceCount", evidenceBundle.size());
+                                    structured.put("evidenceBundleId", evidenceBundle.bundleId());
+
+                                    // Sprint-21: the single authoritative synthesis
+                                    // point in the canonical CHAT path. The agent is
+                                    // constructed with the runtime's LlmRouter so its
+                                    // generate() call invokes the LLM when available,
+                                    // and falls back to the deterministic renderer
+                                    // when the LLM is absent / unreachable.
+                                    com.shreeai.os.platform.runtime.agents.NaturalResponseAgent naturalAgent =
+                                            new com.shreeai.os.platform.runtime.agents.NaturalResponseAgent(
+                                                    llmRouter);
+
+                                    response = naturalAgent.generate(verificationReport, request);
+                                    structured.put("response", response);
+                                    structured.put("confidence", verificationReport.confidence());
+                                    structured.put("verificationTier",
+                                            verificationReport.tier().name());
+                                    structured.put("verificationConfidence",
+                                            verificationReport.confidence());
+                                    structured.put("citationCount",
+                                            verificationReport.citations().size());
+                                    if (!verificationReport.citations().isEmpty()) {
+                                        structured.put("citations",
+                                                verificationReport.citations());
+                                    }
+                                    if (!verificationReport.gaps().isEmpty()) {
+                                        structured.put("gaps",
+                                                verificationReport.gaps());
+                                    }
                                 }
-
-                                structured.put("evidence", evidenceSummary);
-                                structured.put("evidenceCount", evidenceBundle.size());
-                                structured.put("evidenceBundleId", evidenceBundle.bundleId());
-
-                                // Phase 2.2: Re-synthesize the answer using
-                                // NaturalResponseAgent so the response text
-                                // is grounded in the actual evidence items,
-                                // not the generic DefaultResponseSynthesizer output.
-                                com.shreeai.os.platform.runtime.agents.NaturalResponseAgent naturalAgent =
-                                        new com.shreeai.os.platform.runtime.agents.NaturalResponseAgent();
-                                com.shreeai.os.platform.kernels.response.model.SynthesizedResponse evidenceBackedResponse =
-                                        naturalAgent.generate(verificationReport, request);
-
-                                response = evidenceBackedResponse;
-                                structured.put("response", response);
-                                structured.put("confidence", verificationReport.confidence());
-                                structured.put("verificationTier",
-                                        verificationReport.tier().name());
-                                structured.put("verificationConfidence",
-                                        verificationReport.confidence());
-                                structured.put("citationCount",
-                                        verificationReport.citations().size());
-                                if (!verificationReport.citations().isEmpty()) {
-                                    structured.put("citations",
-                                            verificationReport.citations());
-                                }
-                                if (!verificationReport.gaps().isEmpty()) {
-                                    structured.put("gaps",
-                                            verificationReport.gaps());
-                                }
+                                // When route != null (routed operation): synthesizer
+                                // output is preserved — skip NaturalResponseAgent.
                             }
+                            // When bundle is empty: synthesizer output is preserved.
                         } catch (RuntimeException evidenceError) {
                             // Evidence extraction is best-effort: never fail
                             // the request just because evidence grounding
@@ -1192,9 +1242,13 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                                                     : evidenceError.getClass().getSimpleName()
                                     )
                             ));
+                            // Synthesizer output (response) is preserved on error.
                         }
                     }
+                    // When pipelineStateMeta is null/empty: synthesizer output
+                    // is preserved. No buildEmptyBundleResponse needed here.
                 }
+                // When getExecutionState() is null: synthesizer output is preserved.
 
                 Map<String, Object> payload = Map.copyOf(structured);
 
@@ -1275,6 +1329,36 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             return java.util.Map.of("intelligenceContext", intelligenceContext);
         }
         return java.util.Map.of();
+    }
+
+    /**
+     * Sprint-21: produces a meaningful response when the pipeline ran but
+     * extracted no evidence items. The {@link NaturalResponseAgent} handles
+     * the {@code INSUFFICIENT} case internally with a deterministic template.
+     * The agent is constructed with the runtime's {@code llmRouter} so LLM
+     * invocation is attempted when a provider is available.
+     *
+     * @param llmRouter the runtime LLM router (may be null — agent is null-safe)
+     * @param request   the original execution request (provides user context)
+     * @return a non-null {@link SynthesizedResponse} (INSUFFICIENT tier)
+     */
+    private com.shreeai.os.platform.kernels.response.model.SynthesizedResponse
+            buildEmptyBundleResponse(
+                    com.shreeai.os.platform.llm.router.LlmRouter llmRouter,
+                    com.shreeai.os.platform.runtime.execution.ExecutionRequest request
+            ) {
+        com.shreeai.os.platform.runtime.agents.NaturalResponseAgent agent =
+                new com.shreeai.os.platform.runtime.agents.NaturalResponseAgent(llmRouter);
+
+        // Build a minimal INSUFFICIENT VerificationReport so the agent
+        // uses its deterministic insufficient template (no LLM needed here).
+        com.shreeai.os.platform.runtime.model.VerificationReport insufficientReport =
+                com.shreeai.os.platform.runtime.model.VerificationReport.builder()
+                        .tier(com.shreeai.os.platform.runtime.model.VerificationReport.ConfidenceTier.INSUFFICIENT)
+                        .confidence(0.15)
+                        .build();
+
+        return agent.generate(insufficientReport, request);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

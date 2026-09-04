@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.kernels.knowledge.engine;
 
+import com.shreeai.os.platform.kernels.knowledge.chunking.DocumentChunker;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeChunk;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeId;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
@@ -8,7 +9,6 @@ import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeState;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeType;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,10 +20,12 @@ import java.util.Objects;
  * <p>Default implementation of {@link KnowledgeIngestionEngine}.</p>
  *
  * <p><b>Chunking strategy:</b> content is split into chunks of at most
- * {@value #MAX_CHUNK_LENGTH} characters, preferring paragraph boundaries
- * ({@code \n\n}), then sentence boundaries, then hard splits. Consecutive
- * chunks overlap by {@value #CHUNK_OVERLAP} characters so statements near a
- * boundary remain retrievable from both chunks.</p>
+ * {@value #MAX_CHUNK_LENGTH} characters, respecting sentence boundaries
+ * (. ! ? \n). Consecutive chunks overlap by {@value #CHUNK_OVERLAP}
+ * characters so statements near a boundary remain retrievable from both
+ * chunks. The actual chunking logic is delegated to {@link DocumentChunker},
+ * which enforces sentence-boundary awareness and prevents cutting words
+ * midway during overlap.</p>
  *
  * <p><b>Node metadata (metadata-first schema):</b> every chunk node carries
  * {@code documentId}, {@code tenantId}, {@code title}, {@code chunkIndex},
@@ -52,6 +54,8 @@ public final class DefaultKnowledgeIngestionEngine implements KnowledgeIngestion
     /** Metadata source marker for ingestion-created nodes. */
     public static final String SOURCE_DOCUMENT_INGESTION = "DOCUMENT_INGESTION";
 
+    private final DocumentChunker chunker = new DocumentChunker(MAX_CHUNK_LENGTH, CHUNK_OVERLAP);
+
     @Override
     public List<KnowledgeChunk> chunk(String content) {
         Objects.requireNonNull(content, "content must not be null");
@@ -60,27 +64,10 @@ public final class DefaultKnowledgeIngestionEngine implements KnowledgeIngestion
             return List.of();
         }
 
-        List<String> rawSegments = splitToSegments(trimmed);
-        List<KnowledgeChunk> chunks = new ArrayList<>();
-        int index = 0;
-
-        for (String segment : rawSegments) {
-            if (chunks.isEmpty()) {
-                chunks.add(KnowledgeChunk.of(index++, segment));
-                continue;
-            }
-
-            KnowledgeChunk previous = chunks.get(chunks.size() - 1);
-            String combined = previous.text() + "\n" + segment;
-            if (combined.length() <= MAX_CHUNK_LENGTH) {
-                // Grow the current chunk rather than replacing it.
-                chunks.set(chunks.size() - 1, KnowledgeChunk.of(previous.index(), combined));
-            } else {
-                chunks.add(KnowledgeChunk.of(index++, segment));
-            }
-        }
-
-        return List.copyOf(chunks);
+        // DocumentChunker produces TextChunk records; map each to a KnowledgeChunk.
+        return chunker.chunk(trimmed).stream()
+                .map(textChunk -> KnowledgeChunk.of(textChunk.index(), textChunk.text()))
+                .toList();
     }
 
     @Override
@@ -125,46 +112,5 @@ public final class DefaultKnowledgeIngestionEngine implements KnowledgeIngestion
                 metadata,
                 Instant.now(),
                 Instant.now());
-    }
-
-    private List<String> splitToSegments(String content) {
-        List<String> segments = new ArrayList<>();
-
-        for (String paragraph : content.split("\\n\\n+")) {
-            String paragraphTrimmed = paragraph.trim();
-            if (paragraphTrimmed.isEmpty()) {
-                continue;
-            }
-            if (paragraphTrimmed.length() <= MAX_CHUNK_LENGTH) {
-                segments.add(paragraphTrimmed);
-                continue;
-            }
-            // Oversized paragraph: split on sentence boundaries, then hard split.
-            for (String sentence : paragraphTrimmed.split("(?<=\\.)\\s+")) {
-                String sentenceTrimmed = sentence.trim();
-                if (sentenceTrimmed.isEmpty()) {
-                    continue;
-                }
-                if (sentenceTrimmed.length() <= MAX_CHUNK_LENGTH) {
-                    segments.add(sentenceTrimmed);
-                } else {
-                    hardSplit(segments, sentenceTrimmed);
-                }
-            }
-        }
-
-        return segments;
-    }
-
-    private void hardSplit(List<String> segments, String text) {
-        int start = 0;
-        while (start < text.length()) {
-            int end = Math.min(start + MAX_CHUNK_LENGTH, text.length());
-            segments.add(text.substring(start, end));
-            if (end >= text.length()) {
-                break;
-            }
-            start = Math.max(end - CHUNK_OVERLAP, start + 1);
-        }
     }
 }

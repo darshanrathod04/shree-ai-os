@@ -68,6 +68,20 @@
             <optional>true</optional>
         </dependency>
 
+		<!-- Microsoft ONNX Runtime for In-Process Inference -->
+		<dependency>
+			<groupId>com.microsoft.onnxruntime</groupId>
+			<artifactId>onnxruntime</artifactId>
+			<version>1.17.1</version>
+		</dependency>
+
+		<!-- DJL HuggingFace Tokenizer (Zero-dependency tokenization in Java) -->
+		<dependency>
+			<groupId>ai.djl.huggingface</groupId>
+			<artifactId>tokenizers</artifactId>
+			<version>0.28.0</version>
+		</dependency>
+
         <!-- ==========================================================
              PHASE 1 — Real Intelligence Engines: persistence adapters
              (adapters only; the platform boots with zero infrastructure)

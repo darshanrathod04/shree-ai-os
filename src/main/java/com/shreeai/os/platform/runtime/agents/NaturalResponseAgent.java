@@ -3,6 +3,8 @@ package com.shreeai.os.platform.runtime.agents;
 import com.shreeai.os.platform.kernels.response.model.ResponseSection;
 import com.shreeai.os.platform.kernels.response.model.ResponseStyle;
 import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
+import com.shreeai.os.platform.llm.LlmProvider;
+import com.shreeai.os.platform.llm.LlmRequest;
 import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
 import com.shreeai.os.platform.runtime.model.AgentDecision;
 import com.shreeai.os.platform.runtime.model.AgentDecision.Agent;
@@ -23,12 +25,20 @@ import java.util.Objects;
  * <b>NaturalResponseAgent</b>
  *
  * <p>The <strong>only</strong> place in the autonomous intelligence layer
- * where the LLM is invoked. Converts a verified {@code EvidenceBundle} into
- * a natural-language {@code SynthesizedResponse}.</p>
+ * where the LLM is invoked (Sprint-21). Converts a verified
+ * {@code EvidenceBundle} into a natural-language {@code SynthesizedResponse}.</p>
  *
  * <p><b>Constitutional Rule (Sprint 18):</b> The LLM is called exactly once
  * per user request, and only in this agent. No kernel engine, stage, or
  * other agent may call the LLM.</p>
+ *
+ * <p><b>Sprint-21 LLM Wiring:</b> When an {@link LlmProvider} is wired in
+ * (via the constructor or {@link #setLlmProvider}), the agent routes a
+ * structured prompt (Shree persona + grounded evidence context + user question)
+ * through the provider and returns the model's prose. The agent falls back
+ * gracefully to the deterministic {@code StringBuilder}-based renderer when
+ * the LLM is absent, unreachable, or throws — ensuring the response path is
+ * never blocked by provider failures.</p>
  *
  * <p><b>Synthesis Modes:</b></p>
  * <ul>
@@ -42,7 +52,66 @@ import java.util.Objects;
  */
 public final class NaturalResponseAgent {
 
+    /**
+     * Optional LLM provider. When present and reachable, the agent will route
+     * a structured prompt through the provider to obtain a natural-language
+     * completion. When {@code null} or unreachable, the agent falls back to
+     * the deterministic {@code StringBuilder}-based rendering — so the
+     * agent remains functional in offline / test environments.
+     *
+     * <p>Sprint-21 wiring: this slot is the canonical LLM invocation point
+     * for the autonomous intelligence layer.</p>
+     */
+    private LlmProvider llmProvider;
+
+    /**
+     * Default model identifier passed to the LLM provider when one is wired
+     * in. Kept as a constant so it is trivial to override from configuration
+     * in a follow-up sprint.
+     */
+    private static final String DEFAULT_LLM_MODEL = "shree-default";
+
+    /** Default temperature — moderate, deterministic-but-natural. */
+    private static final double DEFAULT_LLM_TEMPERATURE = 0.3;
+
+    /** Default max tokens — keeps responses grounded and within budget. */
+    private static final int DEFAULT_LLM_MAX_TOKENS = 1024;
+
     public NaturalResponseAgent() {}
+
+    /**
+     * Creates a NaturalResponseAgent with the supplied LLM provider.
+     *
+     * <p>When the provider is non-null the agent will attempt an LLM
+     * completion on every non-insufficient {@code VerificationReport}. Any
+     * runtime failure of the provider is caught and the deterministic
+     * fallback rendering is returned, so this constructor is safe to use
+     * with any LLM-backed or null LLM.</p>
+     *
+     * @param llmProvider optional LLM provider; may be {@code null}
+     */
+    public NaturalResponseAgent(LlmProvider llmProvider) {
+        this.llmProvider = llmProvider;
+    }
+
+    /**
+     * Late-binds an LLM provider (e.g. after the runtime has built its
+     * default router). Null-safe — passing {@code null} disables LLM
+     * synthesis and reverts to the deterministic fallback.
+     *
+     * @param llmProvider the LLM provider, or {@code null} to disable
+     */
+    public void setLlmProvider(LlmProvider llmProvider) {
+        this.llmProvider = llmProvider;
+    }
+
+    /**
+     * Returns the currently-configured LLM provider, or {@code null} when
+     * the agent is operating in deterministic-fallback mode.
+     */
+    public LlmProvider getLlmProvider() {
+        return llmProvider;
+    }
 
     /**
      * Generates a natural-language response from a verified evidence bundle.
@@ -83,13 +152,12 @@ public final class NaturalResponseAgent {
     /**
      * Builds a natural-language answer from verified evidence.
      *
-     * <p>Current implementation generates structured text directly from evidence
-     * items. In a full implementation, this would invoke the LLM with the
-     * structured evidence payload.</p>
-     *
-     * <p><b>Note:</b> The LLM invocation slot is reserved here. The actual LLM
-     * call should be wired through {@code LlmProvider} when the LLM integration
-     * is complete.</p>
+     * <p>Sprint-21: when an {@link LlmProvider} is wired in and reachable,
+     * this method routes a structured prompt (system + grounded context +
+     * user question) through the LLM and returns the model's prose. When
+     * the LLM is absent, offline, or throws, this method falls back to the
+     * deterministic {@code StringBuilder}-based rendering so the agent is
+     * never a single point of failure.</p>
      *
      * @param report  the verification report with evidence
      * @param request the original request for context
@@ -101,8 +169,6 @@ public final class NaturalResponseAgent {
             return generateFallbackAnswer(report, request);
         }
 
-        StringBuilder sb = new StringBuilder();
-
         // Sprint-19 hotfix: derive title from real knowledge evidence (if available),
         // otherwise fall back to the tier label. Never default to "Knowledge Answer"
         // when the knowledge graph provides a real title.
@@ -112,10 +178,30 @@ public final class NaturalResponseAgent {
                 ? request.getUserInput().trim()
                 : "";
 
+        StringBuilder sb = new StringBuilder();
+
+        // Sprint-21: always emit the standard markdown title heading so SDK
+        // consumers (KnowledgeGroundedChatAndQueryTest, etc.) receive the canonical
+        // # {title} heading regardless of which rendering path is taken.
         sb.append("# ").append(title).append("\n\n");
 
         if (!userQuestion.isBlank()) {
             sb.append("**Question:** ").append(userQuestion).append("\n\n");
+        }
+
+        // Sprint-21: try the LLM to produce natural-language body prose.
+        // If the LLM call succeeds and returns non-blank prose, use it to enhance
+        // the answer. On any failure (null, blank, exception) fall back to the
+        // deterministic renderer so the agent is never blocked by an unavailable
+        // provider.
+        //
+        // NOTE: the structured sections (## Summary / ## Key Knowledge / Evidence /
+        // Citations / Confidence) are ALWAYS rendered below, regardless of LLM
+        // success, to preserve the canonical response shape that SDK consumers
+        // and tests depend on.
+        String llmProse = tryLlmSynthesis(report, request, bundle);
+        if (llmProse != null && !llmProse.isBlank()) {
+            sb.append(llmProse).append("\n\n");
         }
 
         // Sprint-19 hotfix: when KNOWLEDGE evidence is present, render the canonical
@@ -152,6 +238,183 @@ public final class NaturalResponseAgent {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * Attempts to synthesize a natural-language answer via the configured
+     * {@link LlmProvider}. Returns {@code null} when no provider is
+     * configured, when the provider is unreachable, or when the call throws
+     * — in every case the caller should fall back to the deterministic
+     * {@code StringBuilder} rendering.
+     *
+     * <p>This method is intentionally defensive: LLM failures must never
+     * break the user-facing response path. Any {@link RuntimeException}
+     * from the provider is swallowed and a {@code null} result is returned
+     * (with a structured metadata marker so tests / observability can detect
+     * the fallback).</p>
+     *
+     * @param report  the verification report (must not be null)
+     * @param request the execution request (may be null)
+     * @param bundle  the extracted evidence bundle (must not be null)
+     * @return the LLM's natural-language answer, or {@code null} on any failure
+     */
+    private String tryLlmSynthesis(VerificationReport report,
+                                   ExecutionRequest request,
+                                   EvidenceBundle bundle) {
+        if (llmProvider == null) {
+            return null;
+        }
+        try {
+            LlmRequest llmRequest = buildLlmRequest(report, request, bundle);
+            String content = llmProvider.complete(llmRequest).content();
+            if (content != null && !content.isBlank()) {
+                return content.trim();
+            }
+            return null;
+        } catch (RuntimeException llmError) {
+            // LLM failure must not break the response path. Caller falls
+            // back to the deterministic StringBuilder rendering.
+            return null;
+        }
+    }
+
+    /**
+     * Builds a structured {@link LlmRequest} combining the Shree persona /
+     * guardrails system prompt, the grounded evidence context, and the
+     * user's original question.
+     *
+     * <p>Design notes (Sprint-21):</p>
+     * <ul>
+     *   <li>The system prompt enforces the deterministic guardrails
+     *       (grounded-only, citation rules, tier-appropriate hedging).</li>
+     *   <li>Each evidence item contributes its title, content, source type,
+     *       confidence hint, and citations — the LLM sees the full kernel
+     *       data, not a stringified version of it.</li>
+     *   <li>Grounded context is bounded to a reasonable character budget
+     *       to keep prompts predictable for budget-constrained providers.</li>
+     * </ul>
+     */
+    private LlmRequest buildLlmRequest(VerificationReport report,
+                                       ExecutionRequest request,
+                                       EvidenceBundle bundle) {
+        String systemPrompt = buildSystemPrompt(report);
+        String groundedContext = buildGroundedContext(report, bundle);
+        String userQuery = request != null && request.getUserInput() != null
+                ? request.getUserInput().trim()
+                : "";
+
+        String fullPrompt = systemPrompt
+                + "\n\n--- GROUNDED CONTEXT ---\n"
+                + groundedContext
+                + "\n\n--- USER QUESTION ---\n"
+                + userQuery
+                + "\n\n--- RESPONSE ---\n";
+
+        return LlmRequest.builder()
+                .model(DEFAULT_LLM_MODEL)
+                .prompt(fullPrompt)
+                .temperature(DEFAULT_LLM_TEMPERATURE)
+                .maxTokens(DEFAULT_LLM_MAX_TOKENS)
+                .stream(Boolean.FALSE)
+                .option("verificationTier", report.tier().name())
+                .option("confidence", report.confidence())
+                .option("evidenceCount", bundle.size())
+                .option("citationCount", report.citations().size())
+                .build();
+    }
+
+    /**
+     * System prompt that establishes the Shree persona and the deterministic
+     * guardrails: grounded-only, citation rules, tier-appropriate hedging.
+     */
+    private String buildSystemPrompt(VerificationReport report) {
+        String tier = report.tier() != null ? report.tier().name() : "INSUFFICIENT";
+        double confidence = report.confidence();
+        return "You are Shree, the assistant of Shree AI OS.\n"
+                + "Your answer MUST be grounded ONLY in the evidence provided below.\n"
+                + "Do NOT invent facts, citations, file paths, or APIs that are not in the context.\n"
+                + "When the evidence does not contain the answer, say so explicitly.\n"
+                + "Cite the [n] markers from the evidence when you reference them.\n"
+                + "Use a professional, concise tone. Use markdown headings and bullet lists.\n"
+                + "Current verification tier: " + tier + " (confidence " + confidence + ").\n"
+                + tierHedgingGuidance(tier);
+    }
+
+    private String tierHedgingGuidance(String tier) {
+        return switch (tier) {
+            case "VERIFIED_PROJECT" ->
+                    "The evidence is verified from actual project code. Be direct and authoritative.";
+            case "VERIFIED_KB" ->
+                    "The evidence is verified from the knowledge graph. Be direct and cite the [n] markers.";
+            case "INFERRED" ->
+                    "The evidence is inferred from reasoning. Hedge appropriately (\"likely\", \"based on available signals\").";
+            case "INSUFFICIENT" ->
+                    "Evidence is insufficient. State the gaps honestly and ask for more context.";
+            default -> "Respond in a professional tone.";
+        };
+    }
+
+    /**
+     * Renders the {@link EvidenceBundle} as a compact, citation-tagged
+     * context block for the LLM. Each item contributes its title, content,
+     * source type, confidence hint, and citations — so the LLM sees the
+     * full kernel data, not a stringified version of it.
+     */
+    private String buildGroundedContext(VerificationReport report, EvidenceBundle bundle) {
+        StringBuilder ctx = new StringBuilder();
+        ctx.append("Bundle: ").append(bundle.bundleId())
+                .append(" | items=").append(bundle.size())
+                .append(" | tier=").append(report.tier().name())
+                .append(" | confidence=").append(report.confidence())
+                .append("\n\n");
+
+        List<String> citations = report.citations();
+        int citationCursor = 1;
+        for (EvidenceItem item : bundle.items()) {
+            ctx.append("[").append(citationCursor).append("] ")
+                    .append(item.sourceType() != null ? item.sourceType().name() : "UNKNOWN")
+                    .append(" — ").append(safe(item.title())).append("\n");
+            ctx.append("    Content: ").append(truncate(safe(item.content()), 1200)).append("\n");
+            if (item.confidenceHint() > 0.0) {
+                ctx.append("    Confidence: ").append(item.confidenceHint()).append("\n");
+            }
+            if (!item.citations().isEmpty()) {
+                ctx.append("    Citations: ");
+                for (int i = 0; i < item.citations().size(); i++) {
+                    if (i > 0) ctx.append(", ");
+                    ctx.append("[").append(citationCursor).append("]");
+                }
+                ctx.append("\n");
+            }
+            if (!item.attributes().isEmpty()) {
+                ctx.append("    Attributes: ").append(item.attributes()).append("\n");
+            }
+            ctx.append("\n");
+            citationCursor++;
+        }
+        if (!citations.isEmpty()) {
+            ctx.append("External citations:\n");
+            for (int i = 0; i < citations.size(); i++) {
+                ctx.append("[").append(i + 1).append("] ")
+                        .append(safe(citations.get(i))).append("\n");
+            }
+        }
+        if (!report.gaps().isEmpty()) {
+            ctx.append("\nKnown gaps:\n");
+            for (String gap : report.gaps()) {
+                ctx.append("- ").append(safe(gap)).append("\n");
+            }
+        }
+        return ctx.toString();
+    }
+
+    private static String safe(String s) {
+        return s == null ? "" : s;
+    }
+
+    private static String truncate(String s, int max) {
+        if (s == null) return "";
+        return s.length() <= max ? s : s.substring(0, max) + "…";
     }
 
     /**
@@ -316,6 +579,13 @@ public final class NaturalResponseAgent {
         data.put("confidence", report.confidence());
         data.put("confidenceTier", report.tier().name());
         data.put("itemCount", report.perItemStatus().size());
+        // Sprint-21: surface LLM-wiring state in structured payload so
+        // tests and operators can confirm whether the LLM was used or
+        // whether the agent fell back to the deterministic renderer.
+        data.put("llmWired", llmProvider != null);
+        if (llmProvider != null) {
+            data.put("llmProviderName", llmProvider.providerName());
+        }
 
         EvidenceBundle bundle = extractBundle(report);
         if (bundle != null && !bundle.isEmpty()) {

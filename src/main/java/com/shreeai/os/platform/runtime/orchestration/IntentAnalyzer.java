@@ -153,6 +153,8 @@ public final class IntentAnalyzer {
     // These patterns indicate the user is asking about real, analyzed code,
     // not abstract knowledge from documents.
     private static final List<Pattern> PROJECT_INTELLIGENCE_PATTERNS = List.of(
+            // Sprint-21: General project analysis queries (must come before specific class lookups)
+            Pattern.compile("(?i)\\b(analyz(e|es|ing|ed)?)\\s+(my|the|a)?\\s*project\\b"),
             // Class-level queries
             Pattern.compile("(?i)\\b(explain|describe|show|find|get|tell me about)\\s+the\\s+\\w+\\s+class\\b"),
             Pattern.compile("(?i)\\b(explain|describe|show|find|get|tell me about)\\s+\\w+(Controller|Service|Repository|SDK|Engine|Stage)\\b"),

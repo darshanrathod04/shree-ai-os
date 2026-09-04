@@ -43,3 +43,16 @@ hs_err_pid*
 
 sessions/
 mvn_gate.log
+
+# Local environment — never commit credentials
+.env
+.env.local
+
+
+# Temporary test scripts and logs
+*.txt
+*.err
+*.ps1
+server-pid*
+raw_d01.json
+projects.json

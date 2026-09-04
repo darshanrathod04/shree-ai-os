@@ -17,6 +17,7 @@ import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
 import com.shreeai.os.platform.kernels.response.model.ResponseStyle;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -34,7 +35,9 @@ import java.util.Objects;
  *   <ol type="a">
  *     <li>{@link EvidenceAgent#extract(com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState)} → {@code EvidenceBundle}</li>
  *     <li>{@link VerificationAgent#verify(EvidenceBundle)} → {@code VerificationReport}</li>
- *     <li>{@link NaturalResponseAgent#generate(VerificationReport, ExecutionRequest)} → {@code SynthesizedResponse}</li>
+ *     <li>Sprint-21 fix: only capture chiefMeta; authoritative synthesis is
+ *         deferred to {@code DefaultRuntimeService} after the 11-stage pipeline
+ *         populates the {@code PipelineExecutionState}.</li>
  *   </ol>
  *   <li>If workspace is unhealthy or all kernels blocked:</li>
  *   <ol type="a">
@@ -124,11 +127,51 @@ public final class ChiefIntelligenceAgent {
             return buildDiagnosticResponse(plan, diagnostics);
         }
 
+        // Sprint-21: check workspace/project diagnosis BEFORE building the
+        // pre-flight stub. If there is a hard failure (FAIL status, not
+        // WARN), return the real diagnostic response (with answer text)
+        // instead of the empty-stub so SDK callers receive actionable
+        // feedback. WARN status is acceptable (e.g. WORKSPACE without
+        // projectPath is a soft warning, not a hard failure).
+        // The canonical synthesis is still performed in DefaultRuntimeService
+        // after the pipeline runs, but the pre-flight stub's answer text is
+        // never used downstream.
+        if (diagnostics.hasFailures()) {
+            return buildDiagnosticResponse(plan, diagnostics);
+        }
+
+        // Sprint-21: pre-pipeline chief pre-flight is now observability-only.
+        // The canonical pipeline that runs after this method returns has not
+        // produced any evidence yet, so any bundle/verification/natural
+        // response built here would be built against an empty bundle and
+        // would be discarded. The authoritative synthesis is performed
+        // once in DefaultRuntimeService after the 11-stage pipeline
+        // populates the PipelineExecutionState.
         EvidenceBundle bundle = evidenceAgent.extract(request, diagnostics);
         VerificationReport verification = verificationAgent.verify(bundle);
-        SynthesizedResponse response = naturalResponseAgent.generate(verification, request);
+        SynthesizedResponse stub = buildPreFlightStub(verification);
 
-        return attachChiefMetadata(response, chiefDecision, plan, verification, diagnostics);
+        return attachChiefMetadata(stub, chiefDecision, plan, verification, diagnostics);
+    }
+
+    /**
+     * Sprint-21: builds a minimal pre-flight {@link SynthesizedResponse}
+     * whose {@code answer} text is never used downstream — only the
+     * {@code structuredData} (chief decision id, plan id, verification
+     * tier, confidence, workspace health) is captured by
+     * {@code DefaultRuntimeService}. This replaces the previously
+     * discarded full {@code naturalResponseAgent.generate()} pass and
+     * eliminates the double-synthesis loop.
+     */
+    private SynthesizedResponse buildPreFlightStub(VerificationReport verification) {
+        return new SynthesizedResponse(
+                "",
+                List.of(),
+                verification.confidence(),
+                com.shreeai.os.platform.kernels.response.model.ResponseStyle.PROFESSIONAL,
+                Instant.now(),
+                Map.of()
+        );
     }
 
     /**
