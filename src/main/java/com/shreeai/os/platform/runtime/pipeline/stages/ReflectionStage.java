@@ -19,6 +19,11 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
 import com.shreeai.os.platform.runtime.pipeline.PipelineResult;
 import com.shreeai.os.platform.runtime.pipeline.PipelineStageDescriptor;
+import com.shreeai.os.platform.runtime.reflection.ReflectionAnalyticsService;
+import com.shreeai.os.platform.runtime.reflection.ReflectionHistory;
+import com.shreeai.os.platform.runtime.reflection.ReflectionImportanceScorer;
+import com.shreeai.os.platform.runtime.reflection.ReflectionMemoryBridge;
+import com.shreeai.os.platform.runtime.reflection.ReflectionRepository;
 import com.shreeai.os.platform.sdk.events.EventType;
 import com.shreeai.os.platform.sdk.events.RuntimeEvent;
 import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
@@ -54,15 +59,42 @@ public final class ReflectionStage implements ExecutionStage {
 
     private final DefaultReflectionEngine reflectionEngine;
     private final MemoryService memoryService;
+    private final ReflectionRepository reflectionRepository;
+    private final ReflectionImportanceScorer importanceScorer;
+    private final ReflectionMemoryBridge memoryBridge;
+    private final ReflectionAnalyticsService analyticsService;
 
     /**
-     * Creates a new ReflectionStage.
+     * Creates a new ReflectionStage with full reflection intelligence (Phase 1.5).
+     *
+     * @param memoryService       the memory service used to persist lessons (may be null)
+     * @param reflectionRepository the reflection repository (may be null)
+     * @param importanceScorer     the importance scorer (may be null)
+     * @param memoryBridge         the memory bridge (may be null)
+     * @param analyticsService     the analytics service (may be null)
+     */
+    public ReflectionStage(
+            MemoryService memoryService,
+            ReflectionRepository reflectionRepository,
+            ReflectionImportanceScorer importanceScorer,
+            ReflectionMemoryBridge memoryBridge,
+            ReflectionAnalyticsService analyticsService
+    ) {
+        this.memoryService = memoryService;
+        this.reflectionRepository = reflectionRepository;
+        this.importanceScorer = importanceScorer != null ? importanceScorer : new ReflectionImportanceScorer();
+        this.memoryBridge = memoryBridge;
+        this.analyticsService = analyticsService;
+        this.reflectionEngine = new DefaultReflectionEngine();
+    }
+
+    /**
+     * Creates a new ReflectionStage (backward-compatible).
      *
      * @param memoryService the memory service used to persist lessons (may be null)
      */
     public ReflectionStage(MemoryService memoryService) {
-        this.memoryService = memoryService;
-        this.reflectionEngine = new DefaultReflectionEngine();
+        this(memoryService, null, null, null, null);
     }
 
     @Override
@@ -103,8 +135,18 @@ public final class ReflectionStage implements ExecutionStage {
                 state.addMetadata("reflectionLessonMemoryId", lessonId);
             }
 
+            // Phase 1.5: Compute importance score and persist to repository
+            int importanceScore = computeImportanceScore(context, analysis);
+            String memoryBridgeId = persistReflection(context, requestId, analysis, importanceScore);
+
+            if (memoryBridgeId != null) {
+                state.addMetadata("reflectionMemoryId", memoryBridgeId);
+            }
+            state.addMetadata("reflectionImportanceScore", importanceScore);
+
             state.addMessage("Reflection: " + analysis.summary());
             publishReflectionEvent(context, requestId, analysis);
+            publishReflectionPersistedEvent(context, requestId, analysis, importanceScore, memoryBridgeId);
 
             return chain.next(context, state);
 
@@ -182,6 +224,120 @@ public final class ReflectionStage implements ExecutionStage {
                         )
                 )
         );
+    }
+
+    /**
+     * Phase 1.5: Computes importance score for the reflection.
+     */
+    private int computeImportanceScore(PipelineContext context, ReflectionAnalysis analysis) {
+        String tenantId = resolveTenantId(context);
+        List<List<String>> previousLessons = resolvePreviousLessons(tenantId);
+        return importanceScorer.score(
+                analysis.verdict().name(),
+                analysis.score(),
+                analysis.lessons(),
+                previousLessons
+        );
+    }
+
+    /**
+     * Phase 1.5: Persists reflection to repository and memory bridge.
+     */
+    private String persistReflection(
+            PipelineContext context,
+            String requestId,
+            ReflectionAnalysis analysis,
+            int importanceScore
+    ) {
+        String tenantId = resolveTenantId(context);
+        String executionId = resolveExecutionId(context, requestId);
+        String rootCause = analysis.verdict() == ReflectionVerdict.FAILURE
+                ? "Execution scored below threshold"
+                : null;
+
+        // Save to repository
+        if (reflectionRepository != null) {
+            ReflectionHistory history = new ReflectionHistory(
+                    tenantId,
+                    tenantId,
+                    executionId,
+                    requestId,
+                    analysis.verdict().name(),
+                    analysis.score(),
+                    importanceScore,
+                    analysis.lessons(),
+                    rootCause,
+                    analysis.retryAdvised(),
+                    analysis.evaluatedAt()
+            );
+            reflectionRepository.save(history);
+        }
+
+        // Bridge to memory kernel
+        if (memoryBridge != null) {
+            return memoryBridge.storeLessons(
+                    tenantId,
+                    executionId,
+                    requestId,
+                    analysis.verdict().name(),
+                    analysis.score(),
+                    analysis.lessons()
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * Phase 1.5: Publishes REFLECTION_PERSISTED event.
+     */
+    private void publishReflectionPersistedEvent(
+            PipelineContext context,
+            String requestId,
+            ReflectionAnalysis analysis,
+            int importanceScore,
+            String memoryBridgeId
+    ) {
+        Object value = context.getAttribute("runtimeEventBus");
+        if (!(value instanceof RuntimeEventBus bus)) {
+            return;
+        }
+
+        bus.publish(
+                new RuntimeEvent(
+                        EventType.REFLECTION_PERSISTED,
+                        requestId,
+                        "Reflection",
+                        Instant.now(),
+                        Map.of(
+                                "executionId", resolveExecutionId(context, requestId),
+                                "tenantId", resolveTenantId(context),
+                                "verdict", analysis.verdict().name(),
+                                "score", analysis.score(),
+                                "importanceScore", importanceScore,
+                                "reflectionMemoryId", memoryBridgeId != null ? memoryBridgeId : "none"
+                        )
+                )
+        );
+    }
+
+    private String resolveTenantId(PipelineContext context) {
+        Object value = context.getAttribute("tenantId");
+        return value instanceof String s && !s.isBlank() ? s : "default";
+    }
+
+    private String resolveExecutionId(PipelineContext context, String fallback) {
+        Object value = context.getAttribute("executionId");
+        return value instanceof String s && !s.isBlank() ? s : fallback;
+    }
+
+    private List<List<String>> resolvePreviousLessons(String tenantId) {
+        if (reflectionRepository == null) {
+            return List.of();
+        }
+        return reflectionRepository.findByTenantId(tenantId, 5).stream()
+                .map(ReflectionHistory::lessons)
+                .collect(Collectors.toList());
     }
 
     private static String stringOf(Map<String, Object> metadata, String key) {

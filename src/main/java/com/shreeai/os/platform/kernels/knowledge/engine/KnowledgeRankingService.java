@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.kernels.knowledge.engine;
 
+import com.shreeai.os.platform.kernels.knowledge.engine.QueryNormalizer;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 
 import java.time.Instant;
@@ -37,9 +38,9 @@ public final class KnowledgeRankingService {
      *   <li>Relationship strength (number of relationships)</li>
      * </ol>
      *
-     * @param query the search query
+     * @param query          the search query
      * @param knowledgeNodes the knowledge nodes to rank
-     * @param limit the maximum number of results to return
+     * @param limit          the maximum number of results to return
      * @return ranked list of knowledge nodes (most relevant first)
      */
     public List<KnowledgeNode> rankByRelevance(String query, List<KnowledgeNode> knowledgeNodes, int limit) {
@@ -47,7 +48,8 @@ public final class KnowledgeRankingService {
             return List.of();
         }
 
-        String queryLower = query.toLowerCase();
+        // Normalize the query to enable proper matching (removes interrogative prefixes, etc.)
+        String queryLower = QueryNormalizer.normalize(query);
 
         return knowledgeNodes.stream()
                 .sorted((a, b) -> {
@@ -72,7 +74,7 @@ public final class KnowledgeRankingService {
      * </ul>
      *
      * @param queryLower the lowercase query
-     * @param node the knowledge node to score
+     * @param node       the knowledge node to score
      * @return relevance score (0-100)
      */
     private double calculateRelevanceScore(String queryLower, KnowledgeNode node) {
@@ -149,9 +151,9 @@ public final class KnowledgeRankingService {
     /**
      * Ranks knowledge nodes by similarity to a text.
      *
-     * @param text the reference text
+     * @param text           the reference text
      * @param knowledgeNodes the knowledge nodes to rank
-     * @param limit the maximum number of results
+     * @param limit          the maximum number of results
      * @return ranked knowledge nodes
      */
     public List<KnowledgeNode> rankBySimilarity(String text, List<KnowledgeNode> knowledgeNodes, int limit) {

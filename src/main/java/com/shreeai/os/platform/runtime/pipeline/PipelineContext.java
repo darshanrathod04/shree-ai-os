@@ -1,9 +1,9 @@
 package com.shreeai.os.platform.runtime.pipeline;
 
-import com.shreeai.os.platform.legacy.cognition.CognitiveDecision;
-import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
-import com.shreeai.os.platform.legacy.execution.ExecutionMetadata;
-import com.shreeai.os.platform.legacy.production.ResolvedContext;
+import com.shreeai.os.platform.kernels.cognitive.model.CognitiveDecision;
+import com.shreeai.os.platform.kernels.context.model.ResolvedContext;
+import com.shreeai.os.platform.kernels.execution.model.ExecutionRequest;
+import com.shreeai.os.platform.runtime.pipeline.model.ExecutionMetadata;
 import com.shreeai.os.platform.validation.ValidationResult;
 
 import java.time.Instant;
@@ -222,45 +222,6 @@ public final class PipelineContext {
          */
         public Builder executionRequest(ExecutionRequest executionRequest) {
             this.executionRequest = executionRequest;
-            return this;
-        }
-
-        /**
-         * Legacy compatibility adapter (gate R2 of
-         * docs/architecture/LEGACY_MIGRATION_REPORT.md).
-         *
-         * Converts the legacy execution request to the canonical ExecutionRequest:
-         * userInput maps to payload, intent maps to requestType, and decisionId /
-         * capabilityName are preserved as metadata. The Runtime remains the single
-         * source of truth; no logic is duplicated.
-         *
-         * @deprecated Remove in Phase 2 once all call sites build the canonical
-n         *             ExecutionRequest directly.
-         */
-        @Deprecated
-        public Builder executionRequest(
-                com.shreeai.os.platform.legacy.execution.ExecutionRequest legacyRequest) {
-            if (legacyRequest == null) {
-                this.executionRequest = null;
-                return this;
-            }
-            ExecutionRequest.Builder canonical = ExecutionRequest.builder()
-                    .requestId(legacyRequest.getRequestId() != null
-                            ? legacyRequest.getRequestId()
-                            : java.util.UUID.randomUUID().toString())
-                    .requestType(legacyRequest.getIntent() != null
-                            ? legacyRequest.getIntent()
-                            : "CHAT")
-                    .payload(legacyRequest.getUserInput() != null
-                            ? legacyRequest.getUserInput()
-                            : "");
-            if (legacyRequest.getDecisionId() != null) {
-                canonical.addMetadata("decisionId", legacyRequest.getDecisionId());
-            }
-            if (legacyRequest.getCapabilityName() != null) {
-                canonical.addMetadata("capabilityName", legacyRequest.getCapabilityName());
-            }
-            this.executionRequest = canonical.build();
             return this;
         }
 

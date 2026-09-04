@@ -7,7 +7,7 @@ import com.shreeai.os.platform.kernels.cognitive.engine.GoalIntelligenceEngine.G
 import com.shreeai.os.platform.kernels.cognitive.engine.GoalIntelligenceEngine.Priority;
 import com.shreeai.os.platform.kernels.response.engine.DefaultResponseSynthesizer;
 import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
-import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
+import com.shreeai.os.platform.kernels.execution.model.ExecutionRequest;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
@@ -74,14 +74,14 @@ public class DefaultResponseSynthesizerTest {
                 .requestId("plan-render-test")
                 .requestType("CHAT")
                 .payload(GOAL)
-                .metadata(Map.of(
+                .parameters(Map.of(
                         "operation", operation,
                         "objective", GOAL))
                 .build();
 
         return PipelineContext.builder()
                 .executionRequest(request)
-                .addAttribute("requestMetadata", request.metadata())
+                .addAttribute("requestMetadata", request.getMetadata())
                 .build();
     }
 
@@ -91,12 +91,12 @@ public class DefaultResponseSynthesizerTest {
                 .requestId("plain-render-test")
                 .requestType("CHAT")
                 .payload("Explain Java streams")
-                .metadata(Map.of())
+                .parameters(Map.of())
                 .build();
 
         return PipelineContext.builder()
                 .executionRequest(request)
-                .addAttribute("requestMetadata", request.metadata())
+                .addAttribute("requestMetadata", request.getMetadata())
                 .build();
     }
 

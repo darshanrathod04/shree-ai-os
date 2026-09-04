@@ -6,6 +6,7 @@ import com.shreeai.os.platform.kernels.cognitive.engine.GoalIntelligenceEngine.G
 import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
 import com.shreeai.os.platform.kernels.planning.api.PlanningService;
 import com.shreeai.os.platform.kernels.planning.api.PlanningTypes;
+import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
 import com.shreeai.os.platform.kernels.planning.model.PlanningConstraints;
 import com.shreeai.os.platform.kernels.planning.model.PlanningId;
 import com.shreeai.os.platform.kernels.planning.model.PlanningObjective;
@@ -455,6 +456,20 @@ public final class PlanningStage implements ExecutionStage {
                     );
 
             /*
+             * Sprint-11: Extract the domain-aware PlanBlueprint that the
+             * DefaultPlanningService embedded in objectiveMetadata. The
+             * blueprint carries rich phase/milestone/risk data used by
+             * DefaultResponseSynthesizer to render an executive-grade plan.
+             */
+            PlanBlueprint planBlueprint = null;
+            if (objective != null && objective.metadata() != null) {
+                Object embedded = objective.metadata().get("planBlueprint");
+                if (embedded instanceof PlanBlueprint bp) {
+                    planBlueprint = bp;
+                }
+            }
+
+            /*
              * -------------------------------------------------------------
              * 10. Preserve Goal Intelligence in runtime state
              * -------------------------------------------------------------
@@ -499,6 +514,13 @@ public final class PlanningStage implements ExecutionStage {
                     "planningObjective",
                     objective
             );
+
+            if (planBlueprint != null) {
+                state.addMetadata("planBlueprint", planBlueprint);
+                state.addMetadata(
+                        "planBlueprintDomain",
+                        planBlueprint.metadata().getOrDefault("domain", "GENERAL"));
+            }
 
             state.addMetadata(
                     "planningCompleted",

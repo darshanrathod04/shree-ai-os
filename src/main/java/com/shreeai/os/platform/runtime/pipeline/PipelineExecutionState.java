@@ -1,6 +1,6 @@
 package com.shreeai.os.platform.runtime.pipeline;
 
-import com.shreeai.os.platform.legacy.execution.ExecutionMetadata;
+import com.shreeai.os.platform.runtime.pipeline.model.ExecutionMetadata;
 
 import java.time.Instant;
 import java.util.ArrayList;

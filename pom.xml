@@ -8,10 +8,10 @@
 		<version>4.0.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>platform</groupId>
-	<artifactId>shreeAiOS</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>ai-agent</name>
+	<groupId>com.shreeai</groupId>
+	<artifactId>shree-ai-os</artifactId>
+	<version>1.0.0</version>
+	<name>shree-ai-os</name>
 	<description>ShreeAIOS</description>
 	<url/>
 	<licenses>
@@ -68,10 +68,64 @@
             <optional>true</optional>
         </dependency>
 
+		<!-- Microsoft ONNX Runtime for In-Process Inference -->
+		<dependency>
+			<groupId>com.microsoft.onnxruntime</groupId>
+			<artifactId>onnxruntime</artifactId>
+			<version>1.17.1</version>
+		</dependency>
+
+		<!-- DJL HuggingFace Tokenizer (Zero-dependency tokenization in Java) -->
+		<dependency>
+			<groupId>ai.djl.huggingface</groupId>
+			<artifactId>tokenizers</artifactId>
+			<version>0.28.0</version>
+		</dependency>
+
+        <!-- ==========================================================
+             PHASE 1 — Real Intelligence Engines: persistence adapters
+             (adapters only; the platform boots with zero infrastructure)
+             ========================================================== -->
+
+        <!-- PostgreSQL driver (PgVector adapters, L2 ledger in Phase 2) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Neo4j driver (KnowledgeGraphStore adapter; lazily initialized) -->
+        <dependency>
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            <version>5.28.0</version>
+        </dependency>
+
+        <!-- JavaParser for AST-based project intelligence (Sprint-13) -->
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.26.3</version>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- PHASE 1: container-backed integration tests (skipped when no Docker) -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.20.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.20.4</version>
             <scope>test</scope>
         </dependency>
 

@@ -7,8 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.shreeai.os.platform.kernels.planning.analyzer.PlanningAnalyzer;
+import com.shreeai.os.platform.kernels.planning.engine.planners.DomainPlannerRegistry;
 import com.shreeai.os.platform.kernels.planning.model.Goal;
 import com.shreeai.os.platform.kernels.planning.model.GoalConstraints;
+import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
+import com.shreeai.os.platform.kernels.planning.model.PlanningAnalysisResult;
 import com.shreeai.os.platform.kernels.planning.model.PlanningId;
 import com.shreeai.os.platform.kernels.planning.model.PlanningObjective;
 import com.shreeai.os.platform.kernels.planning.model.Priority;
@@ -48,6 +52,12 @@ import com.shreeai.os.platform.kernels.planning.model.ValidationCriteria;
  * @since 1.0
  */
 public final class DefaultPlanningProcessingEngine implements PlanningProcessingEngine {
+
+    /** Sprint-11 domain planner registry. */
+    private final DomainPlannerRegistry plannerRegistry = new DomainPlannerRegistry();
+
+    /** Sprint-11 planning intent analyzer. */
+    private final PlanningAnalyzer analyzer = new PlanningAnalyzer();
 
     /**
      * Creates a new {@code DefaultPlanningProcessingEngine}.
@@ -261,5 +271,38 @@ public final class DefaultPlanningProcessingEngine implements PlanningProcessing
                 null,
                 null
         );
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Sprint-11 — Domain-Aware Planning
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Processes a domain-aware planning operation (Sprint-11).
+     *
+     * <ol>
+     *   <li>Analyzes the objective text with {@link PlanningAnalyzer}</li>
+     *   <li>Selects the appropriate {@link com.shreeai.os.platform.kernels.planning.engine.planners.DomainPlanner}</li>
+     *   <li>Builds a rich {@link PlanBlueprint} with phases, milestones, risks, and metrics</li>
+     * </ol>
+     *
+     * @param objective the planning objective (must not be {@code null})
+     * @return a fully-populated {@link PlanBlueprint}
+     */
+    @Override
+    public PlanBlueprint processDomainPlanning(PlanningObjective objective) {
+        Objects.requireNonNull(objective, "PlanningObjective must not be null");
+
+        // Extract the objective description from the canonical description field,
+        // falling back to the objectiveId for legacy callers.
+        String text = objective.description() != null && !objective.description().isBlank()
+                ? objective.description()
+                : objective.planningId().value();
+
+        // Step 1: Analyze the input deterministically
+        PlanningAnalysisResult analysis = analyzer.analyze(text);
+
+        // Step 2: Select planner and build the blueprint
+        return plannerRegistry.buildPlan(analysis);
     }
 }
