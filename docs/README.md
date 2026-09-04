@@ -1,234 +1,253 @@
-# Shree AI OS Documentation
+# Shree AI OS
 
-## Document Information
+### Build Intelligent Java Applications with Memory, Knowledge, Planning & Multi-Agent Runtime
 
-| Field | Value |
-|-------|-------|
-| **Document ID** | DOC-DOCS-001 |
-| **Document Type** | Documentation Index |
-| **Platform** | Shree AI OS |
-| **Version** | 1.0 |
-| **Status** | Active |
-| **Owner** | Chief AI Architect |
-| **Founder** | Darshan Rathod |
-| **Classification** | Platform Knowledge |
-| **Created** | 11 July 2026 |
-| **Last Updated** | 11 July 2026 |
+> **Developer Preview v1.0** • Java 21 • Spring Boot • Privacy-First AI Runtime
 
 ---
 
-## Purpose
+## What is Shree AI OS?
 
-This directory contains the official documentation repository for Shree AI OS.
+Shree AI OS is an **AI Runtime Platform for Java** that helps developers build intelligent applications inside their own JVM.
 
-The documentation system is organized into three primary categories:
+Instead of treating an LLM as the center of your application, Shree AI OS provides a deterministic runtime with memory, knowledge retrieval, planning, reasoning, reflection, identity, and real-time streaming. Your application interacts with a structured runtime—not directly with prompts.
 
-### Foundational Documents
-
-The Foundation Layer establishes the platform's identity, purpose, principles, organization, and operational rules. Every contributor must read these documents before contributing.
-
-- **Foundation Layer** — Index to all foundation documents
-- **Constitution** — Supreme governing document
-- **Vision** — Platform vision and strategic direction
-- **Mission** — Platform mission and objectives
-- **Organization** — Engineering organization and governance
-- **Workflow** — Engineering workflow and processes
-- **Rules** — Binding engineering rules
-
-### Platform Documents
-
-Governance and strategic documents that define the platform's identity, principles, and long-term direction.
-
-- **Philosophy** — Engineering philosophy and beliefs
-- **Doctrine** — Platform doctrine and core tenets
-
-### Engineering Documents
-
-Technical documentation that guides implementation, architecture, and operational practices.
-
-- **Architecture** — System architecture and design documents
-- **Standards** — Engineering standards and conventions
-- **Specifications** — Technical specifications and contracts
-- **ADR** — Architecture Decision Records
-- **Decisions** — Platform decisions and rationale
-
-### Operational Documents
-
-Documentation supporting platform evolution, knowledge management, and operational continuity.
-
-- **Roadmap** — Platform evolution and milestones
-- **Research** — Research initiatives and findings
-- **Handbook** — Contributor and operational guides
-- **Journal** — Development logs and reflections
-- **Transition** — Migration and transition guides
+**Design Principle:** *The LLM is the final response generator, not the decision maker.*
 
 ---
 
-## Constitutional Authority
+## Why Shree AI OS?
 
-All documentation within this repository derives authority from the **Shree AI OS Constitution** (`docs/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md`).
+Traditional AI applications:
 
-The Constitution is the supreme governing document. No engineering decision, architectural choice, or implementation practice shall contradict constitutional principles.
+`User → Prompt → LLM → Response`
+
+Shree AI OS:
+
+`User → Runtime → Memory → Knowledge → Planning → Reasoning → Reflection → LLM → Grounded Response`
+
+This architecture allows your application to remain explainable, testable, and extensible.
 
 ---
 
-## Documentation Structure
+## Core Features
 
+| Capability               | Description                                                     |
+| ------------------------ | --------------------------------------------------------------- |
+| **Memory SDK**           | Store and recall episodic, semantic and conversational memories |
+| **Knowledge SDK**        | Hybrid RAG with document ingestion and citation-based retrieval |
+| **Planning SDK**         | Create, refine and validate structured execution plans          |
+| **Reasoning Engine**     | Deterministic evidence-based reasoning pipeline                 |
+| **Reflection Engine**    | Self-evaluation, analytics and learning history                 |
+| **Identity SDK**         | Identity resolution with request-scoped context                 |
+| **Project SDK**          | Analyze Java projects and understand architecture               |
+| **Real Token Streaming** | Live streaming from Gemini, OpenAI and Ollama                   |
+| **BYOK**                 | Bring Your Own API Key with runtime hot reload                  |
+| **Event Bus**            | Publish/subscribe runtime events for intelligent workflows      |
+
+---
+
+## 5-Layer Architecture
+
+`Application`
+
+`↓`
+
+`SDK Layer`
+
+`Memory • Knowledge • Planning • Reflection • Identity`
+
+`↓`
+
+`Runtime Orchestration`
+
+`Intent Router • Multi-Agent • Event Bus • LLM Router`
+
+`↓`
+
+`Kernel Layer`
+
+`Memory • Knowledge • Planning • Execution • Cognitive`
+
+`↓`
+
+`Providers`
+
+`Gemini • OpenAI • Ollama • In-Memory`
+
+---
+
+## Quick Start
+
+### 1. Add the dependency
+
+```xml
+<dependency>
+    <groupId>com.shreeai</groupId>
+    <artifactId>shree-ai-os</artifactId>
+    <version>1.0.0</version>
+</dependency>
 ```
-docs/
-├── README.md                          # This file - Documentation index
-├── DOCUMENT-INDEX.md                  # Searchable document catalog
-├── foundation/                        # Foundation Layer index
-│   └── README.md
-├── constitution/                      # Platform Constitution
-│   └── CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md
-├── vision/                            # Platform vision documents
-│   ├── README.md
-│   └── VISION-001-PLATFORM-VISION.md
-├── mission/                           # Platform mission documents
-│   ├── README.md
-│   └── MISSION-001-PLATFORM-MISSION.md
-├── organization/                      # Engineering organization
-│   ├── README.md
-│   └── ORG-001-ENGINEERING-ORGANIZATION.md
-├── workflow/                          # Engineering workflow
-│   ├── README.md
-│   └── WORKFLOW-001-ENGINEERING-WORKFLOW.md
-├── rules/                             # Engineering rules
-│   ├── README.md
-│   └── RULE-001-PLATFORM-ENGINEERING-RULES.md
-├── architecture/                      # Architecture documentation
-│   ├── README.md
-│   └── runtime/                       # Runtime architecture
-├── standards/                         # Engineering standards
-├── adr/                               # Architecture Decision Records
-├── specifications/                    # Technical specifications
-├── doctrine/                          # Platform doctrine
-├── philosophy/                        # Engineering philosophy
-├── roadmap/                           # Platform roadmap
-├── research/                          # Research documents
-├── decisions/                         # Decision records
-├── handbook/                          # Contributor handbook
-├── journal/                           # Development journal
-└── transition/                        # Transition guides
+
+### 2. Create the runtime
+
+```java
+import com.shreeai.os.platform.ShreeAI;
+
+ShreeAI shree = ShreeAI.builder()
+        .build();
+```
+
+### 3. Chat
+
+```java
+var response = shree.chat(
+    "Create a 30 minute strength workout"
+);
+
+System.out.println(response.message());
 ```
 
 ---
 
-## Navigation
+## Memory Example
 
-### Foundation Layer
-- [Foundation Index](foundation/README.md) — Foundation Layer overview
-- [Constitution](governance/constitution/CONST-001-CONSTITUTION-OF-SHREE-AI-OS.md) — Supreme governing document
-- [Vision](philosophy/vision/VISION-001-PLATFORM-VISION.md) — Platform vision and strategic direction
-- [Mission](philosophy/mission/MISSION-001-PLATFORM-MISSION.md) — Platform mission and objectives
-- [Organization](governance/organization/ORG-001-ENGINEERING-ORGANIZATION.md) — Engineering organization
-- [Workflow](workflow/WORKFLOW-001-ENGINEERING-WORKFLOW.md) — Engineering workflow
-- [Rules](governance/rules/RULE-001-PLATFORM-ENGINEERING-RULES.md) — Engineering rules
+```java
+shree.memory().store(
+    "preferred-language",
+    "Java"
+);
 
-### Platform Governance
-- [Philosophy](philosophy/) — Engineering philosophy
-- [Doctrine](philosophy/doctrine/) — Platform doctrine and tenets
-
-### Architecture & Design
-- [Architecture](architecture/) — System architecture and ADD
-- [Architecture Decision Records](adr/) — ADR index and records
-- [Specifications](specifications/) — Technical specifications
-- [Decisions](decisions/) — Platform decisions
-
-### Engineering Standards
-- [Standards](standards/) — Engineering standards and conventions
-- [Handbook](handbook/) — Contributor and operational guides
-
-### Platform Evolution
-- [Roadmap](roadmap/) — Platform evolution and milestones
-- [Research](research/) — Research initiatives
-- [Journal](journal/) — Development logs and reflections
-- [Transition](transition/) — Migration and transition guides
-
-### Document Catalog
-- [Document Index](DOCUMENT-INDEX.md) — Searchable catalog of all documents
-
----
-
-## Document Template
-
-All official documents follow the standard template:
-
-```
----------------------------------------------------------
-
-Document ID
-
-Document Type
-
-Platform
-
-Version
-
-Status
-
-Owner
-
-Founder
-
-Classification
-
-Created
-
-Last Updated
-
----------------------------------------------------------
+var memories = shree.memory().recall("language");
 ```
 
-This ensures consistency and professionalism across all platform documentation.
+---
+
+## Knowledge RAG Example
+
+```java
+shree.knowledge().ingest(
+    "Java is a programming language created by James Gosling."
+);
+
+var results = shree.knowledge().search(
+    "programming language"
+);
+```
 
 ---
 
-## Principles
+## Planning Example
 
-### Documentation as Production Asset
-
-Documentation is treated as a first-class platform asset. Every document is:
-- Professionally formatted
-- Consistently structured
-- Clearly owned
-- Version controlled
-- Constitutionally aligned
-
-### Knowledge Preservation
-
-Knowledge is preserved as carefully as software. The repository serves as the institutional memory of Shree AI OS.
-
-### Separation of Concerns
-
-Platform knowledge is maintained separately from platform source code to ensure:
-- Clear governance
-- Independent evolution
-- Reduced coupling
-- Improved maintainability
+```java
+var plan = shree.planning()
+        .createPlanTyped(
+            "api",
+            "Build REST API",
+            PlanningScope.APPLICATION,
+            PlanningConstraints.defaults()
+        );
+```
 
 ---
 
-## Contributing
+## Real Streaming
 
-All documentation contributions must:
-1. Align with the Constitution
-2. Follow the standard document template
-3. Maintain professional formatting
-4. Include clear ownership
-5. Be submitted through proper governance channels
+```java
+shree.chatStream(
+    "Explain JVM architecture",
+    token -> System.out.print(token)
+);
+```
 
-See [Handbook](handbook/) for detailed contribution guidelines.
+Supports live streaming from:
+
+* Google Gemini
+* OpenAI
+* Ollama
+
+with automatic provider fallback.
 
 ---
 
-## Constitutional Principle
+## Build Applications Like
 
-> **Documentation is a first-class platform asset.**
+* AI Customer Support
+* Medical Intelligence
+* Financial Analytics
+* Developer Copilot
+* Fitness Coach
+* Education Platform
+* Enterprise Knowledge Assistant
 
 ---
 
-**Platform:** Shree AI OS  
-**Maintained By:** Chief AI Architect  
-**Constitutional Authority:** CONST-001
+## Public SDKs
+
+| SDK           | Purpose                       |
+| ------------- | ----------------------------- |
+| MemorySDK     | Memory management             |
+| KnowledgeSDK  | Document ingestion & search   |
+| PlanningSDK   | Planning & execution          |
+| ReasoningSDK  | Deterministic reasoning       |
+| ReflectionSDK | Reflection & analytics        |
+| InferenceSDK  | Structured inference          |
+| IdentitySDK   | Identity resolution           |
+| ExecutionSDK  | Workflow execution            |
+| ProjectSDK    | Java project intelligence     |
+| SettingsSDK   | BYOK & provider configuration |
+
+---
+
+## Runtime Highlights
+
+* 11-stage orchestration pipeline
+* Multi-agent execution
+* Hybrid RAG retrieval
+* Real token streaming
+* BYOK hot reload
+* Tenant boundary enforcement
+* Runtime event bus
+* Project intelligence
+
+---
+
+## Documentation
+
+| Guide                             | Description                      |
+| --------------------------------- | -------------------------------- |
+| **PLATFORM_IDENTITY.md**          | Runtime architecture & lifecycle |
+| **DEVELOPER_CAPABILITIES.md**     | Complete SDK reference           |
+| **WORKING_STATUS.md**             | Verified implementation status   |
+| **QUICKSTART_DEVELOPER_GUIDE.md** | End-to-end developer tutorial    |
+
+---
+
+## Project Status
+
+**Developer Preview v1.0**
+
+Current focus:
+
+* Stable public SDK
+* Production-ready runtime APIs
+* Developer feedback
+* Performance & usability improvements
+
+No breaking API changes are planned during the Developer Preview unless required by critical feedback.
+
+---
+
+## Philosophy
+
+> **AI should be infrastructure, not just prompts.**
+
+Shree AI OS combines deterministic software engineering with modern language models to help developers build intelligent, grounded, and extensible Java applications.
+
+---
+
+**Founder:** Darshan Rathod
+
+**Language:** Java 21
+
+**Status:** Developer Preview v1.0
