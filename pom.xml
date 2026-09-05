@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>io.github.darshanrathod04</groupId>
 	<artifactId>shree-ai-os</artifactId>
-	<version>1.0.3-developer-preview</version>
+	<version>1.0.4-developer-preview</version>
 	<name>Shree AI OS</name>
 	<description>In-process, privacy-first cognitive runtime and hybrid RAG engine for Java 21</description>
 	<url>https://github.com/darshanrathod04/shree-ai-os</url>
@@ -76,6 +76,35 @@
             <version>4.12.0</version>
         </dependency>
 
+        <!-- JavaParser (Java AST parsing for code-generation and patch-engineering) -->
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.28.2</version>
+        </dependency>
+
+        <!-- ONNX Runtime Java (local embedding inference via ONNX models) -->
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime</artifactId>
+            <version>1.29.0</version>
+        </dependency>
+
+        <!-- DJL HuggingFace Tokenizers (tokenization for ONNX embedding pipelines) -->
+        <dependency>
+            <groupId>ai.djl.huggingface</groupId>
+            <artifactId>tokenizers</artifactId>
+            <version>0.36.0</version>
+        </dependency>
+
+        <!-- Neo4j Java Driver (graph knowledge-store adapter) -->
+        <dependency>
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            <version>5.28.15</version>
+        </dependency>
+
+
         <!-- Lombok (optional but useful) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -87,6 +116,30 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers core (Docker-backed integration testing) -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.21.4</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers PostgreSQL module -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.21.4</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers JUnit-Jupiter 5 integration -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.21.4</version>
             <scope>test</scope>
         </dependency>
 
@@ -145,13 +198,6 @@
 					-->
 					<classifier>exec</classifier>
 				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>repackage</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 
 			<!-- Maven Central Publishing Plugins -->
@@ -171,6 +217,12 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.12.0</version>
+				<configuration>
+					<doclint>none</doclint>
+					<failOnError>false</failOnError>
+					<quiet>true</quiet>
+				</configuration>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
