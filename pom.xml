@@ -16,7 +16,7 @@
 	<url>https://github.com/darshanrathod04/shree-ai-os</url>
 	<licenses>
 		<license>
-			<name>MIT License</name>
+			<name>Shree AI OS Proprietary Evaluation License v1.0</name>
 			<url>https://github.com/darshanrathod04/shree-ai-os/blob/main/LICENSE</url>
 			<distribution>repo</distribution>
 		</license>
@@ -32,11 +32,11 @@
 			<roles>
 				<role>developer</role>
 			</roles>
-			<timezone>UTC</timezone>
+			<timezone>Asia/Kolkata</timezone>
 		</developer>
 	</developers>
 	<scm>
-		<connection>scm:git:git://github.com/darshanrathod04/shree-ai-os.git</connection>
+		<connection>scm:git:https://github.com/darshanrathod04/shree-ai-os.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/darshanrathod04/shree-ai-os.git</developerConnection>
 		<url>https://github.com/darshanrathod04/shree-ai-os</url>
 		<tag>HEAD</tag>
@@ -182,9 +182,9 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
-				<version>3.2.0</version>
+				<version>3.2.8</version>
 				<executions>
 					<execution>
 						<id>sign-artifacts</id>
