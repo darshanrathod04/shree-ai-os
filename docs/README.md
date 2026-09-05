@@ -85,7 +85,7 @@ This architecture allows your application to remain explainable, testable, and e
 <dependency>
     <groupId>io.github.darshanrathod04</groupId>
     <artifactId>shree-ai-os</artifactId>
-    <version>1.0.3-developer-preview</version>
+    <version>1.0.4-developer-preview</version>
 </dependency>
 ```
 
