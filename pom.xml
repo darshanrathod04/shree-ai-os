@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>io.github.darshanrathod04</groupId>
 	<artifactId>shree-ai-os</artifactId>
-	<version>1.0.4-developer-preview</version>
+	<version>1.0.5-developer-preview</version>
 	<name>Shree AI OS</name>
 	<description>In-process, privacy-first cognitive runtime and hybrid RAG engine for Java 21</description>
 	<url>https://github.com/darshanrathod04/shree-ai-os</url>
@@ -111,6 +111,12 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
 
         <!-- Testing -->
         <dependency>
@@ -247,19 +253,20 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<plugin>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.9.0</version>
+				<extensions>true</extensions>
+
+				<configuration>
+					<publishingServerId>central</publishingServerId>
+					<autoPublish>true</autoPublish>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
-	<!-- Maven Central Publishing Configuration -->
-	<distributionManagement>
-		<snapshotRepository>
-			<id>sonatype-nexus-snapshots</id>
-			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
-		<repository>
-			<id>sonatype-nexus-staging</id>
-			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-	</distributionManagement>
 
 </project>
