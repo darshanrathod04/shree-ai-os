@@ -1,0 +1,74 @@
+﻿{
+    "ScenarioId":  "D09",
+    "Message":  "Explain the autonomous intelligence layer and its agents",
+    "Status":  200,
+    "LatencyMs":  188,
+    "Pass":  true,
+    "Checks":  [
+                   {
+                       "Check":  "C1-HTTP-200",
+                       "Pass":  true,
+                       "Detail":  "Status=200"
+                   },
+                   {
+                       "Check":  "C2-Body-NonEmpty",
+                       "Pass":  true,
+                       "Detail":  "Len=3258"
+                   },
+                   {
+                       "Check":  "C3-StructuredPayload",
+                       "Pass":  true,
+                       "Detail":  "Present"
+                   },
+                   {
+                       "Check":  "C4-Evidence-Present",
+                       "Pass":  true,
+                       "Detail":  "1 item(s)"
+                   },
+                   {
+                       "Check":  "C5-Evidence-SourceType",
+                       "Pass":  true,
+                       "Detail":  "REASONING"
+                   },
+                   {
+                       "Check":  "C6-Confidence-Valid",
+                       "Pass":  true,
+                       "Detail":  "60%"
+                   },
+                   {
+                       "Check":  "C7-VerificationTier",
+                       "Pass":  true,
+                       "Detail":  "INFERRED"
+                   },
+                   {
+                       "Check":  "C8-Answer-Present",
+                       "Pass":  true,
+                       "Detail":  "448 chars"
+                   },
+                   {
+                       "Check":  "C9-Answer-NotTemplate",
+                       "Pass":  true,
+                       "Detail":  "Evidence-grounded answer"
+                   },
+                   {
+                       "Check":  "C10-Evidence-Content",
+                       "Pass":  true,
+                       "Detail":  "Evidence-grounded assessment: Explain the autonomous intelligence layer and its "
+                   }
+               ],
+    "Answer":  "# Inferred Answer\n\n**Question:** Explain the autonomous intelligence layer and its agents\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: Explain the autonomous intelligence layer and its agents The assessment is grounded in information explicitly supplied by the requester; external verification is limited.\n\nCitations: [1], [2]\n\n**Confidence:** 60% (INFERRED)\n\n*This answer is inferred from reasoning and may not be fully verified.*\n\n",
+    "Evidence":  {
+                     "confidenceHint":  0.71810990338164249,
+                     "itemId":  "evi-8e22fa0d-12dc-46a0-b9c9-6ded69b42c78",
+                     "content":  "Evidence-grounded assessment: Explain the autonomous intelligence layer and its agents The assessment is grounded in information explicitly supplied by the requester; external verification is limited.",
+                     "sourceType":  "REASONING",
+                     "citations":  {
+
+                                   },
+                     "title":  "Reasoning Conclusion"
+                 },
+    "Confidence":  0.6,
+    "VerificationTier":  "INFERRED",
+    "Error":  null,
+    "RuntimeClass":  "N/A (all checks passed)"
+}

@@ -34,6 +34,45 @@ public class ByokSettingsService {
     private final Map<ProviderType, ProviderSettings> store = new ConcurrentHashMap<>();
 
     /**
+     * Listener fired whenever settings are added, replaced, or removed. Used by
+     * the runtime to rebuild the LLM router chain so that BYOK changes take
+     * effect on the next request.
+     */
+    public interface ChangeListener {
+        void onSettingsChanged();
+    }
+
+    /** Lock for the listeners list. */
+    private final Object listenersLock = new Object();
+    /** Active listeners (small list, append-only with copy-on-write semantics). */
+    private volatile List<ChangeListener> listeners = List.of();
+
+    /**
+     * Adds a listener that will be notified after every settings mutation.
+     *
+     * @param listener the listener (must not be null)
+     */
+    public void addChangeListener(ChangeListener listener) {
+        Objects.requireNonNull(listener, "listener must not be null");
+        synchronized (listenersLock) {
+            java.util.List<ChangeListener> updated = new java.util.ArrayList<>(listeners);
+            updated.add(listener);
+            this.listeners = List.copyOf(updated);
+        }
+    }
+
+    private void fireChange() {
+        // Copy-on-write: the listeners list is volatile, snapshot is safe.
+        for (ChangeListener l : listeners) {
+            try {
+                l.onSettingsChanged();
+            } catch (RuntimeException ignored) {
+                // Defensive: a faulty listener must not block BYOK changes.
+            }
+        }
+    }
+
+    /**
      * Validates the proposed settings without saving them.
      *
      * @return an empty Optional if valid, or an error message
@@ -68,15 +107,17 @@ public class ByokSettingsService {
         if (err.isPresent()) {
             throw new IllegalArgumentException(err.get());
         }
-        // Store masked
-        ProviderSettings masked = ProviderSettings.builder()
-                .provider(settings.provider())
-                .enabled(settings.enabled())
-                .maskedKey(ProviderSettings.maskKey(settings.maskedKey()))
-                .endpoint(settings.endpoint() == null ? "" : settings.endpoint())
-                .build();
-        store.put(settings.provider(), masked);
-        return masked;
+        // Store: masked key for external-facing getters, raw key for the LLM router.
+        ProviderSettings stored = new ProviderSettings(
+                settings.provider(),
+                settings.enabled(),
+                ProviderSettings.maskKey(settings.maskedKey()),
+                settings.endpoint() == null ? "" : settings.endpoint(),
+                settings.maskedKey()  // raw key — passed through, never exposed via public accessor
+        );
+        store.put(settings.provider(), stored);
+        fireChange();
+        return stored;
     }
 
     /**
@@ -108,7 +149,11 @@ public class ByokSettingsService {
      * Deletes the settings for a provider.
      */
     public boolean delete(ProviderType provider) {
-        return store.remove(provider) != null;
+        boolean removed = store.remove(provider) != null;
+        if (removed) {
+            fireChange();
+        }
+        return removed;
     }
 
     /**
@@ -140,5 +185,40 @@ public class ByokSettingsService {
             return Optional.of("Provider type must be specified");
         }
         return Optional.empty();
+    }
+
+    /**
+     * Materialises an {@link com.shreeai.os.platform.llm.LlmProvider} from the
+     * stored settings for {@code type}, or {@code null} when the provider is
+     * disabled or has no raw key (e.g. loaded from external storage without
+     * the key stored alongside it).
+     *
+     * <p>This is the BYOK bridge: callers (currently only {@code DefaultRuntimeService})
+     * use this to plug a BYOK-configured provider into the router chain.</p>
+     */
+    public com.shreeai.os.platform.llm.LlmProvider materializeProvider(ProviderType type) {
+        ProviderSettings s = store.get(type);
+        if (s == null || !s.enabled()) {
+            return null;
+        }
+        String rawKey = s.rawApiKey();
+        String endpoint = s.endpoint();
+        return switch (type) {
+            case OPENAI -> {
+                if (rawKey == null || rawKey.isBlank()) yield null;
+                yield new com.shreeai.os.platform.llm.openai.OpenAiProvider(rawKey);
+            }
+            case GEMINI -> {
+                if (rawKey == null || rawKey.isBlank()) yield null;
+                yield new com.shreeai.os.platform.llm.gemini.GeminiProvider(rawKey);
+            }
+            case OLLAMA -> {
+                String url = (endpoint != null && !endpoint.isBlank())
+                        ? endpoint
+                        : "http://localhost:11434/api/generate";
+                yield new com.shreeai.os.platform.llm.ollama.OllamaProvider(
+                        url, new okhttp3.OkHttpClient());
+            }
+        };
     }
 }

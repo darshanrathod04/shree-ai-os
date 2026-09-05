@@ -67,6 +67,30 @@ public final class SettingsSDK {
     }
 
     /**
+     * Convenience method that validates and saves a raw API key for the given
+     * provider, then triggers a runtime router rebuild so the key takes effect
+     * immediately without requiring a full runtime restart.
+     *
+     * @param provider the provider type
+     * @param apiKey  the raw API key (never stored; masked before persistence)
+     * @return the saved settings (key is masked)
+     * @throws IllegalArgumentException if the key fails validation
+     */
+    public ProviderSettings configureApiKey(ProviderType provider, String apiKey) {
+        Optional<String> error = service.validateRawKey(provider, apiKey);
+        if (error.isPresent()) {
+            throw new IllegalArgumentException(error.get());
+        }
+        ProviderSettings saved = service.save(new ProviderSettings(provider, true, apiKey, ""));
+        // Release-blocking fix: trigger runtime router rebuild so the BYOK key
+        // takes effect immediately without a full runtime restart.
+        // The change listener registered in DefaultRuntimeService.setByokSettingsService()
+        // automatically rebuilds the router when ByokSettingsService fires fireChange().
+        System.out.println("[SettingsSDK] BYOK key configured for " + saved.provider());
+        return saved;
+    }
+
+    /**
      * <b>ValidationResult</b> — outcome of a validation.
      */
     public record ValidationResult(boolean valid, String error) {

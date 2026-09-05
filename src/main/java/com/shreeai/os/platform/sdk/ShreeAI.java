@@ -49,15 +49,20 @@ public final class ShreeAI {
                 runtime,
                 new RuntimeEventBus()
         );
-        this.identity = new IdentitySDK(client);
+        this.identity = new IdentitySDK(client, client.runtime());
         this.memory = new MemorySDK(client);
         this.knowledge = new KnowledgeSDK(client);
         this.planning = new PlanningSDK(client);
         this.execution = new ExecutionSDK(client);
-        this.reflection = new ReflectionSDK(client);
+        this.reflection = new ReflectionSDK(client, client.runtime());
         this.project = new ProjectSDK();
-        this.settings = new SettingsSDK(new ByokSettingsService());
+        // Single ByokSettingsService instance is shared by SettingsSDK (writes)
+        // and DefaultRuntimeService (LLM router rebuilds on write).
+        com.shreeai.os.platform.services.ByokSettingsService byok = new ByokSettingsService();
+        this.settings = new SettingsSDK(byok);
         this.diagnostics = new DiagnosticsSDK(new SdkDiagnosticsService());
+        // Wire BYOK → runtime so SettingsSDK.save() rebuilds the LLM router.
+        this.client.syncByokSettings(byok);
     }
 
     /**

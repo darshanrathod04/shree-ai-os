@@ -1,0 +1,74 @@
+﻿{
+    "ScenarioId":  "D10",
+    "Message":  "Compare AiChatController and SdkDiagnosticsController",
+    "Status":  200,
+    "LatencyMs":  198,
+    "Pass":  true,
+    "Checks":  [
+                   {
+                       "Check":  "C1-HTTP-200",
+                       "Pass":  true,
+                       "Detail":  "Status=200"
+                   },
+                   {
+                       "Check":  "C2-Body-NonEmpty",
+                       "Pass":  true,
+                       "Detail":  "Len=4611"
+                   },
+                   {
+                       "Check":  "C3-StructuredPayload",
+                       "Pass":  true,
+                       "Detail":  "Present"
+                   },
+                   {
+                       "Check":  "C4-Evidence-Present",
+                       "Pass":  true,
+                       "Detail":  "1 item(s)"
+                   },
+                   {
+                       "Check":  "C5-Evidence-SourceType",
+                       "Pass":  true,
+                       "Detail":  "REASONING"
+                   },
+                   {
+                       "Check":  "C6-Confidence-Valid",
+                       "Pass":  true,
+                       "Detail":  "60%"
+                   },
+                   {
+                       "Check":  "C7-VerificationTier",
+                       "Pass":  true,
+                       "Detail":  "INFERRED"
+                   },
+                   {
+                       "Check":  "C8-Answer-Present",
+                       "Pass":  true,
+                       "Detail":  "672 chars"
+                   },
+                   {
+                       "Check":  "C9-Answer-NotTemplate",
+                       "Pass":  true,
+                       "Detail":  "Evidence-grounded answer"
+                   },
+                   {
+                       "Check":  "C10-Evidence-Content",
+                       "Pass":  true,
+                       "Detail":  "Evidence-grounded assessment: Compare AiChatController and SdkDiagnosticsControl"
+                   }
+               ],
+    "Answer":  "# Inferred Answer\n\n**Question:** Compare AiChatController and SdkDiagnosticsController\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: Compare AiChatController and SdkDiagnosticsController The supplied evidence describes a structured layered application including Controller layer. While the structure and technologies are evidence-supported, source-level defects cannot be determined from the supplied evidence alone. The assessment is grounded in information explicitly supplied by the requester; external verification is limited.\n\nCitations: [1], [2]\n\n**Confidence:** 60% (INFERRED)\n\n*This answer is inferred from reasoning and may not be fully verified.*\n\n",
+    "Evidence":  {
+                     "confidenceHint":  0.70714743589743589,
+                     "itemId":  "evi-7b967484-37df-45ce-a8d6-176bfeadc4b2",
+                     "content":  "Evidence-grounded assessment: Compare AiChatController and SdkDiagnosticsController The supplied evidence describes a structured layered application including Controller layer. While the structure and technologies are evidence-supported, source-level defects cannot be determined from the supplied evidence alone. The assessment is grounded in information explicitly supplied by the requester; external verification is limited.",
+                     "sourceType":  "REASONING",
+                     "citations":  {
+
+                                   },
+                     "title":  "Reasoning Conclusion"
+                 },
+    "Confidence":  0.6,
+    "VerificationTier":  "INFERRED",
+    "Error":  null,
+    "RuntimeClass":  "N/A (all checks passed)"
+}
