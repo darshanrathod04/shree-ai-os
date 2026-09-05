@@ -1,0 +1,74 @@
+﻿{
+    "ScenarioId":  "D01",
+    "Message":  "Explain WorkspaceController in the codebase",
+    "Status":  200,
+    "LatencyMs":  1795,
+    "Pass":  true,
+    "Checks":  [
+                   {
+                       "Check":  "C1-HTTP-200",
+                       "Pass":  true,
+                       "Detail":  "Status=200"
+                   },
+                   {
+                       "Check":  "C2-Body-NonEmpty",
+                       "Pass":  true,
+                       "Detail":  "Len=4521"
+                   },
+                   {
+                       "Check":  "C3-StructuredPayload",
+                       "Pass":  true,
+                       "Detail":  "Present"
+                   },
+                   {
+                       "Check":  "C4-Evidence-Present",
+                       "Pass":  true,
+                       "Detail":  "1 item(s)"
+                   },
+                   {
+                       "Check":  "C5-Evidence-SourceType",
+                       "Pass":  true,
+                       "Detail":  "REASONING"
+                   },
+                   {
+                       "Check":  "C6-Confidence-Valid",
+                       "Pass":  true,
+                       "Detail":  "60%"
+                   },
+                   {
+                       "Check":  "C7-VerificationTier",
+                       "Pass":  true,
+                       "Detail":  "INFERRED"
+                   },
+                   {
+                       "Check":  "C8-Answer-Present",
+                       "Pass":  true,
+                       "Detail":  "652 chars"
+                   },
+                   {
+                       "Check":  "C9-Answer-NotTemplate",
+                       "Pass":  true,
+                       "Detail":  "Evidence-grounded answer"
+                   },
+                   {
+                       "Check":  "C10-Evidence-Content",
+                       "Pass":  true,
+                       "Detail":  "Evidence-grounded assessment: Explain WorkspaceController in the codebase The su"
+                   }
+               ],
+    "Answer":  "# Inferred Answer\n\n**Question:** Explain WorkspaceController in the codebase\n\n🧠 **Reasoning Conclusion**\n\nEvidence-grounded assessment: Explain WorkspaceController in the codebase The supplied evidence describes a structured layered application including Controller layer. While the structure and technologies are evidence-supported, source-level defects cannot be determined from the supplied evidence alone. The assessment is grounded in information explicitly supplied by the requester; external verification is limited.\n\nCitations: [1], [2]\n\n**Confidence:** 60% (INFERRED)\n\n*This answer is inferred from reasoning and may not be fully verified.*\n\n",
+    "Evidence":  {
+                     "confidenceHint":  0.70708916083916085,
+                     "itemId":  "evi-70870b7f-d87b-47fc-a5ce-ddb4c9db3bfb",
+                     "content":  "Evidence-grounded assessment: Explain WorkspaceController in the codebase The supplied evidence describes a structured layered application including Controller layer. While the structure and technologies are evidence-supported, source-level defects cannot be determined from the supplied evidence alone. The assessment is grounded in information explicitly supplied by the requester; external verification is limited.",
+                     "sourceType":  "REASONING",
+                     "citations":  {
+
+                                   },
+                     "title":  "Reasoning Conclusion"
+                 },
+    "Confidence":  0.6,
+    "VerificationTier":  "INFERRED",
+    "Error":  null,
+    "RuntimeClass":  "N/A (all checks passed)"
+}

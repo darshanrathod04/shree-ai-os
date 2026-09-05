@@ -46,6 +46,17 @@ import com.shreeai.os.platform.runtime.storage.KnowledgeGraphStores;
 import com.shreeai.os.platform.runtime.vector.VectorStoreProvider;
 import com.shreeai.os.platform.runtime.vector.VectorStoreProviders;
 import com.shreeai.os.platform.kernels.cognitive.engine.DefaultReflectionEngine;
+import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionAnalysis;
+import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionInput;
+import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionVerdict;
+import com.shreeai.os.platform.runtime.reflection.InMemoryReflectionRepository;
+import com.shreeai.os.platform.runtime.reflection.ReflectionAnalyticsService;
+import com.shreeai.os.platform.runtime.reflection.ReflectionHistory;
+import com.shreeai.os.platform.runtime.reflection.ReflectionImportanceScorer;
+import com.shreeai.os.platform.runtime.reflection.ReflectionMemoryBridge;
+import com.shreeai.os.platform.runtime.reflection.ReflectionRepository;
+import com.shreeai.os.platform.sdk.ReflectionReport;
+import com.shreeai.os.platform.sdk.ReflectionStatistics;
 import com.shreeai.os.platform.kernels.cognitive.engine.DefaultReasoningEngine;
 import com.shreeai.os.platform.kernels.inference.engine.DefaultInferenceEngine;
 import com.shreeai.os.platform.kernels.factory.KernelFactory;
@@ -81,6 +92,9 @@ import com.shreeai.os.platform.llm.ollama.OllamaProvider;
 import com.shreeai.os.platform.llm.openai.OpenAiProvider;
 import com.shreeai.os.platform.llm.gemini.GeminiProvider;
 import com.shreeai.os.platform.llm.router.LlmRouter;
+import com.shreeai.os.platform.llm.LlmRequest;
+import com.shreeai.os.platform.services.ByokSettingsService;
+import com.shreeai.os.platform.services.ProviderType;
 import com.shreeai.os.platform.security.api.ApprovalService;
 import com.shreeai.os.platform.security.engine.InMemoryApprovalService;
 
@@ -118,7 +132,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     private final ResponseSynthesisService responseSynthesisService;
     private RuntimeIntentRouter intentRouter;
     /** Interchangeable LLM provider chain (GPT / Gemini / Ollama / in-memory). */
-    private final LlmRouter llmRouter = buildDefaultLlmRouter();
+    private volatile LlmRouter llmRouter = buildDefaultLlmRouter();
     /** Approval gate backing autonomous retries and escalations. */
     private final ApprovalService approvalService = new InMemoryApprovalService();
 
@@ -131,6 +145,13 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     /** Capability-driven execution dispatcher. */
     private final ExecutionDispatcher executionDispatcher =
             new ExecutionDispatcher(kernelRegistry, permissionPolicy);
+
+    /**
+     * BYOK provider service — used to fold SettingsSDK.configureApiKey() state
+     * into the active LLM router chain. May be {@code null} when no Spring
+     * container is providing one (legacy direct construction).
+     */
+    private ByokSettingsService byokSettingsService;
 
     /** Maximum autonomous re-executions advised by the reflection kernel. */
     private static final int MAX_AUTONOMOUS_RETRIES = 2;
@@ -185,8 +206,51 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     /** Stores the PlanningService for orchestrator access. */
     private com.shreeai.os.platform.kernels.planning.api.PlanningService planningServiceField;
 
+    /** Stores the IdentityService for SDK-facing identity operations. */
+    private volatile IdentityService identityServiceField;
+
     /** Lazy-initialized multi-kernel orchestrator. */
     private volatile com.shreeai.os.platform.runtime.orchestration.MultiKernelOrchestrator orchestrator;
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Sprint-Release-5: Real Tenant Isolation
+    // Canonical tenant infrastructure wired into the production runtime so
+    // every execution path can resolve and validate the active tenant.
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Tenant resolver used by the runtime to look up the current tenant
+     * identity (thread-local, falling back to the system tenant).
+     */
+    private final com.shreeai.os.platform.runtime.tenant.DefaultTenantResolver tenantResolverField =
+            new com.shreeai.os.platform.runtime.tenant.DefaultTenantResolver();
+
+    /**
+     * Tenant isolation enforcer that throws {@link
+     * com.shreeai.os.platform.runtime.tenant.TenantIsolationException} on
+     * cross-tenant access. Initialized in {@link #initializeStages()}.
+     */
+    private volatile com.shreeai.os.platform.runtime.tenant.TenantIsolationEnforcer tenantEnforcerField;
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Sprint-Phase 1.5: Reflection Intelligence Layer
+    // Direct, in-process access to the reflection kernel for SDK consumers.
+    // ────────────────────────────────────────────────────────────────────────
+
+    /** Reflection engine used by SDK-facing reflectOnExecution(). */
+    private final DefaultReflectionEngine reflectionEngineField = new DefaultReflectionEngine();
+
+    /** Reflection repository used by SDK-facing recent/search methods. */
+    private volatile ReflectionRepository reflectionRepositoryField;
+
+    /** Reflection analytics service used by SDK-facing statistics(). */
+    private volatile ReflectionAnalyticsService reflectionAnalyticsField;
+
+    /** Deterministic reflection importance scorer. */
+    private final ReflectionImportanceScorer reflectionImportanceField = new ReflectionImportanceScorer();
+
+    /** Memory bridge used to persist lessons as memory observations. */
+    private volatile ReflectionMemoryBridge reflectionMemoryBridgeField;
 
     /**
      * Builds the runtime's default LLM router from configuration.
@@ -265,12 +329,13 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 configuration,
                 contract,
                 List.of(),
-                new RuntimeEventBus()
+                new RuntimeEventBus(),
+                null
         );
     }
 
     /**
-     * Canonical constructor
+     * Canonical constructor (without ByokSettingsService — BYOK not wired).
      */
     public DefaultRuntimeService(
             RuntimeConfiguration configuration,
@@ -281,12 +346,13 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 configuration,
                 contract,
                 stages,
-                new RuntimeEventBus()
+                new RuntimeEventBus(),
+                null
         );
     }
 
     /**
-     * Full constructor with RuntimeEventBus
+     * Full constructor with RuntimeEventBus (without ByokSettingsService — BYOK not wired).
      */
     public DefaultRuntimeService(
             RuntimeConfiguration configuration,
@@ -294,8 +360,29 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             List<ExecutionStage> stages,
             RuntimeEventBus eventBus
     ) {
+        this(configuration, contract, stages, eventBus, null);
+    }
+
+    /**
+     * Full constructor with RuntimeEventBus and ByokSettingsService.
+     *
+     * <p>When {@code byokSettingsService} is non-null and holds enabled provider
+     * settings, those providers are placed at the front of the LLM router chain
+     * so that {@code SettingsSDK.configureApiKey()} controls the active provider
+     * (release-blocking fix for BYOK gap).</p>
+     *
+     * @param byokSettingsService the BYOK settings service (may be null — env-var routing used)
+     */
+    public DefaultRuntimeService(
+            RuntimeConfiguration configuration,
+            RuntimeContract contract,
+            List<ExecutionStage> stages,
+            RuntimeEventBus eventBus,
+            ByokSettingsService byokSettingsService
+    ) {
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
         this.contract = Objects.requireNonNull(contract, "contract must not be null");
+        this.byokSettingsService = byokSettingsService;
 
         this.stages = new ArrayList<>();
         this.pipeline = new DefaultExecutionPipeline(stages);
@@ -308,6 +395,22 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         this.responseSynthesisService = new ResponseSynthesisService();
 
         initializeStages();
+    }
+
+    /**
+     * Sets the BYOK settings service after construction.
+     *
+     * <p>This allows Spring-injected {@code ByokSettingsService} beans to be
+     * wired into runtimes created via the legacy constructors. Registers a
+     * change listener so that subsequent {@code SettingsSDK.save()} calls
+     * automatically rebuild the LLM router chain.</p>
+     */
+    public void setByokSettingsService(ByokSettingsService byokSettingsService) {
+        this.byokSettingsService = byokSettingsService;
+        if (byokSettingsService != null) {
+            byokSettingsService.addChangeListener(this::rebuildLlmRouter);
+        }
+        rebuildLlmRouter();
     }
     
         /**
@@ -402,6 +505,8 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
         IdentityService identityService =
                 kernelFactory.createIdentityService();
+        this.identityServiceField = identityService;
+
         // ==========================================================
         // Kernel Composition Root
         // Runtime NEVER constructs Planning/Execution/Chief directly.
@@ -466,7 +571,32 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         stages.add(new ActionExecutionStage(executionService));
 
         // EO-V1.5 Reflection Kernel Ã¢â‚¬â€ post-execution evaluation + lesson memory
-        stages.add(new ReflectionStage(memoryService));
+        // Sprint-Phase 1.5: wire the full reflection stack (engine, repository,
+        // importance scorer, memory bridge, analytics) so SDK consumers can
+        // access reflection through the Runtime interface.
+        ReflectionRepository reflectionRepository = new InMemoryReflectionRepository();
+        ReflectionMemoryBridge reflectionMemoryBridge = new ReflectionMemoryBridge(memoryService);
+        ReflectionAnalyticsService reflectionAnalytics = new ReflectionAnalyticsService(reflectionRepository);
+
+        stages.add(new ReflectionStage(
+                memoryService,
+                reflectionRepository,
+                reflectionImportanceField,
+                reflectionMemoryBridge,
+                reflectionAnalytics
+        ));
+
+        // Expose reflection components for SDK-facing Runtime methods.
+        this.reflectionRepositoryField = reflectionRepository;
+        this.reflectionMemoryBridgeField = reflectionMemoryBridge;
+        this.reflectionAnalyticsField = reflectionAnalytics;
+
+        // Sprint-Release-5: wire the canonical tenant infrastructure into
+        // the production runtime so every execution path can resolve and
+        // validate the active tenant. The enforcer is the single boundary
+        // check used by Memory / Knowledge / Reflection / Identity.
+        this.tenantEnforcerField = new com.shreeai.os.platform.runtime.tenant.TenantIsolationEnforcer(
+                tenantResolverField);
 
         MemoryStoreStage memoryStoreStage = new MemoryStoreStage(memoryService);
         stages.add(memoryStoreStage);
@@ -494,6 +624,77 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         this.memoryServiceField = memoryService;
         this.knowledgeSearchServiceField = knowledgeSearchService;
         this.planningServiceField = planningService;
+
+        // Sprint-release-fix: fold BYOK providers (SettingsSDK.configureApiKey) into
+        // the active router chain so that BYOK keys take priority over env-var keys.
+        rebuildLlmRouter();
+    }
+
+    /**
+     * Rebuilds the LLM router by prepending enabled BYOK providers from
+     * {@link #byokSettingsService} to the existing env-var-driven chain.
+     *
+     * <p>BYOK providers take priority: when a developer calls
+     * {@code SettingsSDK.configureApiKey(ProviderType.OPENAI, "sk-...")},
+     * the resulting {@code OpenAiProvider} is placed at the front of the router
+     * chain and will be used for all subsequent requests.</p>
+     *
+     * <p>Thread-safe: reads the current chain snapshot and builds a new immutable
+     * {@link LlmRouter} to replace the volatile {@link #llmRouter} field.</p>
+     */
+    private void rebuildLlmRouter() {
+        if (byokSettingsService == null) {
+            return; // No BYOK — keep the env-var-driven default router
+        }
+
+        Map<String, LlmProvider> byokRegistry = new LinkedHashMap<>();
+
+        for (ProviderType type : ProviderType.all()) {
+            LlmProvider provider = byokSettingsService.materializeProvider(type);
+            if (provider != null) {
+                byokRegistry.put(type.name().toLowerCase(), provider);
+            }
+        }
+
+        if (byokRegistry.isEmpty()) {
+            return; // No enabled BYOK providers — keep existing chain
+        }
+
+        // Build merged chain: BYOK first, then existing env-var providers that
+        // are not already in the BYOK registry (deduplication).
+        List<LlmProvider> mergedChain = new ArrayList<>();
+        byokRegistry.forEach((name, p) -> mergedChain.add(p));
+
+        for (LlmProvider existing : llmRouter.providers()) {
+            String existingName = existing.providerName().toLowerCase();
+            if (!byokRegistry.containsKey(existingName)) {
+                mergedChain.add(existing);
+            }
+        }
+
+        this.llmRouter = new LlmRouter(mergedChain);
+        System.out.println(">>> [SHREE RUNTIME] LLM Chain rebuilt with BYOK: "
+                + llmRouter.providerNames());
+    }
+
+    @Override
+    public java.util.stream.Stream<String> streamText(String message) {
+        if (message == null) {
+            throw new IllegalArgumentException("message must not be null");
+        }
+
+        // Build a minimal LLM request for the LLM provider.
+        // The pipeline handles context, memory, knowledge etc. — the LLM router
+        // streams the final synthesized response.
+        LlmRequest llmRequest = LlmRequest.builder()
+                .model("shree-streaming")
+                .prompt(message)
+                .stream(true)
+                .build();
+
+        // Delegate to the LLM router's first-available provider.
+        // The router handles fail-over to the next provider automatically.
+        return llmRouter.stream(llmRequest);
     }
 
     /**
@@ -720,6 +921,13 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         if (request == null) {
             throw new IllegalArgumentException("ExecutionRequest must not be null");
         }
+
+        // Sprint-Release-5: enforce tenant boundary at the runtime entry point
+        // so every kernel (Memory, Knowledge, Reflection, Identity) operates
+        // within the correct tenant scope. Blank / absent tenantId is silently
+        // allowed (backward-compat default path).
+        enforceTenantBoundaryFromMetadata(request.metadata());
+
         eventBus.publish(
                 new RuntimeEvent(
                         EventType.PIPELINE_STARTED,
@@ -1710,5 +1918,301 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 .addMetadata("context", request.context())
                 .build();
     }
+    // ────────────────────────────────────────────────────────────────────────
+    // Sprint-Phase 1.5: Runtime — Reflection Kernel interface implementation
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Reflects on a completed execution: runs the reflection engine, scores
+     * importance, persists the result, and optionally bridges lessons to memory.
+     *
+     * @throws IllegalArgumentException if executionId is null
+     */
+    @Override
+    public ReflectionReport reflectOnExecution(
+            String executionId,
+            String requestText,
+            int planStepCount,
+            String actionStatus,
+            boolean executionSuccess,
+            String responseSummary,
+            double confidence) {
+
+        if (executionId == null) {
+            throw new IllegalArgumentException("executionId must not be null");
+        }
+
+        ReflectionInput input = new ReflectionInput(
+                executionId,
+                requestText,
+                planStepCount,
+                actionStatus,
+                executionSuccess,
+                responseSummary,
+                confidence
+        );
+
+        ReflectionAnalysis analysis = reflectionEngineField.reflect(input);
+        int importanceScore = reflectionImportanceField.score(
+                analysis.verdict().name(), analysis.score(), analysis.lessons(), List.of());
+
+        ReflectionHistory history = new ReflectionHistory(
+                resolveReflectionTenantId(),
+                "default",                    // organizationId
+                executionId,
+                executionId,                  // requestId (use executionId as proxy)
+                analysis.verdict().name(),
+                analysis.score(),
+                importanceScore,
+                analysis.lessons(),
+                null,                         // rootCause
+                analysis.retryAdvised(),
+                analysis.evaluatedAt()
+        );
+
+        ReflectionRepository repo = reflectionRepositoryField;
+        if (repo != null) {
+            repo.save(history);
+        }
+
+        if (analysis.memoryWorthy() && reflectionMemoryBridgeField != null) {
+            reflectionMemoryBridgeField.storeLessons(
+                    history.tenantId(),
+                    history.executionId(),
+                    history.requestId(),
+                    history.verdict(),
+                    history.score(),
+                    history.lessons()
+            );
+        }
+
+        return new ReflectionReport(
+                executionId,
+                analysis.verdict().name(),
+                analysis.score(),
+                importanceScore,
+                analysis.lessons(),
+                analysis.summary(),
+                analysis.memoryWorthy(),
+                analysis.retryAdvised(),
+                analysis.evaluatedAt()
+        );
+    }
+
+    @Override
+    public List<ReflectionHistory> recentReflections(String tenantId, int limit) {
+        // Sprint-Release-5: enforce tenant boundary before any data access
+        enforceTenantBoundary(tenantId);
+        ReflectionRepository repo = reflectionRepositoryField;
+        if (repo == null) {
+            return List.of();
+        }
+        return repo.findByTenantId(tenantId, limit);
+    }
+
+    @Override
+    public List<ReflectionHistory> searchReflections(String tenantId, String keyword, int limit) {
+        // Sprint-Release-5: enforce tenant boundary before any data access
+        enforceTenantBoundary(tenantId);
+        ReflectionRepository repo = reflectionRepositoryField;
+        if (repo == null) {
+            return List.of();
+        }
+        String lower = keyword == null ? "" : keyword.toLowerCase(java.util.Locale.ROOT);
+        return repo.findByTenantId(tenantId, limit).stream()
+                .filter(h -> {
+                    if (h.verdict() != null && h.verdict().toLowerCase(java.util.Locale.ROOT).contains(lower)) {
+                        return true;
+                    }
+                    return h.lessons().stream()
+                            .anyMatch(l -> l.toLowerCase(java.util.Locale.ROOT).contains(lower));
+                })
+                .toList();
+    }
+
+    @Override
+    public ReflectionStatistics reflectionStatistics(String tenantId, int window) {
+        ReflectionAnalyticsService analytics = reflectionAnalyticsField;
+        if (analytics == null) {
+            return null;
+        }
+        com.shreeai.os.platform.runtime.reflection.ReflectionAnalyticsService.ReflectionAnalyticsSummary summary;
+        try {
+            summary = analytics.analyze(tenantId, window);
+        } catch (Exception e) {
+            return null;
+        }
+        return new ReflectionStatistics(
+                tenantId,
+                summary.totalRecords(),
+                summary.successCount(),
+                summary.partialCount(),
+                summary.failureCount(),
+                summary.successRate(),
+                summary.averageScore(),
+                summary.averageImportance(),
+                summary.totalLessons(),
+                summary.rootCauseFrequency(),
+                java.time.Instant.now()
+        );
+    }
+
+    @Override
+    public int reflectionImportance(String verdict, double score, List<String> lessons) {
+        return reflectionImportanceField.score(verdict, score, lessons, List.of());
+    }
+
+    /**
+     * Resolves the tenant id used for reflection history records.
+     *
+     * <p>Reads from the canonical {@link
+     * com.shreeai.os.platform.runtime.tenant.DefaultTenantResolver} wired into
+     * this runtime, otherwise falls back to {@code "default"} so the reflection
+     * pipeline never fails on missing tenant context.</p>
+     */
+    private String resolveReflectionTenantId() {
+        try {
+            return tenantResolverField.resolveTenantId()
+                    .filter(id -> !id.isBlank())
+                    .orElse("default");
+        } catch (Throwable ignored) {
+            // TenantContext may be unavailable in tests; fall through to default.
+            return "default";
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Sprint-Release-5: Real Tenant Isolation
+    // Expose the canonical tenant infrastructure and apply the enforcer at
+    // every execution boundary so Memory / Knowledge / Reflection / Identity
+    // consistently enforce tenant boundaries instead of relying on the
+    // thread-local context alone.
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Override
+    public com.shreeai.os.platform.runtime.tenant.TenantResolver tenantResolver() {
+        return tenantResolverField;
+    }
+
+    @Override
+    public com.shreeai.os.platform.runtime.tenant.TenantIsolationEnforcer tenantIsolation() {
+        return tenantEnforcerField;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Sprint-Release-6: Advanced Planning APIs
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    @Override
+    public com.shreeai.os.platform.kernels.planning.api.PlanningService planningService() {
+        return planningServiceField;
+    }
+
+    /**
+     * Enforces that the requested tenant id matches the active tenant
+     * resolved by the runtime's {@link
+     * com.shreeai.os.platform.runtime.tenant.DefaultTenantResolver}.
+     *
+     * <p>This is the single, canonical boundary check used by every kernel
+     * service that reads a tenant id (Memory, Knowledge, Reflection,
+     * Identity). Backward compatibility is preserved:</p>
+     * <ul>
+     *   <li>A {@code null} or blank requested tenant is silently allowed
+     *       (backward-compat: existing SDK callers do not set tenantId).</li>
+     *   <li>When the requested tenant is one of the bootstrap alias values
+     *       ({@code "default"}, {@code "default-tenant"}) and no tenant
+     *       context is set (defaults to {@code "system"}), the access is
+     *       allowed — so existing callers using {@code tenantId="default"}
+     *       or {@code tenantId="default-tenant"} in metadata continue working
+     *       without modification.</li>
+     *   <li>All other cross-tenant accesses throw
+     *       {@link IllegalStateException}.</li>
+     * </ul>
+     *
+     * @param requestedTenantId the tenant id the caller intends to access
+     *                          (may be {@code null} or blank for default;
+     *                          bootstrap aliases {@code "default"} and
+     *                          {@code "default-tenant"} are allowed without
+     *                          an established tenant context)
+     * @throws IllegalStateException if cross-tenant access is attempted
+     */
+    private void enforceTenantBoundary(String requestedTenantId) {
+        if (tenantEnforcerField == null) {
+            return;
+        }
+        if (requestedTenantId == null || requestedTenantId.isBlank()) {
+            return;
+        }
+        try {
+            // Backward-compat: bootstrap aliases "default" and "default-tenant"
+            // are allowed when no tenant context is set.  Existing SDK callers
+            // (KnowledgeSDK, ReflectionSDK, etc.) use these aliases as the
+            // de-facto system tenant before an application establishes its
+            // own TenantContext.  Real cross-tenant access is still enforced
+            // for any other value.
+            if ("default".equals(requestedTenantId) || "default-tenant".equals(requestedTenantId)) {
+                String currentTenant = tenantResolverField.resolveTenantId()
+                        .orElse("system");
+                if ("system".equals(currentTenant)) {
+                    return; // no tenant set → bootstrap alias is the de-facto system tenant
+                }
+            }
+            tenantEnforcerField.validateAccess(requestedTenantId);
+        } catch (com.shreeai.os.platform.runtime.tenant.TenantIsolationException e) {
+            // Surface as a structured IllegalStateException at the runtime
+            // boundary so SDK consumers and the pipeline can react without
+            // breaking the event-bus contract.
+            throw new IllegalStateException(
+                    "Tenant boundary violation: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Reads a tenant id from a request metadata map under the canonical
+     * {@code "tenantId"} key, applying tenant-boundary enforcement when a
+     * non-blank value is present.
+     *
+     * @param metadata the request metadata (may be {@code null})
+     */
+    private void enforceTenantBoundaryFromMetadata(java.util.Map<String, Object> metadata) {
+        if (metadata == null) {
+            return;
+        }
+        Object raw = metadata.get("tenantId");
+        if (raw == null) {
+            return;
+        }
+        String requested = String.valueOf(raw);
+        enforceTenantBoundary(requested);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Sprint-Release-4: Identity SDK Completion
+    // Expose the Identity Kernel through the Runtime interface for SDK consumers.
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Override
+    public IdentityService identityService() {
+        return identityServiceField;
+    }
+
+    @Override
+    public com.shreeai.os.platform.kernels.identity.model.IdentityContext resolveIdentity(
+            String requestId,
+            String sessionId,
+            String applicationId,
+            String workspaceId) {
+        IdentityService svc = identityServiceField;
+        if (svc == null || requestId == null) {
+            return null;
+        }
+        return svc.resolveIdentity(
+                requestId,
+                sessionId != null ? sessionId : "SDK_SESSION",
+                applicationId != null ? applicationId : "SHREE_SDK",
+                workspaceId != null ? workspaceId : "DEFAULT"
+        );
+    }
+
 }
 

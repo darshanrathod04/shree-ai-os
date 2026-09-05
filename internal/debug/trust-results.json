@@ -1,0 +1,82 @@
+﻿[
+    {
+        "Name":  "T1",
+        "Error":  "The remote server returned an error: (401) Unauthorized.",
+        "Path":  "/actuator/health",
+        "Latency":  1057,
+        "BodyLen":  0,
+        "Status":  401
+    },
+    {
+        "Name":  "T2",
+        "Error":  "The remote server returned an error: (401) Unauthorized.",
+        "Path":  "/",
+        "Latency":  13,
+        "BodyLen":  0,
+        "Status":  401
+    },
+    {
+        "Name":  "T3",
+        "Error":  "The remote server returned an error: (401) Unauthorized.",
+        "Path":  "/api/settings/providers",
+        "Latency":  9,
+        "BodyLen":  0,
+        "Status":  401
+    },
+    {
+        "Name":  "T4",
+        "Error":  "The remote server returned an error: (401) Unauthorized.",
+        "Path":  "/api/sdk/diagnostics",
+        "Latency":  14,
+        "BodyLen":  0,
+        "Status":  401
+    },
+    {
+        "Name":  "T5",
+        "Error":  "The remote server returned an error: (401) Unauthorized.",
+        "Path":  "/api/v1/chat",
+        "Latency":  66,
+        "BodyLen":  0,
+        "Status":  401
+    },
+    {
+        "Name":  "T6",
+        "Error":  "The remote server returned an error: (401) Unauthorized.",
+        "Path":  "/api/developer/workspace",
+        "Latency":  9,
+        "BodyLen":  0,
+        "Status":  401
+    },
+    {
+        "Name":  "T7",
+        "Error":  "The remote server returned an error: (401) Unauthorized.",
+        "Path":  "/api/developer/chat",
+        "Latency":  8,
+        "BodyLen":  0,
+        "Status":  401
+    },
+    {
+        "Name":  "T8",
+        "Error":  "The remote server returned an error: (401) Unauthorized.",
+        "Path":  "/api/developer/review/executions",
+        "Latency":  7,
+        "BodyLen":  0,
+        "Status":  401
+    },
+    {
+        "Name":  "T9",
+        "Error":  "The remote server returned an error: (401) Unauthorized.",
+        "Path":  "/api/developer/workflow/build",
+        "Latency":  9,
+        "BodyLen":  0,
+        "Status":  401
+    },
+    {
+        "Name":  "T10",
+        "Error":  "The remote server returned an error: (401) Unauthorized.",
+        "Path":  "/api/developer/chat",
+        "Latency":  8,
+        "BodyLen":  0,
+        "Status":  401
+    }
+]

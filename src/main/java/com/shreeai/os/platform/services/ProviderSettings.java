@@ -19,18 +19,44 @@ public final class ProviderSettings {
     private final boolean enabled;
     private final String maskedKey;
     private final String endpoint;
+    /**
+     * Raw API key — for internal runtime use only (never serialized, never
+     * returned by the public maskedKey() accessor).
+     */
+    private final String rawApiKey;
 
+    /**
+     * Public constructor for callers who only have the masked key (e.g. loading
+     * persisted settings back from storage without the raw key).
+     */
     public ProviderSettings(ProviderType provider, boolean enabled, String maskedKey, String endpoint) {
+        this(provider, enabled, maskedKey, endpoint, null);
+    }
+
+    /**
+     * Internal constructor that also captures the raw key for runtime use.
+     * Intended for ByokSettingsService and the LLM router build path only.
+     */
+    public ProviderSettings(ProviderType provider, boolean enabled, String maskedKey,
+                           String endpoint, String rawApiKey) {
         this.provider = Objects.requireNonNull(provider, "provider");
         this.enabled = enabled;
         this.maskedKey = maskedKey == null ? "" : maskedKey;
         this.endpoint = endpoint == null ? "" : endpoint;
+        this.rawApiKey = rawApiKey;
     }
 
     public ProviderType provider() { return provider; }
     public boolean enabled() { return enabled; }
     public String maskedKey() { return maskedKey; }
     public String endpoint() { return endpoint; }
+
+    /**
+     * Returns the raw API key for internal runtime / LLM router use.
+     * Returns {@code null} when this instance was loaded from external
+     * storage without the raw key stored alongside it.
+     */
+    public String rawApiKey() { return rawApiKey; }
 
     /**
      * Masks a raw API key, showing only the last 4 characters.
