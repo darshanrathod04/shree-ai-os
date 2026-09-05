@@ -41,6 +41,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class HealthEngineTests {
 
+    /** Fixed instant used throughout to ensure deterministic equals/hashCode comparisons. */
+    private static final Instant INSTANT = Instant.parse("2026-05-09T00:00:00Z");
+
     private HealthEvaluationEngine engine;
 
     @BeforeEach
@@ -244,7 +247,7 @@ public class HealthEngineTests {
                 "OK"
         );
         HealthMetrics metrics = new HealthMetrics(1.0, 0.0, 0.0, Map.of());
-        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, Instant.now());
+        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, INSTANT);
 
         // Act
         EvaluationResult result = EvaluationResult.success(report);
@@ -313,7 +316,7 @@ public class HealthEngineTests {
                 "OK"
         );
         HealthMetrics metrics = new HealthMetrics(1.0, 0.0, 0.0, Map.of());
-        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, Instant.now());
+        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, INSTANT);
 
         EvaluationResult result1 = EvaluationResult.success(report);
         EvaluationResult result2 = EvaluationResult.success(report);
@@ -338,7 +341,7 @@ public class HealthEngineTests {
                 "OK"
         );
         HealthMetrics metrics = new HealthMetrics(1.0, 0.0, 0.0, Map.of());
-        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, Instant.now());
+        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, INSTANT);
         EvaluationResult result = EvaluationResult.success(report);
 
         // Act

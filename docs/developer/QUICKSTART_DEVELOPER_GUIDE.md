@@ -20,7 +20,7 @@ Add this to your `pom.xml`:
 <dependency>
     <groupId>io.github.darshanrathod04</groupId>
     <artifactId>shree-ai-os</artifactId>
-    <version>1.0.4-developer-preview</version>
+    <version>1.0.5-developer-preview</version>
 </dependency>
 ```
 
