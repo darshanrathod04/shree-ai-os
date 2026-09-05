@@ -1,0 +1,156 @@
+# =============================================================================
+# Publish Shree AI OS to Maven Central Portal (Sonatype Central)
+# -----------------------------------------------------------------------------
+# This workflow is triggered ONLY when a GitHub Release is published.
+# It signs artifacts with the imported GPG key and deploys them to the
+# Sonatype Central Portal using the MAVEN_CENTRAL_TOKEN (username:token).
+#
+# Required repository secrets:
+#   - GPG_PRIVATE_KEY     : ASCII-armored GPG private key
+#   - GPG_PASSPHRASE      : Passphrase for the GPG key
+#   - MAVEN_CENTRAL_TOKEN : "<username>:<token>" (Central Portal user-token)
+# =============================================================================
+name: Publish to Maven Central
+
+on:
+  release:
+    types: [published]
+
+# Prevent concurrent releases publishing overlapping artifact sets.
+concurrency:
+  group: maven-central-publish
+  cancel-in-progress: false
+
+# Restrict default token permissions to read-only.
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build, sign, and deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Import GPG private key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE:  ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GPG_PRIVATE_KEY}" ]; then
+            echo "::error::GPG_PRIVATE_KEY secret is empty or missing."
+            exit 1
+          fi
+          # Create a temporary GPG home with strict permissions.
+          GNUPGHOME="$(mktemp -d)"
+          chmod 700 "${GNUPGHOME}"
+          export GNUPGHOME
+
+          # Decode and import the ASCII-armored private key.
+          KEY_FILE="$(mktemp)"
+          # The secret is stored as a multiline string; the workflow runner
+          # preserves newlines inside env values sourced from secrets.
+          printf '%s' "${GPG_PRIVATE_KEY}" | base64 --decode > "${KEY_FILE}"
+          gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "${GPG_PASSPHRASE}" \
+              --import "${KEY_FILE}"
+          rm -f "${KEY_FILE}"
+
+          # Capture the key fingerprint and ensure it is available to Maven.
+          FPR="$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')"
+          if [ -z "${FPR}" ]; then
+            echo "::error::Failed to determine GPG key fingerprint after import."
+            exit 1
+          fi
+          echo "GPG key fingerprint: ${FPR}"
+
+          # Persist for the deploy step via $GITHUB_ENV.
+          {
+            echo "GNUPGHOME=${GNUPGHOME}"
+            echo "GPG_KEY_FPR=${FPR}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Configure Maven settings (Central Portal)
+        env:
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${MAVEN_CENTRAL_TOKEN}" ]; then
+            echo "::error::MAVEN_CENTRAL_TOKEN secret is empty or missing."
+            exit 1
+          fi
+          # MAVEN_CENTRAL_TOKEN is formatted as "<username>:<token>".
+          CENTRAL_USER="${MAVEN_CENTRAL_TOKEN%%:*}"
+          CENTRAL_PASS="${MAVEN_CENTRAL_TOKEN#*:}"
+          if [ -z "${CENTRAL_USER}" ] || [ -z "${CENTRAL_PASS}" ] || \
+             [ "${CENTRAL_USER}" = "${MAVEN_CENTRAL_TOKEN}" ]; then
+            echo "::error::MAVEN_CENTRAL_TOKEN must be in 'username:token' format."
+            exit 1
+          fi
+          mkdir -p "${HOME}/.m2"
+          cat > "${HOME}/.m2/settings.xml" <<XML
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                                        https://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <servers>
+              <!--
+                These server IDs must match the <id> values in pom.xml's
+                <distributionManagement>/<repository> and <snapshotRepository>.
+                sonatype-nexus-staging  -> release artifacts (mvn deploy)
+                sonatype-nexus-snapshots -> snapshot artifacts (mvn deploy -Dversion=...-SNAPSHOT)
+              -->
+              <server>
+                <id>sonatype-nexus-staging</id>
+                <username>${CENTRAL_USER}</username>
+                <password>${CENTRAL_PASS}</password>
+              </server>
+              <server>
+                <id>sonatype-nexus-snapshots</id>
+                <username>${CENTRAL_USER}</username>
+                <password>${CENTRAL_PASS}</password>
+              </server>
+            </servers>
+            <profiles>
+              <profile>
+                <id>gpg-signing</id>
+                <properties>
+                  <gpg.keyname>${GPG_KEY_FPR}</gpg.keyname>
+                  <gpg.passphrase>${GPG_PASSPHRASE}</gpg.passphrase>
+                  <gpg.executable>gpg</gpg.executable>
+                  <gpg.skip>false</gpg.skip>
+                </properties>
+              </profile>
+            </profiles>
+            <activeProfiles>
+              <activeProfile>gpg-signing</activeProfile>
+            </activeProfiles>
+          </settings>
+          XML
+          chmod 600 "${HOME}/.m2/settings.xml"
+          echo "Maven settings.xml written for Central Portal user '${CENTRAL_USER}'."
+
+      - name: Make Maven Wrapper executable
+        run: chmod +x ./mvnw
+
+      - name: Build, sign, and deploy
+        env:
+          GNUPGHOME: ${{ env.GNUPGHOME }}
+        run: ./mvnw -B clean deploy
+
+      - name: Clean up GPG home
+        if: always()
+        run: |
+          if [ -n "${GNUPGHOME:-}" ] && [ -d "${GNUPGHOME}" ]; then
+            rm -rf "${GNUPGHOME}"
+          fi
