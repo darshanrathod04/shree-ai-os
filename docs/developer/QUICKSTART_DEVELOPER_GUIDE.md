@@ -18,9 +18,9 @@ Add this to your `pom.xml`:
 
 ```xml
 <dependency>
-    <groupId>com.shreeai</groupId>
+    <groupId>io.github.darshanrathod04</groupId>
     <artifactId>shree-ai-os</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-developer-preview</version>
 </dependency>
 ```
 
