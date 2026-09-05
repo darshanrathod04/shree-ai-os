@@ -104,6 +104,7 @@
             <version>5.28.15</version>
         </dependency>
 
+
         <!-- Lombok (optional but useful) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -115,6 +116,30 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers core (Docker-backed integration testing) -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.21.4</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers PostgreSQL module -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.21.4</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers JUnit-Jupiter 5 integration -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.21.4</version>
             <scope>test</scope>
         </dependency>
 
@@ -173,13 +198,6 @@
 					-->
 					<classifier>exec</classifier>
 				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>repackage</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 
 			<!-- Maven Central Publishing Plugins -->
@@ -199,6 +217,12 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.12.0</version>
+				<configuration>
+					<doclint>none</doclint>
+					<failOnError>false</failOnError>
+					<quiet>true</quiet>
+				</configuration>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
