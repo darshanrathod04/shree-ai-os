@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>io.github.darshanrathod04</groupId>
 	<artifactId>shree-ai-os</artifactId>
-	<version>1.0.0-developer-preview</version>
+	<version>1.0.1-developer-preview</version>
 	<name>Shree AI OS</name>
 	<description>In-process, privacy-first cognitive runtime and hybrid RAG engine for Java 21</description>
 	<url>https://github.com/darshanrathod04/shree-ai-os</url>
