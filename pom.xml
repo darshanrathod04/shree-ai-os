@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>io.github.darshanrathod04</groupId>
 	<artifactId>shree-ai-os</artifactId>
-	<version>1.0.3-developer-preview</version>
+	<version>1.0.4-developer-preview</version>
 	<name>Shree AI OS</name>
 	<description>In-process, privacy-first cognitive runtime and hybrid RAG engine for Java 21</description>
 	<url>https://github.com/darshanrathod04/shree-ai-os</url>
@@ -74,6 +74,34 @@
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.12.0</version>
+        </dependency>
+
+        <!-- JavaParser (Java AST parsing for code-generation and patch-engineering) -->
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.28.2</version>
+        </dependency>
+
+        <!-- ONNX Runtime Java (local embedding inference via ONNX models) -->
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime</artifactId>
+            <version>1.29.0</version>
+        </dependency>
+
+        <!-- DJL HuggingFace Tokenizers (tokenization for ONNX embedding pipelines) -->
+        <dependency>
+            <groupId>ai.djl.huggingface</groupId>
+            <artifactId>tokenizers</artifactId>
+            <version>0.36.0</version>
+        </dependency>
+
+        <!-- Neo4j Java Driver (graph knowledge-store adapter) -->
+        <dependency>
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            <version>5.28.15</version>
         </dependency>
 
         <!-- Lombok (optional but useful) -->
