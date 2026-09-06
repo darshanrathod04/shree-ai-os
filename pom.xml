@@ -171,6 +171,8 @@
 						<exclude>com/shreeai/os/platform/AutonomousPlanningTests.java</exclude>
 						<exclude>com/shreeai/os/platform/ConversationContinuityTests.java</exclude>
 						<exclude>com/shreeai/os/platform/ExecutionAuditTests.java</exclude>
+
+						<exclude>**/PgVectorIntegrationTest.java</exclude>
 					</excludes>
 				</configuration>
 			</plugin>

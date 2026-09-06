@@ -61,55 +61,50 @@ jobs:
 
           echo "GNUPGHOME=$GNUPGHOME" >> $GITHUB_ENV
           echo "GPG_KEY_FPR=$FPR" >> $GITHUB_ENV
-
-      # ------------------------------------------------------------
-      # Configure Maven settings
-      # ------------------------------------------------------------
-      - name: Configure Maven settings
-        shell: bash
-        env:
-          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-          GPG_KEY_FPR: ${{ env.GPG_KEY_FPR }}
-        run: |
-          set -euo pipefail
-
-          USERNAME="${MAVEN_CENTRAL_TOKEN%%:*}"
-          PASSWORD="${MAVEN_CENTRAL_TOKEN#*:}"
-
-          mkdir -p ~/.m2
-
-          cat > ~/.m2/settings.xml <<EOF
-          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
-            <servers>
-              <server>
-                <id>sonatype-nexus-staging</id>
-                <username>${USERNAME}</username>
-                <password>${PASSWORD}</password>
-              </server>
-              <server>
-                <id>sonatype-nexus-snapshots</id>
-                <username>${USERNAME}</username>
-                <password>${PASSWORD}</password>
-              </server>
-            </servers>
-
-            <profiles>
-              <profile>
-                <id>gpg</id>
-                <properties>
-                  <gpg.keyname>${GPG_KEY_FPR}</gpg.keyname>
-                  <gpg.passphrase>${GPG_PASSPHRASE}</gpg.passphrase>
-                  <gpg.executable>gpg</gpg.executable>
-                </properties>
-              </profile>
-            </profiles>
-
-            <activeProfiles>
-              <activeProfile>gpg</activeProfile>
-            </activeProfiles>
-          </settings>
-          EOF
+          
+          # ------------------------------------------------------------
+          # Configure Maven settings
+          # ------------------------------------------------------------
+          - name: Configure Maven settings
+            shell: bash
+            env:
+              MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
+              GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+              GPG_KEY_FPR: ${{ env.GPG_KEY_FPR }}
+            run: |
+              set -euo pipefail
+          
+              USERNAME="${MAVEN_CENTRAL_TOKEN%%:*}"
+              PASSWORD="${MAVEN_CENTRAL_TOKEN#*:}"
+          
+              mkdir -p ~/.m2
+          
+              cat > ~/.m2/settings.xml <<EOF
+              <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+                <servers>
+                  <server>
+                    <id>central</id>
+                    <username>${USERNAME}</username>
+                    <password>${PASSWORD}</password>
+                  </server>
+                </servers>
+          
+                <profiles>
+                  <profile>
+                    <id>gpg</id>
+                    <properties>
+                      <gpg.keyname>${GPG_KEY_FPR}</gpg.keyname>
+                      <gpg.passphrase>${GPG_PASSPHRASE}</gpg.passphrase>
+                      <gpg.executable>gpg</gpg.executable>
+                    </properties>
+                  </profile>
+                </profiles>
+          
+                <activeProfiles>
+                  <activeProfile>gpg</activeProfile>
+                </activeProfiles>
+              </settings>
+              EOF
 
       - name: Make Maven Wrapper executable
         run: chmod +x mvnw
@@ -121,7 +116,7 @@ jobs:
         shell: bash
         env:
           GNUPGHOME: ${{ env.GNUPGHOME }}
-        run: ./mvnw -B clean deploy
+        run: mvn clean deploy
 
       # ------------------------------------------------------------
       # Cleanup
