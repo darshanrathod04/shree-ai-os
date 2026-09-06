@@ -2,6 +2,10 @@
 
 ### Build Intelligent Java Applications with Memory, Knowledge, Planning & Multi-Agent Runtime
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.darshanrathod04/shree-ai-os?color=007ec6&label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.darshanrathod04/shree-ai-os)
+[![Java Version](https://img.shields.io/badge/Java-21%2B-blue.svg)](https://openjdk.org/projects/jdk/21/)
+[![License](https://img.shields.io/badge/License-Proprietary%20Evaluation-orange.svg)](LICENSE)
+
 > **Developer Preview v1.0** • Java 21 • Spring Boot • Privacy-First AI Runtime
 
 ---
