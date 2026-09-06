@@ -6,6 +6,10 @@ import org.junit.jupiter.api.TestInstance;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 
@@ -41,8 +45,22 @@ class PgVectorIntegrationTest {
                 "Docker unavailable \u2014 pgvector integration test skipped");
         postgres = new PostgreSQLContainer<>(PGVECTOR_IMAGE);
         postgres.start();
+        try (Connection conn = DriverManager.getConnection(
+                postgres.getJdbcUrl(),
+                postgres.getUsername(),
+                postgres.getPassword());
+             Statement stmt = conn.createStatement()) {
+
+            stmt.execute("CREATE EXTENSION IF NOT EXISTS vector");
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to create vector extension", e);
+        }
+
         provider = new PgVectorStoreProvider(
-                postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword(), 256);
+                postgres.getJdbcUrl(),
+                postgres.getUsername(),
+                postgres.getPassword(),
+                2);
         provider.ensureSchema();
     }
 
