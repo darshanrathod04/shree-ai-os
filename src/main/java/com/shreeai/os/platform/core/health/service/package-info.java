@@ -16,7 +16,7 @@
  * platform.core.health.service
  * ├── DefaultHealthService.java    — Default service implementation
  * ├── package-info.java
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Ownership:</b> Platform Core</p>

@@ -15,11 +15,11 @@
 	<description>In-process, privacy-first cognitive runtime and hybrid RAG engine for Java 21</description>
 	<url>https://github.com/darshanrathod04/shree-ai-os</url>
 	<licenses>
-		<license>
-			<name>Shree AI OS Proprietary Evaluation License v1.0</name>
-			<url>https://github.com/darshanrathod04/shree-ai-os/blob/main/LICENSE</url>
-			<distribution>repo</distribution>
-		</license>
+			<license>
+				<name>Shree AI OS Source-Available Evaluation License v1.0</name>
+				<url>https://github.com/darshanrathod04/shree-ai-os/blob/main/LICENSE</url>
+				<distribution>repo</distribution>
+			</license>
 	</licenses>
 	<developers>
 		<developer>

@@ -49,7 +49,7 @@
  * ├── ReflectionService.java         — Reflection contracts
  * ├── CognitiveStateService.java     — Cognitive state management contracts
  * ├── package-info.java              — Package documentation
- * └── README.md                      — API layer documentation
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md                      — API layer documentation
  * </pre>
  *
  * <p><b>Ownership:</b> Cognitive Kernel</p>

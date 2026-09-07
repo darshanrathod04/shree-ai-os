@@ -16,7 +16,7 @@
  * <pre>
  * platform.core.eventbus.service
  * ├── DefaultEventBusService.java  — Default EventBus implementation
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Ownership:</b> Platform Core</p>

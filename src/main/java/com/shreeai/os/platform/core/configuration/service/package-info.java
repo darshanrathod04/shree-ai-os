@@ -17,7 +17,7 @@
  * platform.core.configuration.service
  * ├── DefaultConfigurationService.java  — Default ConfigurationService implementation
  * ├── package-info.java
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Ownership:</b> Platform Core</p>

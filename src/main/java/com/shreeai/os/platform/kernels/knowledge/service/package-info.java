@@ -40,7 +40,7 @@
  * ├── DefaultKnowledgeService.java    — Default implementation of all API interfaces
  * ├── KnowledgeProcessingEngine.java  — Engine interface for processing delegation
  * ├── package-info.java               — Package documentation
- * └── README.md                       — Service layer documentation
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md                       — Service layer documentation
  * </pre>
  *
  * <p><b>Ownership:</b> Knowledge Kernel</p>

@@ -1,6 +1,34 @@
-# Developer Capabilities — SDK Catalog
+# Developer Capabilities
 
-> **Every entry below is verified against the Java source.** The "Runtime path" column shows the exact code path from the SDK method to the implementation. If a method is not listed, it was not found in the public SDK surface.
+> **Official Public SDK Reference — Developer Preview v1.0.5**
+
+This document describes every **public SDK capability** available in Shree AI OS.
+
+**Audience:** Java developers integrating Shree AI OS into Spring Boot or JVM applications.
+
+**Compatibility Promise**
+
+- Java 21+
+- Maven Central artifact: `io.github.darshanrathod04:shree-ai-os`
+- Version: **1.0.5-developer-preview**
+- All APIs documented here are part of the verified public SDK surface.
+
+## SDK Index
+
+| SDK             | Purpose                   |
+|-----------------|---------------------------|
+| MemorySDK       | Memory management         |
+| KnowledgeSDK    | Hybrid RAG                |
+| PlanningSDK     | Structured planning       |
+| ReasoningSDK    | Deterministic reasoning   |
+| ReflectionSDK   | Reflection & analytics    |
+| InferenceSDK    | Structured inference      |
+| IdentitySDK     | Identity resolution       |
+| ExecutionSDK    | Workflow execution        |
+| ProjectSDK      | Java project intelligence |
+| SettingsSDK     | BYOK configuration        |
+| RuntimeEventBus | Event-driven workflows    |
+| Streaming API   | Real token streaming      |
 
 ---
 
@@ -14,6 +42,12 @@ You access them via:
 - Or inject `ShreeAI` as a Spring bean
 
 ---
+
+> **Developer Note**
+>
+> Runtime paths explain how the SDK delegates into the Shree AI OS runtime.
+> They are provided for architectural understanding and debugging only.
+> Applications should depend **only on the public SDK**, not internal runtime classes.
 
 ## 1. MemorySDK
 
@@ -461,6 +495,26 @@ shree.stop();
 
 > **Note on this Developer Preview:** All 6 release blockers (BYOK hot reload, real token streaming, Reflection SDK Phase 1.5, Identity SDK typed path, tenant isolation enforcement, advanced Planning SDK) are now fully wired and production-reachable. The only remaining PARTIAL entries are documented in `WORKING_STATUS.md`.
 
+## Public API Summary
+
+Shree AI OS exposes **15 verified developer capabilities** through a stable Java SDK.
+
+- Memory & Knowledge
+- Planning & Execution
+- Reasoning & Reflection
+- Identity & Project Intelligence
+- BYOK Configuration
+- Event Bus
+- Real Token Streaming
+- Multi-Agent Runtime
+
+These APIs are available through a single entry point:
+
+```java
+ShreeAI shree = ShreeAI.builder().build();
+```
+
+The runtime remains deterministic Java infrastructure, while language models act as the final response generation layer.
 ---
 
 *Next: see [WORKING_STATUS.md](WORKING_STATUS.md) for the complete verification report.*
