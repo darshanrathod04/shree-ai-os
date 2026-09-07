@@ -55,4 +55,4 @@ mvn_gate.log
 *.ps1
 server-pid*
 raw_d01.json
-projects.json
+internal/logs/projects.json

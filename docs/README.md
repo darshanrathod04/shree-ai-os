@@ -2,88 +2,82 @@
 
 ### Build Intelligent Java Applications with Memory, Knowledge, Planning & Multi-Agent Runtime
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.darshanrathod04/shree-ai-os?color=007ec6&label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.darshanrathod04/shree-ai-os)
-[![Java Version](https://img.shields.io/badge/Java-21%2B-blue.svg)](https://openjdk.org/projects/jdk/21/)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.darshanrathod04/shree-ai-os?color=007ec6\&label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.darshanrathod04/shree-ai-os)
+[![Java](https://img.shields.io/badge/Java-21%2B-blue.svg)](https://openjdk.org/projects/jdk/21/)
 [![License](https://img.shields.io/badge/License-Proprietary%20Evaluation-orange.svg)](LICENSE)
 
-> **Developer Preview v1.0** • Java 21 • Spring Boot • Privacy-First AI Runtime
+> **Developer Preview v1.0.5** • Java 21 • Spring Boot • Maven Central
 
 ---
 
 ## What is Shree AI OS?
 
-Shree AI OS is an **AI Runtime Platform for Java** that helps developers build intelligent applications inside their own JVM.
+**Shree AI OS** is a privacy-first AI Runtime Platform for Java that enables developers to build intelligent applications inside their own JVM.
 
-Instead of treating an LLM as the center of your application, Shree AI OS provides a deterministic runtime with memory, knowledge retrieval, planning, reasoning, reflection, identity, and real-time streaming. Your application interacts with a structured runtime—not directly with prompts.
+Instead of treating prompts as the architecture, Shree AI OS provides a deterministic runtime with memory, knowledge retrieval, planning, reasoning, reflection, identity management, and multi-provider inference.
 
-**Design Principle:** *The LLM is the final response generator, not the decision maker.*
+**Design Principle**
+
+> *The LLM generates language. The runtime makes decisions.*
 
 ---
 
 ## Why Shree AI OS?
 
-Traditional AI applications:
+### Traditional AI
 
 `User → Prompt → LLM → Response`
 
-Shree AI OS:
+### Shree AI OS
 
 `User → Runtime → Memory → Knowledge → Planning → Reasoning → Reflection → LLM → Grounded Response`
 
-This architecture allows your application to remain explainable, testable, and extensible.
+This architecture makes AI applications more explainable, testable, and extensible.
 
 ---
 
 ## Core Features
 
-| Capability               | Description                                                     |
-| ------------------------ | --------------------------------------------------------------- |
-| **Memory SDK**           | Store and recall episodic, semantic and conversational memories |
-| **Knowledge SDK**        | Hybrid RAG with document ingestion and citation-based retrieval |
-| **Planning SDK**         | Create, refine and validate structured execution plans          |
-| **Reasoning Engine**     | Deterministic evidence-based reasoning pipeline                 |
-| **Reflection Engine**    | Self-evaluation, analytics and learning history                 |
-| **Identity SDK**         | Identity resolution with request-scoped context                 |
-| **Project SDK**          | Analyze Java projects and understand architecture               |
-| **Real Token Streaming** | Live streaming from Gemini, OpenAI and Ollama                   |
-| **BYOK**                 | Bring Your Own API Key with runtime hot reload                  |
-| **Event Bus**            | Publish/subscribe runtime events for intelligent workflows      |
+| Capability               | Description                                        |
+| ------------------------ | -------------------------------------------------- |
+| **Memory SDK**           | Episodic, semantic & conversational memory         |
+| **Knowledge SDK**        | Hybrid RAG with citation-based retrieval           |
+| **Planning SDK**         | Structured execution planning                      |
+| **Reasoning Engine**     | Evidence-grounded deterministic reasoning          |
+| **Reflection Engine**    | Self-evaluation & execution analytics              |
+| **Identity SDK**         | Request-scoped identity resolution                 |
+| **Project SDK**          | Java project understanding & architecture analysis |
+| **Real Token Streaming** | Live streaming from OpenAI, Gemini & Ollama        |
+| **BYOK**                 | Bring Your Own API Key with hot reload             |
+| **Runtime Event Bus**    | Publish/subscribe intelligent workflows            |
 
 ---
 
 ## 5-Layer Architecture
 
-`Application`
-
-`↓`
-
-`SDK Layer`
-
-`Memory • Knowledge • Planning • Reflection • Identity`
-
-`↓`
-
-`Runtime Orchestration`
-
-`Intent Router • Multi-Agent • Event Bus • LLM Router`
-
-`↓`
-
-`Kernel Layer`
-
-`Memory • Knowledge • Planning • Execution • Cognitive`
-
-`↓`
-
-`Providers`
-
-`Gemini • OpenAI • Ollama • In-Memory`
+```text
+Application
+      │
+SDK Layer
+Memory • Knowledge • Planning • Reflection • Identity
+      │
+Runtime Orchestration
+Intent Router • Multi-Agent • Event Bus • LLM Router
+      │
+Kernel Layer
+Memory • Knowledge • Planning • Execution • Cognitive
+      │
+Providers
+Gemini • OpenAI • Ollama • In-Memory
+```
 
 ---
 
-## Quick Start
+# Quick Start
 
-### 1. Add the dependency
+## 1. Install
+
+### Maven
 
 ```xml
 <dependency>
@@ -93,28 +87,57 @@ This architecture allows your application to remain explainable, testable, and e
 </dependency>
 ```
 
-### 2. Create the runtime
+### Gradle
 
-```java
-import com.shreeai.os.platform.ShreeAI;
-
-ShreeAI shree = ShreeAI.builder()
-        .build();
-```
-
-### 3. Chat
-
-```java
-var response = shree.chat(
-    "Create a 30 minute strength workout"
-);
-
-System.out.println(response.message());
+```gradle
+implementation("io.github.darshanrathod04:shree-ai-os:1.0.5-developer-preview")
 ```
 
 ---
 
-## Memory Example
+## 2. Create the Runtime
+
+```java
+import com.shreeai.os.platform.sdk.ShreeAI;
+
+ShreeAI shree = ShreeAI.builder()
+        .apiKey("local")
+        .build();
+```
+
+---
+
+## 3. Chat with the Runtime
+
+```java
+import com.shreeai.os.platform.sdk.SDKResponse;
+
+SDKResponse response = shree.chat(
+    "Create a roadmap for a student management system."
+);
+
+System.out.println(response.answer());
+System.out.println(response.confidence());
+```
+
+---
+
+# SDK Response
+
+```java
+String answer = response.answer();
+double confidence = response.confidence();
+boolean grounded = response.reasoningAvailable();
+String metadata = response.metadata();
+Map<String, Object> payload = response.structuredPayload();
+Instant timestamp = response.timestamp();
+```
+
+The structured payload exposes rich runtime context while preserving backward compatibility.
+
+---
+
+# Memory Example
 
 ```java
 shree.memory().store(
@@ -127,7 +150,7 @@ var memories = shree.memory().recall("language");
 
 ---
 
-## Knowledge RAG Example
+# Knowledge (Hybrid RAG)
 
 ```java
 shree.knowledge().ingest(
@@ -141,7 +164,7 @@ var results = shree.knowledge().search(
 
 ---
 
-## Planning Example
+# Planning
 
 ```java
 var plan = shree.planning()
@@ -155,7 +178,7 @@ var plan = shree.planning()
 
 ---
 
-## Real Streaming
+# Real Token Streaming
 
 ```java
 shree.chatStream(
@@ -164,89 +187,89 @@ shree.chatStream(
 );
 ```
 
-Supports live streaming from:
+Supported providers:
 
-* Google Gemini
 * OpenAI
+* Google Gemini
 * Ollama
 
-with automatic provider fallback.
+Automatic provider fallback is built into the runtime.
 
 ---
 
-## Build Applications Like
+# Build Applications Like
 
+* Developer Copilot
+* Enterprise Knowledge Assistant
 * AI Customer Support
 * Medical Intelligence
 * Financial Analytics
-* Developer Copilot
 * Fitness Coach
-* Education Platform
-* Enterprise Knowledge Assistant
+* Education Platforms
 
 ---
 
-## Public SDKs
+# Public SDKs
 
-| SDK           | Purpose                       |
-| ------------- | ----------------------------- |
-| MemorySDK     | Memory management             |
-| KnowledgeSDK  | Document ingestion & search   |
-| PlanningSDK   | Planning & execution          |
-| ReasoningSDK  | Deterministic reasoning       |
-| ReflectionSDK | Reflection & analytics        |
-| InferenceSDK  | Structured inference          |
-| IdentitySDK   | Identity resolution           |
-| ExecutionSDK  | Workflow execution            |
-| ProjectSDK    | Java project intelligence     |
-| SettingsSDK   | BYOK & provider configuration |
+| SDK           | Purpose                        |
+| ------------- | ------------------------------ |
+| MemorySDK     | Memory management              |
+| KnowledgeSDK  | Document ingestion & retrieval |
+| PlanningSDK   | Planning & execution           |
+| ReasoningSDK  | Evidence-based reasoning       |
+| ReflectionSDK | Runtime reflection & analytics |
+| InferenceSDK  | Structured inference           |
+| IdentitySDK   | Identity resolution            |
+| ExecutionSDK  | Workflow execution             |
+| ProjectSDK    | Java project intelligence      |
+| SettingsSDK   | BYOK & provider configuration  |
 
 ---
 
-## Runtime Highlights
+# Runtime Highlights
 
 * 11-stage orchestration pipeline
 * Multi-agent execution
 * Hybrid RAG retrieval
+* Deterministic reasoning
 * Real token streaming
 * BYOK hot reload
-* Tenant boundary enforcement
 * Runtime event bus
-* Project intelligence
+* Tenant boundary enforcement
 
 ---
 
 ## Documentation
 
-| Guide                             | Description                      |
-| --------------------------------- | -------------------------------- |
-| **PLATFORM_IDENTITY.md**          | Runtime architecture & lifecycle |
-| **DEVELOPER_CAPABILITIES.md**     | Complete SDK reference           |
-| **WORKING_STATUS.md**             | Verified implementation status   |
-| **QUICKSTART_DEVELOPER_GUIDE.md** | End-to-end developer tutorial    |
-
+| Document                            | Purpose                                         |
+|-------------------------------------|-------------------------------------------------|
+| PLATFORM_IDENTITY.md                | Platform philosophy & runtime                   |
+| QUICKSTART_DEVELOPER_GUIDE.md       | 5-minute tutorial                               |
+| DEVELOPER_CAPABILITIES.md           | Complete SDK reference                          |
+| WORKING_STATUS.md                   | Verification report                             |
+| COGNITIVE_RUNTIME_ARCHITECTURE.md   | Hybrid RAG, ONNX, pgvector & runtime internals  |
 ---
 
-## Project Status
+# Project Status
 
-**Developer Preview v1.0**
+**Developer Preview v1.0.5**
 
 Current focus:
 
 * Stable public SDK
 * Production-ready runtime APIs
-* Developer feedback
-* Performance & usability improvements
+* Developer documentation
+* Real developer feedback
 
-No breaking API changes are planned during the Developer Preview unless required by critical feedback.
+> During the Developer Preview, the public API is considered **feature-frozen**. Future releases will be driven primarily by real developer feedback.
 
 ---
 
-## Philosophy
+# Philosophy
 
 > **AI should be infrastructure, not just prompts.**
 
-Shree AI OS combines deterministic software engineering with modern language models to help developers build intelligent, grounded, and extensible Java applications.
+Shree AI OS combines deterministic software engineering with modern language models to help developers build grounded, explainable, and extensible Java applications.
 
 ---
 
@@ -254,4 +277,6 @@ Shree AI OS combines deterministic software engineering with modern language mod
 
 **Language:** Java 21
 
-**Status:** Developer Preview v1.0
+**Distribution:** Maven Central
+
+**Status:** Developer Preview v1.0.5

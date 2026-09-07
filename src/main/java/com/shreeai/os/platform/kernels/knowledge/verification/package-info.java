@@ -60,7 +60,7 @@
  * ├── KnowledgeVerificationSuite.java      — Verification orchestration layer
  * ├── KnowledgeVerificationResult.java     — Immutable verification result value object
  * ├── package-info.java                    — Package documentation
- * └── README.md                            — Verification layer documentation
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md                            — Verification layer documentation
  * </pre>
  *
  * <p><b>Ownership:</b> Knowledge Kernel</p>

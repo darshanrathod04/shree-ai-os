@@ -16,7 +16,7 @@
  * platform.core.configuration.validator
  * ├── ConfigurationValidator.java  — Configuration validation logic
  * ├── package-info.java
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Ownership:</b> Platform Core</p>

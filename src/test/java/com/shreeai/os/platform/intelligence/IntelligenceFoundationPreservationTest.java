@@ -101,7 +101,7 @@ public class IntelligenceFoundationPreservationTest {
         metadata.put("projectName", "Long Evidence Project");
         metadata.put("evidence", List.of(
                 Map.of("id", "ev-long", "type", "OBSERVATION", "value", LONG_EVIDENCE,
-                        "sourceType", "FILE", "sourceId", "src/main/README.md", "confidence", 0.9)
+                        "sourceType", "FILE", "sourceId", "src/main/COGNITIVE_RUNTIME_ARCHITECTURE.md", "confidence", 0.9)
         ));
 
         SDKRequest request = SDKRequest.builder()

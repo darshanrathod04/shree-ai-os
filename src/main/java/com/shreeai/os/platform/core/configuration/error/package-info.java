@@ -20,7 +20,7 @@
  * ├── ConfigurationNotFoundException.java  — Configuration not found error
  * ├── InvalidConfigurationException.java    — Invalid configuration error
  * ├── package-info.java
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Ownership:</b> Platform Core</p>

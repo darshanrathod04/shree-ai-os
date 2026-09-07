@@ -19,7 +19,7 @@
  * ├── HealthReport.java        — Forward-reference placeholder (EIO-602)
  * ├── HealthCheck.java         — Forward-reference placeholder (EIO-602)
  * ├── package-info.java
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Expected Future Package Structure:</b></p>

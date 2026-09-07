@@ -20,7 +20,7 @@
  * ├── InvalidEventException.java    — Validation failure
  * ├── NoSubscribersException.java   — No subscribers found
  * ├── EventDispatchException.java   — Dispatch failure
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Ownership:</b> Platform Core</p>

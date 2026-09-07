@@ -18,7 +18,7 @@
  * ├── HealthEvaluationEngine.java    — Stateless evaluation engine
  * ├── EvaluationResult.java          — Immutable evaluation result
  * ├── package-info.java
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Ownership:</b> Platform Core</p>

@@ -1,10 +1,16 @@
 ﻿
-# Shree AI OS
+# Cognitive Runtime Architecture
+
+> Technical Architecture Reference
+
+This document explains the internal architecture of Shree AI OS, including the cognitive runtime, hybrid retrieval engine, ONNX embedding pipeline, pgvector integration, and grounded response generation.
+
+Audience: platform architects, contributors, and advanced Java developers.
 
 **In-Process, Privacy-First Cognitive Runtime & Hybrid RAG Engine**
 
 [![Java 21](https://img.shields.io/badge/Java-21-blue.svg)](https://adoptium.net/)
-[![Spring Boot 3](https://img.shields.io/badge/Spring%20Boot-3-green.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot 4](https://img.shields.io/badge/Spring%20Boot-3-green.svg)](https://spring.io/projects/spring-boot)
 [![pgvector](https://img.shields.io/badge/pgvector-0.7-blue.svg)](https://github.com/pgvector/pgvector)
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](./LICENSE)
 
@@ -14,19 +20,19 @@
 
 Shree AI OS is an **in-process, privacy-first cognitive runtime** that gives your application a full AI brain - without sending your data to any third-party API. It ships as a standard JVM library you embed directly in your service, providing:
 
-| Capability | Implementation |
-|---|---|
-| **Semantic Embeddings** | Local ONNX model (`all-MiniLM-L6-v2`), 384-dim, zero-latency inference |
-| **Smart Document Chunking** | Sentence-boundary-aware sliding window (600-char target, 80-char overlap) |
-| **Hybrid Vector Search** | PostgreSQL + pgvector: HNSW (semantic KNN) + GIN full-text (keyword), fused via **Reciprocal Rank Fusion (RRF)** |
-| **Grounded Responses** | Every answer carries citations back to specific ingested chunks |
-| **Memory & Knowledge Graph** | In-process episodic memory + entity-relationship knowledge graph |
-| **Multi-Agent Orchestration** | Chief-of-staff pattern with typed intent routing |
-| **Constitutional Governance** | Approval guardrails, audit logging, and traceable reasoning |
+| Capability                    | Implementation                                                                                                   |
+|-------------------------------|------------------------------------------------------------------------------------------------------------------|
+| **Semantic Embeddings**       | Local ONNX model (`all-MiniLM-L6-v2`), 384-dim, zero-latency inference                                           |
+| **Smart Document Chunking**   | Sentence-boundary-aware sliding window (600-char target, 80-char overlap)                                        |
+| **Hybrid Vector Search**      | PostgreSQL + pgvector: HNSW (semantic KNN) + GIN full-text (keyword), fused via **Reciprocal Rank Fusion (RRF)** |
+| **Grounded Responses**        | Every answer carries citations back to specific ingested chunks                                                  |
+| **Memory & Knowledge Graph**  | In-process episodic memory + entity-relationship knowledge graph                                                 |
+| **Multi-Agent Orchestration** | Chief-of-staff pattern with typed intent routing                                                                 |
+| **Constitutional Governance** | Approval guardrails, audit logging, and traceable reasoning                                                      |
 
 ---
 
-## Architecture Overview
+## Runtime Architecture
 
 ```
                         Shree AI OS Runtime
@@ -259,14 +265,14 @@ curl -s -X POST http://localhost:7070/api/playground/memory/recall \
 All settings are in `application/shree-playground/src/main/resources/application.properties`
 and can be overridden via environment variables:
 
-| Property | Env Variable | Default | Description |
-|---|---|---|---|
-| `shree.vector.provider` | `SHREE_VECTOR_PROVIDER` | `pgvector` | `pgvector` or `in-memory` |
-| `shree.vector.jdbc.url` | `SHREE_VECTOR_JDBC_URL` | `jdbc:postgresql://localhost:5432/shree` | PostgreSQL JDBC URL |
-| `shree.vector.jdbc.user` | `SHREE_VECTOR_JDBC_USER` | `postgres` | Database user |
-| `shree.vector.jdbc.password` | `SHREE_VECTOR_JDBC_PASSWORD` | `shreeai` | Database password |
-| `shree.embedding.provider` | `SHREE_EMBEDDING_PROVIDER` | `onnx` | `onnx` (local) or `gemini` |
-| `shree.embedding.dimensions` | `SHREE_EMBEDDING_DIMENSIONS` | `384` | Embedding vector dimension |
+| Property                     | Env Variable                 | Default                                  | Description                |
+|------------------------------|------------------------------|------------------------------------------|----------------------------|
+| `shree.vector.provider`      | `SHREE_VECTOR_PROVIDER`      | `pgvector`                               | `pgvector` or `in-memory`  |
+| `shree.vector.jdbc.url`      | `SHREE_VECTOR_JDBC_URL`      | `jdbc:postgresql://localhost:5432/shree` | PostgreSQL JDBC URL        |
+| `shree.vector.jdbc.user`     | `SHREE_VECTOR_JDBC_USER`     | `postgres`                               | Database user              |
+| `shree.vector.jdbc.password` | `SHREE_VECTOR_JDBC_PASSWORD` | `shreeai`                                | Database password          |
+| `shree.embedding.provider`   | `SHREE_EMBEDDING_PROVIDER`   | `onnx`                                   | `onnx` (local) or `gemini` |
+| `shree.embedding.dimensions` | `SHREE_EMBEDDING_DIMENSIONS` | `384`                                    | Embedding vector dimension |
 
 ---
 
@@ -298,13 +304,13 @@ shree-ai-os/
 
 All code is governed by five immutable rules:
 
-| Rule | Description |
-|---|---|
-| **R1** | No canonical code imports `platform.legacy` - enforced by `CanonicalIsolationTest` |
-| **R2** | Legacy types migrate by promote-and-delegate; the Runtime is the single source of truth |
-| **R3** | Public API surfaces (REST routes, SDK signatures) are frozen until final removal |
-| **R4** | A legacy component is removed only when zero canonical imports and zero test dependencies exist |
-| **R5** | Every phase ends green: `mvn clean test` passes completely |
+| Rule    | Description                                                                                     |
+|---------|-------------------------------------------------------------------------------------------------|
+| **R1**  | No canonical code imports `platform.legacy` - enforced by `CanonicalIsolationTest`              |
+| **R2**  | Legacy types migrate by promote-and-delegate; the Runtime is the single source of truth         |
+| **R3**  | Public API surfaces (REST routes, SDK signatures) are frozen until final removal                |
+| **R4**  | A legacy component is removed only when zero canonical imports and zero test dependencies exist |
+| **R5**  | Every phase ends green: `mvn clean test` passes completely                                      |
 
 ---
 
@@ -339,7 +345,10 @@ All contributions must:
 
 ---
 
-**Platform:** Shree AI OS
-**Version:** 1.0
-**Constitutional Authority:** PHASE-1-ARCH-001, EIO-KNW-101
-**Founder:** Darshan Rathod
+Platform: Shree AI OS
+
+Document: Cognitive Runtime Architecture
+
+Version: Developer Preview v1.0.5
+
+Author: Darshan Rathod

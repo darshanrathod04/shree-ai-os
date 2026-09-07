@@ -15,7 +15,7 @@
  * platform.core.eventbus.engine
  * ├── EventDispatchEngine.java  — Dispatch engine interface
  * ├── DispatchResult.java       — Immutable dispatch result
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Ownership:</b> Platform Core</p>

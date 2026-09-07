@@ -57,7 +57,7 @@
  * ├── DefaultKnowledgeProcessingEngine.java — Default implementation
  * ├── KnowledgeProcessingResult.java       — Immutable processing result value object
  * ├── package-info.java                    — Package documentation
- * └── README.md                            — Engine layer documentation
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md                            — Engine layer documentation
  * </pre>
  *
  * <p><b>Ownership:</b> Knowledge Kernel</p>

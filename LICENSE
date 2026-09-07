@@ -1,62 +1,96 @@
-Shree AI OS Proprietary Source-Available License
-Evaluation License v1.0
+# Shree AI OS Source-Available Evaluation License v1.0
 
-Shree AI OS
-Copyright (c) 2026 Darshan Rathod. All Rights Reserved.
+**Copyright © 2026 Darshan Rathod. All Rights Reserved.**
 
-IMPORTANT: PLEASE READ CAREFULLY BEFORE DOWNLOADING, ACCESSING, BUILDING, OR USING 
-THE SHREE AI OS SOFTWARE, DOCUMENTATION, AND ASSOCIATED INTELLECTUAL PROPERTY.
+This Source-Available Evaluation License ("License") governs the use of the **Shree AI OS** software, including its source code, binaries, SDKs, runtime components, documentation, APIs, architecture, and associated project materials (collectively, the **Software**).
 
-1. OWNERSHIP & INTELLECTUAL PROPERTY
-Shree AI OS, including but not limited to its architecture, source code, bytecode, 
-SDKs, runtime kernels, documentation, APIs, and design materials, is the exclusive 
-proprietary intellectual property of Darshan Rathod ("Copyright Holder"). 
-This license does not grant or transfer any title, ownership, copyright, or patent 
-rights to you or any third party. All rights not expressly granted herein are 
-reserved by the Copyright Holder.
+By downloading, accessing, building, or using the Software, you agree to be bound by this License.
 
-2. PERMITTED USES (EVALUATION ONLY)
-Subject to the terms and restrictions of this License, you are granted a non-exclusive, 
-non-transferable, revocable license to:
-  a) Clone and inspect the repository source code solely for personal evaluation, 
-     educational, and architectural review purposes.
-  b) Build and run the software locally in a non-production environment solely for 
-     internal testing and benchmarking.
-  c) Submit bug reports, issues, feedback, and pull requests to the official repository.
+---
 
-3. STRICT RESTRICTIONS & PROHIBITED ACTS
-You may NOT, directly or indirectly, without explicit prior written authorization 
-from Darshan Rathod:
-  a) Deploy, execute, or integrate Shree AI OS in any commercial, production, revenue-generating, 
-     or enterprise environment.
-  b) Distribute, publish, mirror, sublicense, rent, lease, lend, or sell copies or 
-     forks of the source code, binaries, or documentation.
-  c) Create derivative commercial works, competitive runtimes, frameworks, or SaaS 
-     products based in whole or in part upon Shree AI OS architecture or code.
-  d) Remove, deface, obscure, or alter any copyright, author attribution, patent, 
-     or proprietary notices contained in or on the software.
+## 1. Grant of License
 
-4. CONTRIBUTION LICENSE ASSIGNMENT
-By submitting a contribution (including pull requests, patches, code snippets, or documentation),
-you grant the Copyright Holder a perpetual, worldwide, royalty-free license to use, modify, reproduce,
-and distribute that contribution as part of Shree AI OS.
-This does not transfer ownership of your original copyright unless separately agreed in writing.
+Subject to the terms of this License, the Copyright Holder grants you a **non-exclusive, non-transferable, revocable, royalty-free** license to:
 
-5. DISCLAIMER OF WARRANTY
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT 
-HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, LOSS OF DATA, OR OTHER LIABILITY, WHETHER 
-IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION 
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+* Inspect and study the source code for personal, educational, research, or architectural evaluation purposes.
+* Compile, build, and execute the Software locally in development, testing, and non-production environments.
+* Integrate the public SDK into **non-commercial evaluation prototypes** and internal technical demonstrations.
+* Submit issues, documentation improvements, bug reports, and pull requests to the official repository.
 
-6. COMMERCIAL LICENSING & INQUIRIES
-For enterprise licensing, commercial usage rights, custom deployments, or partnerships, 
-please contact:
-Darshan Rathod
+No ownership or intellectual property rights are transferred under this License.
 
-Commercial licensing and partnership inquiries should be made through the official contact
-published by the project owner.
+---
 
---------------------------------------------------------------------------------
-License Type: Proprietary Source-Available (Evaluation Only) — All Rights Reserved.
+## 2. Restrictions
+
+Unless expressly authorized in writing by the Copyright Holder, you may **not**:
+
+* Deploy or operate the Software in any production, commercial, enterprise, or revenue-generating environment.
+* Sell, sublicense, lease, rent, distribute, mirror, or publicly host the Software, source code, binaries, or container images.
+* Create or commercialize derivative AI runtimes, agent frameworks, SDKs, developer platforms, or SaaS products based substantially on the Software's architecture or implementation.
+* Remove, modify, or obscure any copyright, trademark, attribution, or proprietary notices contained in the Software.
+* Represent the Software or any modified version as an official release of Shree AI OS.
+
+---
+
+## 3. Intellectual Property
+
+Shree AI OS and all related intellectual property remain the exclusive property of **Darshan Rathod**.
+
+This License grants only the limited rights explicitly stated above. All rights not expressly granted are reserved.
+
+---
+
+## 4. Contributions
+
+You retain ownership of your original contributions.
+
+By submitting any pull request, patch, code contribution, documentation, or other contribution to the official project, you grant the Copyright Holder a **perpetual, worldwide, irrevocable, royalty-free, transferable** license to use, modify, reproduce, distribute, sublicense, and commercialize that contribution as part of Shree AI OS or related products.
+
+---
+
+## 5. Termination
+
+This License terminates automatically if you violate any provision of this Agreement.
+
+Upon termination, you must immediately cease using the Software and destroy all copies in your possession or control, except where retention is required by applicable law.
+
+---
+
+## 6. Disclaimer of Warranty
+
+**THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED**, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY, OR PERFORMANCE.
+
+You assume all risks arising from the use of the Software.
+
+---
+
+## 7. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES, INCLUDING LOSS OF DATA, PROFITS, BUSINESS INTERRUPTION, OR PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, ARISING FROM THE USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+---
+
+## 8. Commercial Licensing
+
+Any commercial use—including production deployment, enterprise integration, OEM licensing, hosted services, or redistribution—requires a separate written commercial license from the Copyright Holder.
+
+Commercial licensing and partnership inquiries should be made through the official contact published by the project owner.
+
+---
+
+## 9. Governing Terms
+
+If any provision of this License is found unenforceable, the remaining provisions shall remain in full force and effect.
+
+This License constitutes the entire agreement governing evaluation use of the Software and supersedes any prior evaluation permissions relating to Shree AI OS.
+
+---
+
+**Project:** Shree AI OS
+
+**License Model:** Source-Available Evaluation License v1.0
+
+**Author & Copyright Holder:** Darshan Rathod
+
+**Status:** Developer Preview
