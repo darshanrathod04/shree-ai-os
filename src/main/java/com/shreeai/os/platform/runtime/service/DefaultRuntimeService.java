@@ -96,7 +96,10 @@ import com.shreeai.os.platform.llm.LlmRequest;
 import com.shreeai.os.platform.services.ByokSettingsService;
 import com.shreeai.os.platform.services.ProviderType;
 import com.shreeai.os.platform.security.api.ApprovalService;
+import com.shreeai.os.platform.security.api.PermissionManager;
 import com.shreeai.os.platform.security.engine.InMemoryApprovalService;
+import com.shreeai.os.platform.security.model.PermissionDecision;
+import com.shreeai.os.platform.resolver.CapabilityType;
 
 import java.time.Instant;
 import java.util.*;
@@ -195,6 +198,68 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     /** Request metadata key carrying the requested capability. */
     private static final String CAPABILITY_KEY = "capability";
 
+    /**
+     * Request metadata key that opts into graph-driven execution (Task-003).
+     *
+     * <p>The {@code executionGraph} metadata itself is a planning artifact that
+     * is attached to <em>every</em> Gateway request by
+     * {@code DefaultApplicationGateway}. It must NOT cause the Runtime to
+     * short-circuit into the graph executor — that would bypass deterministic
+     * intent routing and the canonical Chief pipeline for all SDK traffic.
+     * Graph-mode execution therefore runs only when the caller explicitly sets
+     * this flag to {@code true} AND no deterministic kernel route applies.</p>
+     */
+    private static final String GRAPH_EXECUTION_MODE_KEY = "graphExecutionMode";
+
+    /**
+     * Builds the permission manager backing the graph runtime safety gate.
+     *
+     * <p>Graph node capabilities are routed through the runtime's canonical
+     * {@link PermissionPolicy} when they map to an {@link ExecutionCapability};
+     * capabilities without an execution mapping (IDENTITY, CONTEXT,
+     * OBSERVABILITY, …) default to {@link PermissionDecision#ALLOW} so
+     * graph-mode execution keeps its established behaviour. Unlike
+     * {@code DefaultPermissionManager} — whose unknown-tool default is DENY and
+     * would block the root IDENTITY node of every graph request — this adapter
+     * never denies by default; the gate's deterministic deny-list remains the
+     * hard safety boundary and explicit policy entries can still deny or
+     * require approval.</p>
+     */
+    private PermissionManager graphPermissionManager() {
+        return request -> {
+            try {
+                CapabilityType capability = CapabilityType.valueOf(request.toolId());
+                ExecutionCapability execution = toExecutionCapability(capability);
+                if (execution == null) {
+                    return PermissionDecision.ALLOW;
+                }
+                // The runtime policy contract uses its own PermissionDecision
+                // (REQUIRE_APPROVAL); translate it to the canonical security
+                // contract consumed by the gate (ASK_USER).
+                return switch (permissionPolicy.evaluate(execution)) {
+                    case ALLOW -> PermissionDecision.ALLOW;
+                    case REQUIRE_APPROVAL -> PermissionDecision.ASK_USER;
+                    case DENY -> PermissionDecision.DENY;
+                };
+            } catch (IllegalArgumentException | NullPointerException e) {
+                return PermissionDecision.ALLOW;
+            }
+        };
+    }
+
+    /**
+     * Maps a graph node capability to the runtime execution capability it
+     * represents, or {@code null} when no execution capability matches.
+     */
+    private static ExecutionCapability toExecutionCapability(CapabilityType capability) {
+        return switch (capability) {
+            case MEMORY -> ExecutionCapability.MEMORY_RECALL;
+            case KNOWLEDGE -> ExecutionCapability.KNOWLEDGE_SEARCH;
+            case PLANNING -> ExecutionCapability.PROJECT_PLANNING;
+            case EXECUTION -> ExecutionCapability.TASK_EXECUTION;
+            default -> null;
+        };
+    }
     // ─── Sprint-12: Multi-Kernel Orchestration ────────────────────────────────
 
     /** Stores the MemoryService for orchestrator access (initialized in initializeStages). */
@@ -1035,6 +1100,70 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                         .result(result)
                         .createdAt(session.createdAt())
                         .build();
+            }
+
+            // ================================================================
+            // Task-003: Graph-Runtime Executor
+            // Requests that OPT IN via the "graphExecutionMode" metadata flag
+            // (value "true") and carry an "executionGraph" artifact are executed
+            // through the Universal Execution Graph via DefaultGraphRuntimeExecutor,
+            // which resolves each graph node to its owning kernel service through
+            // CapabilityNodeExecutors and applies the governance interceptor chain
+            // (Safety → Validation, Observability always).
+            //
+            // Precedence: deterministic intent routing (route != null) always
+            // wins over the graph artifact. Every Gateway request carries an
+            // "executionGraph" planning artifact, so without the explicit opt-in
+            // flag this branch would short-circuit all routed and unrouted SDK
+            // traffic (breaking routedOperation evidence, structured payloads,
+            // and knowledge-grounded answers).
+            // ================================================================
+            if (route == null
+                    && request.metadata() != null
+                    && request.metadata().containsKey("executionGraph")
+                    && "true".equalsIgnoreCase(
+                            String.valueOf(request.metadata().get(GRAPH_EXECUTION_MODE_KEY)))) {
+                Object graphObj = request.metadata().get("executionGraph");
+                if (graphObj instanceof com.shreeai.os.platform.graph.ExecutionGraph graph) {
+
+                    java.util.Map<com.shreeai.os.platform.resolver.CapabilityType,
+                            com.shreeai.os.platform.runtime.graph.NodeExecutor> nodeExecutors =
+                            com.shreeai.os.platform.runtime.graph.CapabilityNodeExecutors
+                                    .buildNodeExecutors(
+                                            identityServiceField,
+                                            knowledgeSearchServiceField,
+                                            planningServiceField,
+                                            memoryServiceField);
+
+                    java.util.List<com.shreeai.os.platform.runtime.graph.RuntimeInterceptor> interceptors =
+                            java.util.List.of(
+                                    new com.shreeai.os.platform.runtime.graph.SafetyInterceptor(),
+                                    new com.shreeai.os.platform.runtime.graph.ValidationInterceptor(),
+                                    new com.shreeai.os.platform.runtime.graph.ObservabilityInterceptor());
+
+                    com.shreeai.os.platform.runtime.graph.DefaultGraphRuntimeExecutor graphExecutor =
+                            new com.shreeai.os.platform.runtime.graph.DefaultGraphRuntimeExecutor(
+                                    nodeExecutors,
+                                    interceptors,
+                                    new com.shreeai.os.platform.runtime.interceptor.DefaultSafetyInterceptor(
+                                            graphPermissionManager(), approvalService));
+
+                    com.shreeai.os.platform.runtime.execution.ExecutionSession graphSession =
+                            graphExecutor.execute(graph, request);
+
+                    eventBus.publish(
+                            new RuntimeEvent(
+                                    EventType.PIPELINE_COMPLETED,
+                                    request.requestId(),
+                                    "GraphRuntimeExecutor",
+                                    Instant.now(),
+                                    Map.of(
+                                            "status", graphSession.status().name(),
+                                            "graphId", graph.graphId()))
+                    );
+
+                    return graphSession;
+                }
             }
 
             // ================================================================

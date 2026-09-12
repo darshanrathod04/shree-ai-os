@@ -49,16 +49,23 @@
 
         <!-- Shree AI OS SDK -->
         <dependency>
-		    <groupId>com.shreeai</groupId>
-		    <artifactId>shree-ai-os</artifactId> 
-		    <version>1.0.0</version>
-	    </dependency>
+            <groupId>io.github.darshanrathod04</groupId>
+            <artifactId>shree-ai-os</artifactId>
+            <version>1.0.5-developer-preview</version>
+        </dependency>
 
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
 		 <dependency>

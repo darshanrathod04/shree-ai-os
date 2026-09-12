@@ -148,6 +148,34 @@ public final class ReflectionStage implements ExecutionStage {
             publishReflectionEvent(context, requestId, analysis);
             publishReflectionPersistedEvent(context, requestId, analysis, importanceScore, memoryBridgeId);
 
+            // P0.1 — Reflection Loop Execution.
+            //
+            // When the analysis advises another reasoning pass (the effective
+            // "shouldReReason" signal) and the reflection iteration bound has
+            // not been exhausted, request the pipeline to re-execute ONLY the
+            // cognitive segment (Reasoning → Inference → Planning → Reflection).
+            // The signal is consumed and cleared by DefaultExecutionPipeline.
+            //
+            // ReflectionStage never invokes ReasoningStage directly — it only
+            // flags the request.
+            state.recordQualityScore(analysis.score());
+            state.incrementReflectionIteration();
+            if (analysis.retryAdvised()
+                    && state.getReflectionIteration() < state.getMaxReflectionIterations()) {
+                // Mark the next stage as invoked so the chain does not treat
+                // this short return as a short-circuit; the loop decision is
+                // carried by the requiresReReason flag instead.
+                state.markNextStageInvoked();
+                state.setRequiresReReason(true);
+                return PipelineResult.builder()
+                        .success(true)
+                        .status("REFLECTION_LOOP_REQUESTED")
+                        .addMessage("Reflection advised another reasoning pass (iteration "
+                                + state.getReflectionIteration() + "/"
+                                + state.getMaxReflectionIterations() + ")")
+                        .build();
+            }
+
             return chain.next(context, state);
 
         } catch (Exception e) {
