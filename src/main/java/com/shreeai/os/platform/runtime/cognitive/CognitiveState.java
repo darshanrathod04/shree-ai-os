@@ -2,6 +2,7 @@ package com.shreeai.os.platform.runtime.cognitive;
 
 import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionAnalysis;
 import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
+import com.shreeai.os.platform.kernels.context.model.IntentProfile;
 import com.shreeai.os.platform.kernels.inference.model.EvidencePackage;
 import com.shreeai.os.platform.kernels.inference.model.InferenceResult;
 import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
@@ -44,6 +45,7 @@ import java.util.Objects;
  * @param reflectionIteration the number of completed reflection passes
  * @param qualityHistory      quality scores recorded per reflection pass
  * @param evidencePackage     the resolved evidence package (null before InferenceStage)
+ * @param intentProfile       the detected primary intent (null before ContextStage)
  */
 public record CognitiveState(
         ReasoningResult reasoning,
@@ -52,7 +54,8 @@ public record CognitiveState(
         ReflectionAnalysis reflection,
         int reflectionIteration,
         List<Double> qualityHistory,
-        EvidencePackage evidencePackage) {
+        EvidencePackage evidencePackage,
+        IntentProfile intentProfile) {
 
     /** Creates a deeply-immutable CognitiveState with defensive copies. */
     public CognitiveState {
@@ -67,7 +70,7 @@ public record CognitiveState(
      * @return an empty state (never null)
      */
         public static CognitiveState empty() {
-        return new CognitiveState(null, null, null, null, 0, List.of(), null);
+        return new CognitiveState(null, null, null, null, 0, List.of(), null, null);
     }
 
     /**
@@ -79,7 +82,7 @@ public record CognitiveState(
         public CognitiveState withReasoning(ReasoningResult reasoning) {
         Objects.requireNonNull(reasoning, "reasoning must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile);
     }
 
     /**
@@ -91,7 +94,7 @@ public record CognitiveState(
         public CognitiveState withInference(InferenceResult inference) {
         Objects.requireNonNull(inference, "inference must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile);
     }
 
     /**
@@ -103,7 +106,7 @@ public record CognitiveState(
         public CognitiveState withPlanning(PlanningResponse planning) {
         Objects.requireNonNull(planning, "planning must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile);
     }
 
     /**
@@ -119,7 +122,7 @@ public record CognitiveState(
         List<Double> history = new ArrayList<>(qualityHistory);
         history.add(qualityScore);
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration + 1, List.copyOf(history), evidencePackage);
+                reflection, reflectionIteration + 1, List.copyOf(history), evidencePackage, intentProfile);
     }
 
         /**
@@ -145,7 +148,7 @@ public record CognitiveState(
     public CognitiveState withEvidencePackage(EvidencePackage pkg) {
         Objects.requireNonNull(pkg, "evidencePackage must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, pkg);
+                reflection, reflectionIteration, qualityHistory, pkg, intentProfile);
     }
 
     /**
@@ -156,7 +159,20 @@ public record CognitiveState(
      */
         public CognitiveState incrementReflection() {
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration + 1, qualityHistory, evidencePackage);
+                reflection, reflectionIteration + 1, qualityHistory, evidencePackage, intentProfile);
+    }
+
+    /**
+     * Returns a new cognitive state with the given intent profile,
+     * preserving all existing cognitive artifacts.
+     *
+     * @param intentProfile the detected primary intent profile (must not be null)
+     * @return a new CognitiveState with the intent profile set (never null)
+     */
+    public CognitiveState withIntentProfile(IntentProfile intentProfile) {
+        Objects.requireNonNull(intentProfile, "intentProfile must not be null");
+        return new CognitiveState(reasoning, inference, planning,
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile);
     }
 
     /**
@@ -177,6 +193,7 @@ public record CognitiveState(
                 + ", reflection=" + (reflection != null)
                 + ", reflectionIteration=" + reflectionIteration
                                  + ", qualityHistory=" + qualityHistory
-                + ", evidencePackage=" + (evidencePackage != null) + '}';
+                + ", evidencePackage=" + (evidencePackage != null)
+                + ", intentProfile=" + intentProfile + '}';
     }
 }

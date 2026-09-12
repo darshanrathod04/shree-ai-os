@@ -521,7 +521,8 @@ public final class PipelineExecutionState {
                 cs.reflection(),
                 0,
                 List.of(),
-                cs.evidencePackage());
+                cs.evidencePackage(),
+                cs.intentProfile());
         requiresReReason = false;
     }
 
@@ -578,7 +579,8 @@ public final class PipelineExecutionState {
                 cs.reflection(),
                 cs.reflectionIteration(),
                 List.copyOf(history),
-                cs.evidencePackage());
+                cs.evidencePackage(),
+                cs.intentProfile());
     }
 
     /**
