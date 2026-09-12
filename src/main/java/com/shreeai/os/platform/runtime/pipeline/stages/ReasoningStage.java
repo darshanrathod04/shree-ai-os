@@ -95,21 +95,11 @@ public final class ReasoningStage implements ExecutionStage {
             // Run the reasoning engine
             ReasoningResult result = reasoningEngine.reason(requestText, rankedMemories, rankedKnowledge);
 
-            // Store the full ReasoningResult in state so downstream stages
-            // consume the actual reasoning output without information loss
-            state.addMetadata("reasoningResult", result);
-            state.addMetadata("reasoningId", result.reasoningId());
-            state.addMetadata("reasoningSummary", result.summary());
-            state.addMetadata("reasoningConfidence", result.confidence());
-            state.addMetadata("reasoningFindings", result.findings());
-            state.addMetadata("reasoningEvidence", result.evidence());
-            state.addMetadata("reasoningAlternatives", result.alternatives());
-            state.addMetadata("reasoningRisk", result.risks());
-            state.addMetadata("reasoningConclusion", result.conclusion());
-            state.addMetadata("reasoningType", result.reasoningType());
-            state.addMetadata("reasoningSteps", result.reasoningSteps());
-            state.addMetadata("reasoningScope", result.scope());
-            state.addMetadata("reasoningCompleted", true);
+            // P0.2 — Store the reasoning artifact in the immutable cognitive
+            // state. Downstream stages consume the reasoning output via
+            // state.getCognitiveState().reasoning() — the artifact is no
+            // longer decomposed into the metadata map.
+            state.updateCognitiveState(cs -> cs.withReasoning(result));
             state.addMessage("Reasoning completed: " + result.conclusion());
 
             publishReasoningEvent(

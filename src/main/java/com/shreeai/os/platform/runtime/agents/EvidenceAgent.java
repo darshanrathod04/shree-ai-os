@@ -1,5 +1,11 @@
 package com.shreeai.os.platform.runtime.agents;
 
+import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionAnalysis;
+import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
+import com.shreeai.os.platform.kernels.inference.model.InferenceResult;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
+import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
+import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
 import com.shreeai.os.platform.runtime.model.AgentDecision;
 import com.shreeai.os.platform.runtime.model.AgentDecision.Agent;
@@ -9,8 +15,6 @@ import com.shreeai.os.platform.runtime.model.EvidenceBundle;
 import com.shreeai.os.platform.runtime.model.EvidenceItem;
 import com.shreeai.os.platform.runtime.model.EvidenceItem.SourceType;
 import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
-
-import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -101,12 +105,32 @@ public final class EvidenceAgent {
     /**
      * Extracts evidence from pipeline state (convenience overload).
      *
+     * <p>P0.2 — cognitive artifacts (reasoning, inference, planning,
+     * reflection) are read from the immutable {@link CognitiveState} of the
+     * execution state instead of the metadata mirror; infrastructure
+     * sources (knowledge, memory, project, execution) still come from the
+     * metadata map.</p>
+     *
      * @param state the pipeline execution state (never null)
      * @return a fully-populated EvidenceBundle (never null)
      */
     public EvidenceBundle extractFromPipelineState(PipelineExecutionState state) {
         Objects.requireNonNull(state, "state must not be null");
-        return extractFromMetadata(state.getMetadata());
+
+        EvidenceBundle.Builder builder = EvidenceBundle.builder();
+        Map<String, Object> metadata = state.getMetadata();
+        CognitiveState cognitive = state.getCognitiveState();
+
+        extractKnowledgeEvidence(builder, metadata);
+        extractReasoningEvidence(builder, cognitive);
+        extractInferenceEvidence(builder, cognitive);
+        extractPlanningEvidence(builder, cognitive);
+        extractMemoryEvidence(builder, metadata);
+        extractReflectionEvidence(builder, cognitive);
+        extractProjectEvidence(builder, metadata);
+        extractExecutionEvidence(builder, metadata);
+
+        return builder.build();
     }
 
     /**
@@ -327,6 +351,78 @@ public final class EvidenceAgent {
             return result;
         }
         return List.of();
+    }
+
+    // ─── Cognitive-state artifact extraction (P0.2) ───────────────────────────
+
+    private void extractReasoningEvidence(EvidenceBundle.Builder builder, CognitiveState cognitive) {
+        ReasoningResult reasoning = cognitive.reasoning();
+        if (reasoning == null) return;
+
+        String conclusion = reasoning.conclusion();
+        if (conclusion == null || conclusion.isBlank()) return;
+
+        double confidence = reasoning.confidence();
+
+        builder.addItem(EvidenceItem.builder()
+                .sourceType(SourceType.REASONING)
+                .title("Reasoning Conclusion")
+                .content(conclusion)
+                .confidenceHint(confidence > 0.0 ? confidence : 0.60)
+                .citations(reasoning.evidence() != null ? reasoning.evidence() : List.of())
+                .build());
+    }
+
+    private void extractInferenceEvidence(EvidenceBundle.Builder builder, CognitiveState cognitive) {
+        InferenceResult inference = cognitive.inference();
+        if (inference == null || inference.bestHypothesis() == null) return;
+
+        String hypothesis = inference.bestHypothesis().description();
+        if (hypothesis == null || hypothesis.isBlank()) return;
+
+        builder.addItem(EvidenceItem.builder()
+                .sourceType(SourceType.INFERENCE)
+                .title("Inference Hypothesis")
+                .content(hypothesis)
+                .confidenceHint(inference.confidence() > 0.0 ? inference.confidence() : 0.60)
+                .build());
+    }
+
+    private void extractPlanningEvidence(EvidenceBundle.Builder builder, CognitiveState cognitive) {
+        PlanningResponse planning = cognitive.planning();
+        if (planning == null) return;
+
+        String summary = planning.goal() != null && !planning.goal().isBlank()
+                ? planning.goal()
+                : planning.title();
+        if (summary == null || summary.isBlank()) return;
+
+        builder.addItem(EvidenceItem.builder()
+                .sourceType(SourceType.PLANNING)
+                .title("Planning Result")
+                .content(summary)
+                .confidenceHint(0.70)
+                .build());
+    }
+
+    private void extractReflectionEvidence(EvidenceBundle.Builder builder, CognitiveState cognitive) {
+        ReflectionAnalysis reflection = cognitive.reflection();
+        if (reflection == null) return;
+
+        String outcome = reflection.verdict() != null ? reflection.verdict().name() : "";
+        List<String> lessons = reflection.lessons() != null ? reflection.lessons() : List.of();
+
+        StringBuilder content = new StringBuilder(outcome);
+        if (!lessons.isEmpty()) {
+            content.append("\nLessons: ").append(String.join("; ", lessons));
+        }
+
+        builder.addItem(EvidenceItem.builder()
+                .sourceType(SourceType.REFLECTION)
+                .title("Reflection Outcome")
+                .content(content.toString())
+                .confidenceHint(0.60)
+                .build());
     }
 
     private double readDouble(Object value) {

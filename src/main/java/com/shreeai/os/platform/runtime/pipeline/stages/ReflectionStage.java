@@ -123,11 +123,13 @@ public final class ReflectionStage implements ExecutionStage {
 
             ReflectionAnalysis analysis = reflectionEngine.reflect(input);
 
-            state.addMetadata("reflectionVerdict", analysis.verdict().name());
-            state.addMetadata("reflectionScore", analysis.score());
-            state.addMetadata("reflectionLessons", analysis.lessons());
-            state.addMetadata("reflectionSummary", analysis.summary());
-            state.addMetadata("reflectionRetryAdvised", analysis.retryAdvised());
+            // P0.2 — persist the reflection artifact in the immutable
+            // cognitive state. withReflection records the quality score and
+            // advances the reflection iteration in one atomic update; the
+            // verdict/score/lessons/summary are no longer mirrored into the
+            // metadata map.
+            state.updateCognitiveState(
+                    cs -> cs.withReflection(analysis, analysis.score()));
 
             String lessonId = storeLesson(context, requestId, analysis);
 
@@ -157,9 +159,9 @@ public final class ReflectionStage implements ExecutionStage {
             // The signal is consumed and cleared by DefaultExecutionPipeline.
             //
             // ReflectionStage never invokes ReasoningStage directly — it only
-            // flags the request.
-            state.recordQualityScore(analysis.score());
-            state.incrementReflectionIteration();
+            // flags the request. The iteration counter lives inside the
+            // immutable cognitive state (P0.2) and was already advanced by
+            // the withReflection update above.
             if (analysis.retryAdvised()
                     && state.getReflectionIteration() < state.getMaxReflectionIterations()) {
                 // Mark the next stage as invoked so the chain does not treat

@@ -1,6 +1,7 @@
 package com.shreeai.os.platform.kernels.response.engine;
 
 import com.shreeai.os.platform.kernels.cognitive.engine.GoalIntelligenceEngine.GoalAnalysis;
+import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
 import com.shreeai.os.platform.kernels.planning.model.Milestone;
 import com.shreeai.os.platform.kernels.planning.model.Phase;
 import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
@@ -14,6 +15,7 @@ import com.shreeai.os.platform.runtime.pipeline.PipelineExecutionState;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeCitation;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 import com.shreeai.os.platform.runtime.orchestration.CompositeKernelResult;
+import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.orchestration.IntentAnalysisResult;
 import com.shreeai.os.platform.kernels.response.model.DeveloperResponse;
 
@@ -56,7 +58,7 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
             return synthesizeChat(context, metadata);
         }
 
-        return synthesizeDefault(metadata);
+        return synthesizeDefault(metadata, state.getCognitiveState());
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -188,12 +190,14 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
      * Legacy rendering path — unchanged behavior for chat and all
      * non-planning payloads.
      */
-    private SynthesizedResponse synthesizeDefault(Map<String, Object> metadata) {
+    private SynthesizedResponse synthesizeDefault(
+            Map<String, Object> metadata,
+            CognitiveState cognitive) {
 
         List<ResponseSection> sections = new ArrayList<>();
 
-        String summary = extractSummary(metadata);
-        String conclusion = string(metadata.get("reasoningConclusion"));
+        String summary = extractSummary(metadata, cognitive);
+        String conclusion = reasoningConclusion(cognitive, metadata);
         String plan = string(metadata.get("planSummary"));
 
         // Executive Summary
@@ -203,7 +207,7 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         ));
 
         // Key Findings
-        String findings = buildFindings(metadata);
+        String findings = buildFindings(metadata, cognitive);
 
         if (!findings.isBlank()) {
             sections.add(new ResponseSection(
@@ -221,7 +225,7 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         }
 
         // Evidence
-        String evidence = buildEvidence(metadata);
+        String evidence = buildEvidence(metadata, cognitive);
 
         if (!evidence.isBlank()) {
             sections.add(new ResponseSection(
@@ -230,7 +234,7 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
             ));
         }
 
-        double confidence = confidence(metadata);
+        double confidence = confidence(metadata, cognitive);
 
         String answer = buildAnswer(summary, conclusion, plan);
 
@@ -243,12 +247,20 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         );
     }
 
-    private String extractSummary(Map<String, Object> metadata) {
+    private String extractSummary(Map<String, Object> metadata, CognitiveState cognitive) {
 
-        String reasoning = string(metadata.get("reasoningSummary"));
+        // P0.2 — reasoning summary comes from the immutable cognitive state;
+        // falls back to the metadata key for callers that bypass the pipeline.
+        ReasoningResult reasoning = cognitive != null ? cognitive.reasoning() : null;
+        if (reasoning != null && reasoning.summary() != null
+                && !reasoning.summary().isBlank()) {
+            return reasoning.summary();
+        }
 
-        if (!reasoning.isBlank()) {
-            return reasoning;
+        String reasoningSummary = string(metadata.get("reasoningSummary"));
+
+        if (!reasoningSummary.isBlank()) {
+            return reasoningSummary;
         }
 
         String plan = string(metadata.get("planSummary"));
@@ -260,24 +272,50 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         return "The request was successfully processed through the Shree AI intelligence pipeline.";
     }
 
-    private String buildFindings(Map<String, Object> metadata) {
+    private String buildFindings(Map<String, Object> metadata, CognitiveState cognitive) {
 
         List<String> findings = new ArrayList<>();
 
-        addIfPresent(findings, metadata, "reasoningSummary");
-        addIfPresent(findings, metadata, "reasoningConclusion");
+        // P0.2 — prefer the immutable reasoning artifact; fall back to the
+        // metadata keys for callers that bypass the pipeline.
+        ReasoningResult reasoning = cognitive != null ? cognitive.reasoning() : null;
+
+        if (reasoning != null && reasoning.summary() != null
+                && !reasoning.summary().isBlank()) {
+            findings.add(reasoning.summary());
+        } else {
+            addIfPresent(findings, metadata, "reasoningSummary");
+        }
+
+        if (reasoning != null && reasoning.conclusion() != null
+                && !reasoning.conclusion().isBlank()) {
+            findings.add(reasoning.conclusion());
+        } else {
+            addIfPresent(findings, metadata, "reasoningConclusion");
+        }
+
         addIfPresent(findings, metadata, "planSummary");
 
         return String.join("\n• ", prependBullet(findings));
     }
 
-    private String buildEvidence(Map<String, Object> metadata) {
+    private String buildEvidence(Map<String, Object> metadata, CognitiveState cognitive) {
 
         List<String> evidence = new ArrayList<>();
 
         addIfPresent(evidence, metadata, "memoryId");
         addIfPresent(evidence, metadata, "knowledgeId");
-        addIfPresent(evidence, metadata, "reasoningId");
+
+        // P0.2 — reasoning id comes from the immutable reasoning artifact;
+        // falls back to the metadata key for legacy callers.
+        ReasoningResult reasoning = cognitive != null ? cognitive.reasoning() : null;
+        if (reasoning != null && reasoning.reasoningId() != null
+                && !reasoning.reasoningId().isBlank()) {
+            evidence.add(reasoning.reasoningId());
+        } else {
+            addIfPresent(evidence, metadata, "reasoningId");
+        }
+
         addIfPresent(evidence, metadata, "planId");
 
         return String.join("\n• ", prependBullet(evidence));
@@ -299,7 +337,14 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         return result;
     }
 
-    private double confidence(Map<String, Object> metadata) {
+    private double confidence(Map<String, Object> metadata, CognitiveState cognitive) {
+
+        // P0.2 — reasoning confidence comes from the immutable reasoning
+        // artifact; falls back to the metadata key, then to the default.
+        ReasoningResult reasoning = cognitive != null ? cognitive.reasoning() : null;
+        if (reasoning != null) {
+            return Math.max(0.0, Math.min(1.0, reasoning.confidence()));
+        }
 
         Object value = metadata.get("reasoningConfidence");
 
@@ -309,6 +354,25 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         }
 
         return 0.90;
+    }
+
+    /**
+     * Reads the authoritative reasoning conclusion for the default
+     * rendering path.
+     *
+     * <p>P0.2 — the conclusion is read from the immutable reasoning
+     * artifact in the cognitive state; the metadata key is only consulted
+     * when the artifact is absent (legacy callers).</p>
+     */
+    private String reasoningConclusion(CognitiveState cognitive, Map<String, Object> metadata) {
+
+        ReasoningResult reasoning = cognitive != null ? cognitive.reasoning() : null;
+        if (reasoning != null && reasoning.conclusion() != null
+                && !reasoning.conclusion().isBlank()) {
+            return reasoning.conclusion();
+        }
+
+        return string(metadata.get("reasoningConclusion"));
     }
 
     private String buildAnswer(
