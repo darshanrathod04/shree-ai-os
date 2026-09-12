@@ -18,7 +18,7 @@
  * ├── ConfigurationType.java        — Enum of configuration types
  * ├── ConfigurationEntry.java       — Immutable configuration entry
  * ├── package-info.java
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Ownership:</b> Platform Core</p>

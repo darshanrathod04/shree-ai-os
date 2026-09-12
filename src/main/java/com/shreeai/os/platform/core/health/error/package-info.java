@@ -21,7 +21,7 @@
  * ├── HealthCheckFailedException.java   — Check failed
  * ├── InvalidHealthComponentException.java — Invalid component
  * ├── package-info.java
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Ownership:</b> Platform Core</p>

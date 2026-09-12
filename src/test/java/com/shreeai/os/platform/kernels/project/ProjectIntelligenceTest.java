@@ -25,11 +25,11 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class ProjectIntelligenceTest {
 
-    private static final String TEST_PROJECT = "C:/shree-ai-os";
+    private static final Path REPO_ROOT = Path.of("").toAbsolutePath();
 
     @Test
     void repositoryScanner_findsJavaFiles() throws IOException {
-        RepositoryScanner scanner = new RepositoryScanner(Path.of(TEST_PROJECT));
+        RepositoryScanner scanner = new RepositoryScanner(REPO_ROOT);
         List<Path> javaFiles = scanner.findJavaFiles();
         assertNotNull(javaFiles);
         assertFalse(javaFiles.isEmpty(), "Should find at least some Java files");
@@ -37,7 +37,7 @@ public class ProjectIntelligenceTest {
 
     @Test
     void repositoryScanner_findsConfigFiles() throws IOException {
-        RepositoryScanner scanner = new RepositoryScanner(Path.of(TEST_PROJECT));
+        RepositoryScanner scanner = new RepositoryScanner(REPO_ROOT);
         List<Path> configs = scanner.findConfigFiles();
         assertNotNull(configs);
         assertFalse(configs.isEmpty(), "Should find pom.xml");
@@ -141,7 +141,7 @@ public class ProjectIntelligenceTest {
     @Test
     void projectEngine_analyzesProject() throws IOException {
         DefaultProjectIntelligenceEngine engine = new DefaultProjectIntelligenceEngine();
-        ProjectSummary summary = engine.analyze(Path.of(TEST_PROJECT));
+        ProjectSummary summary = engine.analyze(REPO_ROOT);
 
         assertNotNull(summary);
         assertEquals("shree-ai-os", summary.projectName());
@@ -153,7 +153,7 @@ public class ProjectIntelligenceTest {
     @Test
     void projectEngine_extractsControllers() throws IOException {
         DefaultProjectIntelligenceEngine engine = new DefaultProjectIntelligenceEngine();
-        engine.analyze(Path.of(TEST_PROJECT));
+        engine.analyze(REPO_ROOT);
         ProjectGraph graph = engine.getGraph();
 
         assertNotNull(graph);
@@ -163,7 +163,7 @@ public class ProjectIntelligenceTest {
     @Test
     void projectGraph_impactAnalysis() throws IOException {
         DefaultProjectIntelligenceEngine engine = new DefaultProjectIntelligenceEngine();
-        engine.analyze(Path.of(TEST_PROJECT));
+        engine.analyze(REPO_ROOT);
 
         ProjectImpact impact = engine.impact("ShreeAI");
         assertNotNull(impact);
@@ -174,7 +174,7 @@ public class ProjectIntelligenceTest {
     @Test
     void projectEngine_statisticsCounts() throws IOException {
         DefaultProjectIntelligenceEngine engine = new DefaultProjectIntelligenceEngine();
-        ProjectSummary summary = engine.analyze(Path.of(TEST_PROJECT));
+        ProjectSummary summary = engine.analyze(REPO_ROOT);
 
         ProjectStatistics stats = summary.statistics();
         assertNotNull(stats);
@@ -185,7 +185,7 @@ public class ProjectIntelligenceTest {
     @Test
     void projectEngine_detectsSpringBoot() throws IOException {
         DefaultProjectIntelligenceEngine engine = new DefaultProjectIntelligenceEngine();
-        ProjectSummary summary = engine.analyze(Path.of(TEST_PROJECT));
+        ProjectSummary summary = engine.analyze(REPO_ROOT);
         // shree-ai-os is a Spring Boot project
         assertEquals("SPRING_BOOT", summary.framework());
     }
@@ -193,7 +193,7 @@ public class ProjectIntelligenceTest {
     @Test
     void projectEngine_findClass() throws IOException {
         DefaultProjectIntelligenceEngine engine = new DefaultProjectIntelligenceEngine();
-        engine.analyze(Path.of(TEST_PROJECT));
+        engine.analyze(REPO_ROOT);
 
         ProjectClass found = engine.findClass("ShreeAI");
         assertNotNull(found, "Should find ShreeAI class");
@@ -203,7 +203,7 @@ public class ProjectIntelligenceTest {
     @Test
     void dependencyGraphBuilder_producesEdges() throws IOException {
         DefaultProjectIntelligenceEngine engine = new DefaultProjectIntelligenceEngine();
-        engine.analyze(Path.of(TEST_PROJECT));
+        engine.analyze(REPO_ROOT);
         ProjectGraph graph = engine.getGraph();
 
         List<ProjectDependency> edges = graph.edges();
@@ -214,7 +214,7 @@ public class ProjectIntelligenceTest {
     @Test
     void projectGraph_cycleDetection() throws IOException {
         DefaultProjectIntelligenceEngine engine = new DefaultProjectIntelligenceEngine();
-        engine.analyze(Path.of(TEST_PROJECT));
+        engine.analyze(REPO_ROOT);
         ProjectGraph graph = engine.getGraph();
 
         List<List<String>> cycles = graph.detectCycles();

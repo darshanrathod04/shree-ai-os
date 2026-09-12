@@ -59,6 +59,24 @@ public final class PipelineExecutionState {
     private boolean terminated;
 
     /**
+     * Maximum number of reflection evaluations allowed per execution.
+     *
+     * <p>Bounding the reflection loop here, together with the loop guard in
+     * {@code DefaultExecutionPipeline}, makes an infinite reflection loop
+     * impossible even if a custom reflection stage ignores the limit.</p>
+     */
+    private static final int DEFAULT_MAX_REFLECTION_ITERATIONS = 2;
+
+    /** Number of reflection passes completed (0 before the first pass). */
+    private int reflectionIteration;
+
+    /** Whether reflection requested another reasoning pass. */
+    private boolean requiresReReason;
+
+    /** Quality scores recorded by each completed reflection pass. */
+    private final List<Double> previousQualityScores;
+
+    /**
      * Per-frame "next stage invoked" flags.
      *
      * <p>The ExecutionChain recursively invokes stages. Each frame (stage invocation)
@@ -93,6 +111,9 @@ public final class PipelineExecutionState {
         this.shortCircuited = false;
         this.terminated = false;
         this.nextStageInvokedStack = new ArrayDeque<>();
+        this.reflectionIteration = 0;
+        this.requiresReReason = false;
+        this.previousQualityScores = new ArrayList<>();
     }
 
     // =====================================================
@@ -407,6 +428,104 @@ public final class PipelineExecutionState {
     }
 
     // =====================================================
+    // P0.1 — REFLECTION LOOP TRACKING
+    // =====================================================
+
+    /**
+     * Returns the number of reflection passes completed so far.
+     *
+     * @return the completed reflection pass count (0 before the first pass)
+     */
+    public int getReflectionIteration() {
+        return reflectionIteration;
+    }
+
+    /**
+     * Increments the reflection pass count by one.
+     *
+     * <p>Called by {@code ReflectionStage} once per completed reflection
+     * evaluation. Together with {@link #getMaxReflectionIterations()} this
+     * bounds the reflection loop.</p>
+     */
+    public void incrementReflectionIteration() {
+        reflectionIteration++;
+    }
+
+    /**
+     * Resets all reflection metadata: pass count, quality scores and the
+     * re-reason flag.
+     */
+    public void resetReflectionIteration() {
+        reflectionIteration = 0;
+        previousQualityScores.clear();
+        requiresReReason = false;
+    }
+
+    /**
+     * Returns the maximum number of reflection evaluations allowed before
+     * the pipeline refuses another reasoning pass.
+     *
+     * @return the reflection iteration bound (always &ge; 1)
+     */
+    public int getMaxReflectionIterations() {
+        return DEFAULT_MAX_REFLECTION_ITERATIONS;
+    }
+
+    /**
+     * Returns whether reflection has requested another reasoning pass.
+     *
+     * @return true when the pipeline must re-execute the cognitive segment
+     */
+    public boolean requiresReReason() {
+        return requiresReReason;
+    }
+
+    /**
+     * Sets the reflection loop request flag.
+     *
+     * @param requiresReReason true to request another reasoning pass
+     */
+    public void setRequiresReReason(boolean requiresReReason) {
+        this.requiresReReason = requiresReReason;
+    }
+
+    /** Clears the reflection loop request flag. */
+    public void clearRequiresReReason() {
+        this.requiresReReason = false;
+    }
+
+    /**
+     * Records the quality score of a completed reflection pass.
+     *
+     * @param score the reflection quality score (0.0-1.0)
+     */
+    public void recordQualityScore(double score) {
+        previousQualityScores.add(score);
+    }
+
+    /**
+     * Returns an unmodifiable list of the recorded reflection quality scores
+     * in pass order.
+     *
+     * @return the previous quality scores (never null, may be empty)
+     */
+    public List<Double> getPreviousQualityScores() {
+        return Collections.unmodifiableList(previousQualityScores);
+    }
+
+    /**
+     * Clears the terminated flag.
+     *
+     * <p>Used by {@code DefaultExecutionPipeline} to resume the downstream
+     * stages (e.g. MemoryStore, ChiefReview) after a reflection loop pass
+     * completed its segment chain. The terminated flag is a chain-navigation
+     * signal, not a terminal result status.</p>
+     */
+    void resetTerminated() {
+        this.terminated = false;
+    }
+
+    // =====================================================
     // FREEZE TO IMMUTABLE RESULT
     // =====================================================
 
@@ -477,6 +596,8 @@ public final class PipelineExecutionState {
                 .addCustomValue("shortCircuited", shortCircuited)
                 .addCustomValue("terminated", terminated)
                 .addCustomValue("duration", duration)
+                .addCustomValue("reflectionIteration", reflectionIteration)
+                .addCustomValue("requiresReReason", requiresReReason)
                 .build();
     }
 

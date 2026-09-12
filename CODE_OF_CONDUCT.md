@@ -2,7 +2,7 @@
 
 ## Shree AI OS Community Code of Conduct
 
-We are committed to building a respectful, inclusive, and professional developer community around **Shree AI OS**.
+Shree AI OS is committed to building a respectful, inclusive, and professional engineering community.
 
 This Code of Conduct applies to all project spaces, including GitHub Issues, Discussions, Pull Requests, documentation, and community interactions.
 
@@ -10,69 +10,74 @@ This Code of Conduct applies to all project spaces, including GitHub Issues, Dis
 
 ## Our Standards
 
-Examples of behavior that contribute to a positive and productive community include:
+We encourage contributors to:
 
-* Being respectful, constructive, and professional.
-* Welcoming developers of all background and experience levels.
-* Providing technical feedback with code evidence, benchmarks, and reasoning.
-* Helping improve documentation, tests, and overall developer experience.
-* Respecting different viewpoints and constructive design discussions.
+- Be respectful, constructive, and professional.
+- Welcome developers of all experience levels.
+- Support technical discussions with evidence, benchmarks, and reproducible examples.
+- Improve documentation, testing, and developer experience.
+- Respect differing viewpoints during architectural reviews.
 
 ---
 
 ## Unacceptable Behavior
 
-The following behaviors are strictly prohibited:
+The following behaviors are not permitted:
 
-* Personal attacks, insults, or harassment.
-* Hate speech or discriminatory language.
-* Trolling, intimidation, or demeaning communication.
-* Publishing others' private information without explicit permission.
-* Deliberately disruptive, harmful, or malicious contributions.
-* Spam, plagiarism, or intentionally misleading technical claims.
-
----
-
-## Technical Discussions & Architectural Debates
-
-Technical debates and architecture reviews are strongly encouraged. When proposing architectural modifications or refactorings, please:
-
-1. Clearly explain the technical problem being addressed.
-2. Provide concrete engineering rationale (performance, determinism, correctness).
-3. Include reproducible code examples or benchmark data where possible.
-4. Respect existing architectural decisions unless proposing a thoroughly reasoned alternative.
-
-> **"Disagreement is acceptable. Disrespect is not."**
+- Harassment, personal attacks, or abusive language
+- Hate speech or discriminatory conduct
+- Trolling, intimidation, or deliberately disruptive behavior
+- Publishing another person's private information without permission
+- Spam, plagiarism, or intentionally misleading technical claims
+- Malicious contributions intended to compromise the project
 
 ---
 
-## Enforcement
+## Engineering Discussions
 
-Project maintainers are responsible for clarifying and enforcing standards. Maintainers reserve the right to:
+Architectural debate is encouraged.
 
-* Request edits to discussions, issue comments, or pull requests.
-* Edit or remove comments, commits, or pull requests that violate this Code of Conduct.
-* Temporarily or permanently ban any contributor from the repository for repeated or severe violations.
+When proposing significant design changes, please:
+
+1. Clearly describe the problem.
+2. Explain the engineering rationale.
+3. Include reproducible code or benchmark evidence where possible.
+4. Respect existing architectural decisions while presenting alternatives professionally.
+
+> **Disagreement is welcome. Disrespect is not.**
 
 ---
 
-## Reporting Issues
+## Maintainer Responsibilities
 
-If you experience or witness unacceptable behavior, please report it to the project maintainer:
+Project maintainers may take appropriate action to preserve a healthy community, including:
 
-* **Contact:** Darshan Rathod (via GitHub Issues or official maintainer contact)
+- Requesting edits to discussions or pull requests
+- Removing content that violates this Code of Conduct
+- Rejecting malicious or intentionally harmful contributions
+- Temporarily or permanently restricting participation for repeated or severe violations
 
-All reports will be reviewed promptly, fairly, and confidentially.
+Enforcement decisions are made in good faith to protect the community and the project.
+
+---
+
+## Reporting Conduct Issues
+
+If you experience or witness behavior that violates this Code of Conduct, please contact the project maintainer privately through the official GitHub repository contact.
+
+For **security vulnerabilities**, do **not** use this process. Please follow the instructions in **SECURITY.md** and use GitHub Private Vulnerability Reporting.
+
+All conduct reports will be handled respectfully and confidentially.
 
 ---
 
 ## Our Goal
 
-Shree AI OS is being built as long-term, deterministic infrastructure for the Java ecosystem. We believe great systems are created through thoughtful engineering, honest feedback, and mutual respect.
+Shree AI OS aims to become long-term deterministic AI infrastructure for the Java ecosystem. We believe excellent software is built through thoughtful engineering, honest feedback, and mutual respect.
 
-Thank you for helping build a strong, high-standard community.
+Thank you for contributing to the project.
 
 ---
+
 **Project:** Shree AI OS  
-**Status:** Developer Preview v1.0  
-**License:** Proprietary Source-Available (Evaluation Only)
+**Status:** Developer Preview v1.0.0

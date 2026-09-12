@@ -14,6 +14,7 @@ import com.shreeai.os.platform.core.health.engine.HealthEvaluationEngine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Constructor;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * @see EvaluationResult
  */
 public class HealthEngineTests {
+
+    /** Fixed instant used throughout to ensure deterministic equals/hashCode comparisons. */
+    private static final Instant INSTANT = Instant.parse("2026-05-09T00:00:00Z");
 
     private HealthEvaluationEngine engine;
 
@@ -244,7 +248,7 @@ public class HealthEngineTests {
                 "OK"
         );
         HealthMetrics metrics = new HealthMetrics(1.0, 0.0, 0.0, Map.of());
-        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, Instant.now());
+        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, INSTANT);
 
         // Act
         EvaluationResult result = EvaluationResult.success(report);
@@ -299,10 +303,10 @@ public class HealthEngineTests {
     }
 
     /**
-     * Test: EvaluationResult equals and hashCode.
+     * Test: EvaluationResult equals and hashCode with the same fixed timestamp.
      */
     @Test
-    void testEvaluationResultEqualsAndHashCode() {
+    void testEvaluationResultEqualsAndHashCode() throws Exception {
         // Arrange
         HealthComponentId id = new HealthComponentId("test-component");
         HealthComponent component = new HealthComponent(id, "Test Component", "Category");
@@ -313,12 +317,17 @@ public class HealthEngineTests {
                 "OK"
         );
         HealthMetrics metrics = new HealthMetrics(1.0, 0.0, 0.0, Map.of());
-        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, Instant.now());
+        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, INSTANT);
 
-        EvaluationResult result1 = EvaluationResult.success(report);
-        EvaluationResult result2 = EvaluationResult.success(report);
+        Instant fixed = Instant.parse("2026-05-09T00:00:00Z");
 
-        // Assert
+        Constructor<EvaluationResult> constructor = EvaluationResult.class.getDeclaredConstructor(
+                boolean.class, HealthReport.class, String.class, Instant.class);
+        constructor.setAccessible(true);
+
+        EvaluationResult result1 = constructor.newInstance(true, report, null, fixed);
+        EvaluationResult result2 = constructor.newInstance(true, report, null, fixed);
+
         assertEquals(result1, result2);
         assertEquals(result1.hashCode(), result2.hashCode());
     }
@@ -338,7 +347,7 @@ public class HealthEngineTests {
                 "OK"
         );
         HealthMetrics metrics = new HealthMetrics(1.0, 0.0, 0.0, Map.of());
-        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, Instant.now());
+        HealthReport report = new HealthReport(component, HealthStatus.HEALTHY, List.of(indicator), metrics, INSTANT);
         EvaluationResult result = EvaluationResult.success(report);
 
         // Act

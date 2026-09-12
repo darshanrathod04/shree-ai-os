@@ -22,7 +22,7 @@
  * ├── HealthCheck.java          — Immutable health check request
  * ├── HealthReport.java         — Immutable health check result
  * ├── package-info.java
- * └── README.md
+ * └── COGNITIVE_RUNTIME_ARCHITECTURE.md
  * </pre>
  *
  * <p><b>Ownership:</b> Platform Core</p>

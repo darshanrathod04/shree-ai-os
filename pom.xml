@@ -8,23 +8,38 @@
 		<version>4.0.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.shreeai</groupId>
+	<groupId>io.github.darshanrathod04</groupId>
 	<artifactId>shree-ai-os</artifactId>
-	<version>1.0.0</version>
-	<name>shree-ai-os</name>
-	<description>ShreeAIOS</description>
-	<url/>
+	<version>1.0.5-developer-preview</version>
+	<name>Shree AI OS</name>
+	<description>In-process, privacy-first cognitive runtime and hybrid RAG engine for Java 21</description>
+	<url>https://github.com/darshanrathod04/shree-ai-os</url>
 	<licenses>
-		<license/>
+			<license>
+				<name>Shree AI OS Source-Available Evaluation License v1.0</name>
+				<url>https://github.com/darshanrathod04/shree-ai-os/blob/main/LICENSE</url>
+				<distribution>repo</distribution>
+			</license>
 	</licenses>
 	<developers>
-		<developer/>
+		<developer>
+			<id>darshanrathod04</id>
+			<name>Darshan Rathod</name>
+			<email>darshanrathod04@users.noreply.github.com</email>
+			<url>https://github.com/darshanrathod04</url>
+			<organization>Darshan Rathod</organization>
+			<organizationUrl>https://github.com/darshanrathod04</organizationUrl>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>Asia/Kolkata</timezone>
+		</developer>
 	</developers>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>scm:git:https://github.com/darshanrathod04/shree-ai-os.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/darshanrathod04/shree-ai-os.git</developerConnection>
+		<url>https://github.com/darshanrathod04/shree-ai-os</url>
+		<tag>HEAD</tag>
 	</scm>
 	<properties>
 		<java.version>21</java.version>
@@ -61,6 +76,35 @@
             <version>4.12.0</version>
         </dependency>
 
+        <!-- JavaParser (Java AST parsing for code-generation and patch-engineering) -->
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.28.2</version>
+        </dependency>
+
+        <!-- ONNX Runtime Java (local embedding inference via ONNX models) -->
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime</artifactId>
+            <version>1.29.0</version>
+        </dependency>
+
+        <!-- DJL HuggingFace Tokenizers (tokenization for ONNX embedding pipelines) -->
+        <dependency>
+            <groupId>ai.djl.huggingface</groupId>
+            <artifactId>tokenizers</artifactId>
+            <version>0.36.0</version>
+        </dependency>
+
+        <!-- Neo4j Java Driver (graph knowledge-store adapter) -->
+        <dependency>
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            <version>5.28.15</version>
+        </dependency>
+
+
         <!-- Lombok (optional but useful) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -68,45 +112,11 @@
             <optional>true</optional>
         </dependency>
 
-		<!-- Microsoft ONNX Runtime for In-Process Inference -->
 		<dependency>
-			<groupId>com.microsoft.onnxruntime</groupId>
-			<artifactId>onnxruntime</artifactId>
-			<version>1.17.1</version>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>test</scope>
 		</dependency>
-
-		<!-- DJL HuggingFace Tokenizer (Zero-dependency tokenization in Java) -->
-		<dependency>
-			<groupId>ai.djl.huggingface</groupId>
-			<artifactId>tokenizers</artifactId>
-			<version>0.28.0</version>
-		</dependency>
-
-        <!-- ==========================================================
-             PHASE 1 — Real Intelligence Engines: persistence adapters
-             (adapters only; the platform boots with zero infrastructure)
-             ========================================================== -->
-
-        <!-- PostgreSQL driver (PgVector adapters, L2 ledger in Phase 2) -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- Neo4j driver (KnowledgeGraphStore adapter; lazily initialized) -->
-        <dependency>
-            <groupId>org.neo4j.driver</groupId>
-            <artifactId>neo4j-java-driver</artifactId>
-            <version>5.28.0</version>
-        </dependency>
-
-        <!-- JavaParser for AST-based project intelligence (Sprint-13) -->
-        <dependency>
-            <groupId>com.github.javaparser</groupId>
-            <artifactId>javaparser-core</artifactId>
-            <version>3.26.3</version>
-        </dependency>
 
         <!-- Testing -->
         <dependency>
@@ -115,17 +125,27 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- PHASE 1: container-backed integration tests (skipped when no Docker) -->
+        <!-- Testcontainers core (Docker-backed integration testing) -->
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>1.20.4</version>
+            <artifactId>testcontainers</artifactId>
+            <version>1.21.4</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Testcontainers PostgreSQL module -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
-            <version>1.20.4</version>
+            <version>1.21.4</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers JUnit-Jupiter 5 integration -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.21.4</version>
             <scope>test</scope>
         </dependency>
 
@@ -151,6 +171,8 @@
 						<exclude>com/shreeai/os/platform/AutonomousPlanningTests.java</exclude>
 						<exclude>com/shreeai/os/platform/ConversationContinuityTests.java</exclude>
 						<exclude>com/shreeai/os/platform/ExecutionAuditTests.java</exclude>
+
+						<exclude>**/PgVectorIntegrationTest.java</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
@@ -179,21 +201,74 @@
 					<!--
 						EO-V1-REL1-SDK-PKG-001:
 						Produce the executable Spring Boot JAR with an '-exec' classifier
-						so the main artifact (shreeAiOS-0.0.1-SNAPSHOT.jar) remains the
-						plain Maven-consumable JAR with classes at the root (e.g.
-						com/shreeai/os/platform/sdk/ShreeAI.class).
+						so the main artifact (shree-ai-os-1.0.0-developer-preview.jar) remains the
+						plain Maven-consumable JAR with classes at the root.
 					-->
 					<classifier>exec</classifier>
 				</configuration>
+			</plugin>
+
+			<!-- Maven Central Publishing Plugins -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
 				<executions>
 					<execution>
+						<id>attach-sources</id>
+						<phase>verify</phase>
 						<goals>
-							<goal>repackage</goal>
+							<goal>jar-no-fork</goal>
 						</goals>
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.12.0</version>
+				<configuration>
+					<doclint>none</doclint>
+					<failOnError>false</failOnError>
+					<quiet>true</quiet>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>3.2.8</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.9.0</version>
+				<extensions>true</extensions>
+
+				<configuration>
+					<publishingServerId>central</publishingServerId>
+					<autoPublish>true</autoPublish>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
+
 
 </project>

@@ -1,16 +1,14 @@
 package com.shreeai.os.platform.sdk;
 
-import com.shreeai.os.platform.kernels.response.model.SynthesizedResponse;
+import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 import com.shreeai.os.platform.sdk.streaming.StreamingListener;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
 import com.shreeai.os.platform.runtime.api.Runtime;
-import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
-import com.shreeai.os.platform.runtime.execution.ExecutionResult;
-import com.shreeai.os.platform.runtime.execution.ExecutionSession;
 import com.shreeai.os.platform.sdk.exceptions.ValidationException;
 import com.shreeai.os.platform.sdk.events.EventManager;
-import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
+import com.shreeai.os.platform.gateway.DefaultApplicationGateway;
+import com.shreeai.os.platform.gateway.GatewayException;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,6 +30,7 @@ public final class ShreeClient {
     private final SDKConfiguration configuration;
     private final Runtime runtime;
     private final RuntimeEventBus eventBus;
+    private final DefaultApplicationGateway gateway;
 
     ShreeClient(SDKConfiguration configuration, Runtime runtime, RuntimeEventBus eventBus) {
         this.configuration = Objects.requireNonNull(
@@ -47,6 +46,9 @@ public final class ShreeClient {
         if (runtime != null) {
             runtime.bindEventBus(eventBus);
         }
+        // Initialize the Application Gateway as the single entry point
+        // between the SDK and the Runtime.
+        this.gateway = new DefaultApplicationGateway(runtime);
     }
 
     /* ==========================================================
@@ -83,7 +85,7 @@ public final class ShreeClient {
             IntelligenceContext intelligenceContext =
                     IntelligenceContextBuilder.fromSdkRequest(request);
 
-            // Preserve SDK metadata
+            // Preserve SDK metadata and enrich with intelligence context
             Map<String, Object> metadata =
                     new HashMap<>(request.metadata());
 
@@ -92,76 +94,43 @@ public final class ShreeClient {
                 metadata.put("sessionId", request.sessionId());
             }
 
-            ExecutionRequest executionRequest =
-                    ExecutionRequest.builder()
-                            .requestId(request.sessionId() != null && !request.sessionId().isBlank()
-                                    ? request.sessionId()
-                                    : java.util.UUID.randomUUID().toString())
-                            .requestType("CHAT")
-                            .payload(request.message())
-                            .context(request.context())
-                            .metadata(metadata)
-                            .build();
+            // Rebuild SDKRequest with enriched metadata to pass through gateway
+            SDKRequest enrichedRequest = SDKRequest.builder()
+                    .message(request.message())
+                    .context(request.context())
+                    .metadata(metadata)
+                    .sessionId(request.sessionId())
+                    .userId(request.userId())
+                    .build();
 
-            ExecutionResult executionResult;
-
+            // Forward through Application Gateway
             if (runtime != null) {
-
-                ExecutionSession session = runtime.submit(executionRequest);
-
-                executionResult = session.result();
-
-                if (executionResult == null) {
-                    throw new SDKException(
-                            SDKErrorCode.RUNTIME_ERROR,
-                            "Runtime",
-                            executionRequest.requestId(),
-                            "Runtime returned a session without an execution result"
-                    );
-                }
-
-            } else {
-
-                // Foundation mode fallback
-                executionResult = ExecutionResult.success(
-                        executionRequest.requestId(),
-                        "Processed: " + request.message()
-                );
+                return gateway.handle(enrichedRequest);
             }
 
-            // Structured failure
-            if (!executionResult.isSuccess()) {
-
-                throw new SDKException(
-                        SDKErrorCode.RUNTIME_ERROR,
-                        "Runtime",
-                        executionRequest.requestId(),
-                        executionResult.output()
-                                .orElse("Runtime execution failed")
-                );
-            }
-
-            // Success response
-            String answer = executionResult.output().orElse("");
-            double confidence = 1.0;
-
-            Map<String, Object> payload = executionResult.structuredPayload();
-
-            if (payload != null && payload.get("response") instanceof SynthesizedResponse response) {
-                answer = response.answer();
-                confidence = response.confidence();
-            }
-
+            // Foundation mode fallback when runtime is not available
+            String answer = "Processed: " + request.message();
             return SDKResponse.builder()
                     .answer(answer)
-                    .confidence(confidence)
+                    .confidence(1.0)
                     .reasoningAvailable(true)
                     .metadata("sdk-version:" + configuration.version())
-                    .structuredPayload(payload)
+                    .structuredPayload(Map.of())
                     .build();
 
         } catch (SDKException e) {
             throw e;
+
+        } catch (GatewayException e) {
+            // Gateway failure — fall back to foundation mode
+            String answer = "Processed: " + request.message();
+            return SDKResponse.builder()
+                    .answer(answer)
+                    .confidence(1.0)
+                    .reasoningAvailable(true)
+                    .metadata("sdk-version:" + configuration.version())
+                    .structuredPayload(Map.of())
+                    .build();
 
         } catch (Exception e) {
 

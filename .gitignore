@@ -4,6 +4,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+internal/
+*.json
+
+
 ### STS ###
 .apt_generated
 .classpath
@@ -55,4 +59,4 @@ mvn_gate.log
 *.ps1
 server-pid*
 raw_d01.json
-projects.json
+internal/logs/projects.json
