@@ -2,6 +2,8 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 
 import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
 import com.shreeai.os.platform.kernels.inference.engine.DefaultInferenceEngine;
+import com.shreeai.os.platform.kernels.inference.engine.DefaultEvidenceConflictResolver;
+import com.shreeai.os.platform.kernels.inference.model.EvidencePackage;
 import com.shreeai.os.platform.kernels.inference.model.InferenceResult;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 import com.shreeai.os.platform.kernels.memory.model.Memory;
@@ -50,11 +52,6 @@ public final class InferenceStage implements ExecutionStage {
                             "Performs inference and hypothesis generation while preserving reasoning provenance"
                     )
                     .build();
-
-    private static final String REASONING_RESULT_KEY = "reasoningResult";
-    private static final String REASONING_CONCLUSION_KEY = "reasoningConclusion";
-    private static final String REASONING_CONFIDENCE_KEY = "reasoningConfidence";
-    private static final String SUPPORTING_EVIDENCE_KEY = "supportingEvidence";
 
     private final DefaultInferenceEngine inferenceEngine;
 
@@ -160,29 +157,48 @@ public final class InferenceStage implements ExecutionStage {
             ReasoningResult reasoningResult =
                     readReasoningResult(state);
 
-            /*
-             * -------------------------------------------------------------
-             * 5. Backward-compatible reconstruction
-             * -------------------------------------------------------------
-             *
-             * Older pipeline paths may only contain decomposed reasoning
-             * metadata. Preserve compatibility without allowing the
-             * inference stage to operate without a reasoning object.
-             */
+                         /*
+              * -------------------------------------------------------------
+              * 5. Backward-compatible reconstruction
+              * -------------------------------------------------------------
+              *
+              * Older pipeline paths may only contain decomposed reasoning
+              * metadata. Preserve compatibility without allowing the
+              * inference stage to operate without a reasoning object.
+              */
             if (reasoningResult == null) {
-                reasoningResult = reconstructReasoningResult(state);
+                reasoningResult = reconstructReasoningResult();
             }
 
             /*
-             * -------------------------------------------------------------
-             * 6. Execute inference
-             * -------------------------------------------------------------
-             */
+              * -------------------------------------------------------------
+              * 5.5. Deterministic evidence conflict resolution (P0.3)
+              * -------------------------------------------------------------
+              *
+              * Before inference executes, all conflicting evidence is resolved
+              * into one immutable EvidencePackage stored inside CognitiveState.
+              * Inference must never consume raw conflicting evidence - it must
+              * consume the resolved EvidencePackage from CognitiveState.
+              */
+            EvidencePackage evidencePackage = DefaultEvidenceConflictResolver.resolve(
+                    reasoningResult,
+                    rankedMemories,
+                    rankedKnowledge
+            );
+            state.updateCognitiveState(cs -> cs.withEvidencePackage(evidencePackage));
+
+            /*
+              * -------------------------------------------------------------
+              * 6. Execute inference (P0.3 - consumes EvidencePackage)
+              * -------------------------------------------------------------
+              *
+              * The inference engine consumes the resolved EvidencePackage
+              * from CognitiveState, never raw conflicting evidence.
+              */
             InferenceResult result = inferenceEngine.infer(
                     requestText,
                     reasoningResult,
-                    rankedMemories,
-                    rankedKnowledge,
+                    evidencePackage,
                     "request-" + requestId
             );
 
@@ -192,104 +208,14 @@ public final class InferenceStage implements ExecutionStage {
 
             /*
              * -------------------------------------------------------------
-             * 7. Preserve supporting evidence
-             * -------------------------------------------------------------
-             *
-             * The inference engine is expected to carry forward the
-             * reasoning conclusion. However, the runtime boundary must
-             * protect against accidental information loss.
-             *
-             * If the inference result contains no supporting evidence,
-             * recover the authoritative reasoning conclusion.
-             *
-             * This is NOT fabricated evidence:
-             *
-             * ReasoningResult.conclusion()
-             * is an actual upstream cognitive result.
-             */
-            List<String> supportingEvidence =
-                    preserveSupportingEvidence(result, reasoningResult);
-
-            /*
-             * -------------------------------------------------------------
-             * 8. Store complete inference state
+             * 7. Store the inference artifact in the immutable cognitive
+             *    state (P0.2). The reasoning artifact stays untouched -
+             *    inference never rewrites another stage's output. The
+             *    evidence lists remain part of the InferenceResult itself;
+             *    they are no longer duplicated into the metadata map.
              * -------------------------------------------------------------
              */
-            state.addMetadata(
-                    "inferenceId",
-                    result.inferenceId()
-            );
-
-            state.addMetadata(
-                    "hypotheses",
-                    result.hypotheses()
-            );
-
-            state.addMetadata(
-                    "bestHypothesis",
-                    result.bestHypothesis().description()
-            );
-
-            state.addMetadata(
-                    "inferenceConfidence",
-                    result.confidence()
-            );
-
-            state.addMetadata(
-                    SUPPORTING_EVIDENCE_KEY,
-                    supportingEvidence
-            );
-
-            state.addMetadata(
-                    "contradictingEvidence",
-                    safeList(result.contradictingEvidence())
-            );
-
-            state.addMetadata(
-                    "unknowns",
-                    safeList(result.unknownInformation())
-            );
-
-            state.addMetadata(
-                    "nextInvestigation",
-                    result.recommendedNextInvestigation()
-            );
-
-            /*
-             * Preserve the complete reasoning object for downstream
-             * planning/reflection/verification stages.
-             */
-            state.addMetadata(
-                    REASONING_RESULT_KEY,
-                    reasoningResult
-            );
-
-            state.addMetadata(
-                    REASONING_CONCLUSION_KEY,
-                    reasoningResult.conclusion()
-            );
-
-            state.addMetadata(
-                    REASONING_CONFIDENCE_KEY,
-                    reasoningResult.confidence()
-            );
-
-            state.addMetadata(
-                    "inferenceCompleted",
-                    true
-            );
-
-            /*
-             * Explicit provenance marker.
-             *
-             * This allows future intelligence layers to distinguish
-             * evidence inherited from reasoning from evidence introduced
-             * by inference itself.
-             */
-            state.addMetadata(
-                    "inferenceEvidenceProvenance",
-                    "REASONING_RESULT_PRESERVED"
-            );
+            state.updateCognitiveState(cs -> cs.withInference(result));
 
             state.addMessage(
                     "Inference completed: "
@@ -322,153 +248,40 @@ public final class InferenceStage implements ExecutionStage {
     }
 
     /**
-     * Returns the authoritative reasoning result from pipeline state.
+     * Returns the authoritative reasoning result from the immutable
+     * cognitive state (P0.2). The reasoning artifact is no longer mirrored
+     * in the metadata map.
      */
     private ReasoningResult readReasoningResult(
             PipelineExecutionState state) {
 
-        Object value = state.getMetadata()
-                .get(REASONING_RESULT_KEY);
-
-        if (value instanceof ReasoningResult reasoningResult) {
-            return reasoningResult;
-        }
-
-        return null;
+        return state.getCognitiveState().reasoning();
     }
 
     /**
-     * Reconstructs a ReasoningResult for compatibility with older pipeline
-     * paths that only stored decomposed reasoning metadata.
+     * Reconstructs a fallback ReasoningResult for compatibility with
+     * alternate chains that execute inference without a reasoning stage.
+     *
+     * <p>Values match the previous metadata-derived defaults exactly, so
+     * the inference engine observes an identical fallback object.</p>
      */
-    @SuppressWarnings("unchecked")
-    private ReasoningResult reconstructReasoningResult(
-            PipelineExecutionState state) {
-
-        String reasoningConclusion =
-                (String) state.getMetadata()
-                        .get(REASONING_CONCLUSION_KEY);
-
-        Double reasoningConfidence =
-                readDouble(
-                        state.getMetadata()
-                                .get(REASONING_CONFIDENCE_KEY)
-                );
-
-        if (reasoningConfidence == null) {
-            reasoningConfidence = 0.0;
-        }
-
-        List<String> reasoningFindings =
-                readStringList(
-                        state.getMetadata()
-                                .get("reasoningFindings")
-                );
-
-        List<String> reasoningEvidence =
-                readStringList(
-                        state.getMetadata()
-                                .get("reasoningEvidence")
-                );
-
-        List<String> reasoningRisks =
-                readStringList(
-                        state.getMetadata()
-                                .get("reasoningRisk")
-                );
-
-        List<String> reasoningAlternatives =
-                readStringList(
-                        state.getMetadata()
-                                .get("reasoningAlternatives")
-                );
-
-        Object reasoningStepsValue =
-                state.getMetadata()
-                        .get("reasoningSteps");
-
-        int reasoningSteps =
-                reasoningStepsValue instanceof Integer steps
-                        ? steps
-                        : 0;
-
-        String reasoningId =
-                (String) state.getMetadata()
-                        .get("reasoningId");
-
-        String reasoningSummary =
-                (String) state.getMetadata()
-                        .getOrDefault(
-                                "reasoningSummary",
-                                "Reasoning summary"
-                        );
-
-        String reasoningScope =
-                (String) state.getMetadata()
-                        .getOrDefault(
-                                "reasoningScope",
-                                "general"
-                        );
-
-        String reasoningType =
-                (String) state.getMetadata()
-                        .getOrDefault(
-                                "reasoningType",
-                                "EVIDENCE_BASED_REASONING"
-                        );
+    private ReasoningResult reconstructReasoningResult() {
 
         return new ReasoningResult(
-                reasoningId,
-                reasoningSummary,
-                reasoningFindings,
-                reasoningEvidence,
-                reasoningConclusion != null
-                        ? reasoningConclusion
-                        : "No conclusion",
-                reasoningConfidence,
-                reasoningRisks,
-                reasoningAlternatives,
-                reasoningScope,
-                reasoningType,
-                reasoningSteps,
+                "inference-fallback",
+                "Reasoning summary",
+                List.of(),
+                List.of(),
+                "No conclusion",
+                0.0,
+                List.of(),
+                List.of(),
+                "general",
+                "EVIDENCE_BASED_REASONING",
+                0,
                 java.util.Map.of(),
                 java.time.Instant.now()
         );
-    }
-
-    /**
-     * Preserves inference evidence while guaranteeing that an actual
-     * reasoning conclusion is not lost at the runtime boundary.
-     */
-    private List<String> preserveSupportingEvidence(
-            InferenceResult result,
-            ReasoningResult reasoningResult) {
-
-        List<String> existing =
-                safeList(result.supportingEvidence());
-
-        if (!existing.isEmpty()) {
-            return existing;
-        }
-
-        String conclusion =
-                reasoningResult != null
-                        ? reasoningResult.conclusion()
-                        : null;
-
-        if (conclusion == null || conclusion.isBlank()) {
-            return List.of();
-        }
-
-        List<String> recovered =
-                new ArrayList<>(1);
-
-        recovered.add(
-                "Reasoning conclusion: "
-                        + conclusion
-        );
-
-        return List.copyOf(recovered);
     }
 
     /**
@@ -496,51 +309,6 @@ public final class InferenceStage implements ExecutionStage {
         }
 
         return List.copyOf(result);
-    }
-
-    /**
-     * Reads a string list safely.
-     */
-    private List<String> readStringList(Object value) {
-
-        if (!(value instanceof List<?> rawList)) {
-            return List.of();
-        }
-
-        List<String> result =
-                new ArrayList<>(rawList.size());
-
-        for (Object item : rawList) {
-            if (item instanceof String text) {
-                result.add(text);
-            }
-        }
-
-        return List.copyOf(result);
-    }
-
-    /**
-     * Returns an immutable safe list.
-     */
-    private <T> List<T> safeList(List<T> value) {
-
-        if (value == null || value.isEmpty()) {
-            return List.of();
-        }
-
-        return List.copyOf(value);
-    }
-
-    /**
-     * Safely reads a numeric confidence value.
-     */
-    private Double readDouble(Object value) {
-
-        if (value instanceof Number number) {
-            return number.doubleValue();
-        }
-
-        return null;
     }
 
     /**

@@ -260,7 +260,7 @@ class ReflectionLoopExecutionTest {
         assertEquals(1, state.getReflectionIteration(),
                 "reflection should have run exactly once");
         assertFalse(state.requiresReReason(), "no re-reason request expected");
-        assertEquals(0.97, (double) state.getMetadata().get("reflectionScore"), 0.0001,
+        assertEquals(0.97, state.getCognitiveState().reflection().score(), 0.0001,
                 "reflection should evaluate the upgraded metadata immediately");
 
         assertEquals(1, reasoningOf(stages).calls(), "reasoning must run exactly once");
@@ -284,7 +284,7 @@ class ReflectionLoopExecutionTest {
                 "reflection should have run twice (initial + one rewind)");
         assertEquals(List.of(0.0, 0.97), state.getPreviousQualityScores(),
                 "quality should improve from the first to the second pass");
-        assertEquals(0.97, (double) state.getMetadata().get("reflectionScore"), 0.0001,
+        assertEquals(0.97, state.getCognitiveState().reflection().score(), 0.0001,
                 "final response must use the second reasoning result");
         assertFalse(state.requiresReReason());
 

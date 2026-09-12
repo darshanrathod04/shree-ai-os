@@ -4,6 +4,7 @@ import com.shreeai.os.platform.kernels.cognitive.engine.GoalIntelligenceEngine;
 import com.shreeai.os.platform.kernels.cognitive.engine.GoalIntelligenceEngine.GoalAnalysis;
 import com.shreeai.os.platform.kernels.cognitive.engine.GoalIntelligenceEngine.GoalRequest;
 import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
+import com.shreeai.os.platform.kernels.inference.model.InferenceResult;
 import com.shreeai.os.platform.kernels.planning.api.PlanningService;
 import com.shreeai.os.platform.kernels.planning.api.PlanningTypes;
 import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
@@ -11,6 +12,7 @@ import com.shreeai.os.platform.kernels.planning.model.PlanningConstraints;
 import com.shreeai.os.platform.kernels.planning.model.PlanningId;
 import com.shreeai.os.platform.kernels.planning.model.PlanningObjective;
 import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
+import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
@@ -21,7 +23,6 @@ import com.shreeai.os.platform.sdk.events.EventType;
 import com.shreeai.os.platform.sdk.events.RuntimeEvent;
 import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 import com.shreeai.os.platform.kernels.planning.response.PlanningResponseBuilder;
-import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
 
 import java.time.Instant;
 import java.util.Map;
@@ -184,40 +185,41 @@ public final class PlanningStage implements ExecutionStage {
             String reasoningId =
                     reasoningResult != null
                             ? reasoningResult.reasoningId()
-                            : stringMetadata(
-                            state,
-                            "reasoningId"
-                    );
+                            : "";
 
             /*
              * -------------------------------------------------------------
-             * 3. Read inference intelligence
+             * 3. Read inference intelligence from the cognitive state
              * -------------------------------------------------------------
+             *
+             * P0.2 — the evidence lists are no longer mirrored in the
+             * metadata map. Planning derives them from the immutable
+             * InferenceResult / ReasoningResult artifacts, preserving the
+             * exact recovery semantics the previous metadata path had.
              */
 
+            CognitiveState cognitive = state.getCognitiveState();
+
+            InferenceResult inferenceResult = cognitive.inference();
+
             List<String> supportingEvidence =
-                    readStringList(
-                            state,
-                            "supportingEvidence"
-                    );
+                    deriveSupportingEvidence(inferenceResult, reasoningResult);
 
             List<String> contradictingEvidence =
-                    readStringList(
-                            state,
-                            "contradictingEvidence"
-                    );
+                    inferenceResult != null
+                            ? safeList(inferenceResult.contradictingEvidence())
+                            : List.of();
 
             List<String> unknowns =
-                    readStringList(
-                            state,
-                            "unknowns"
-                    );
+                    inferenceResult != null
+                            ? safeList(inferenceResult.unknownInformation())
+                            : List.of();
 
             String nextInvestigation =
-                    stringMetadata(
-                            state,
-                            "nextInvestigation"
-                    );
+                    inferenceResult != null
+                            && inferenceResult.recommendedNextInvestigation() != null
+                            ? inferenceResult.recommendedNextInvestigation()
+                            : "";
 
             /*
              * -------------------------------------------------------------
@@ -306,9 +308,6 @@ public final class PlanningStage implements ExecutionStage {
                     );
 
             PlanningResponse planningResponse =
-                    responseBuilder.build(goalAnalysis);
-
-            PlanningResponse response =
                     responseBuilder.build(goalAnalysis);
 
             /*
@@ -471,9 +470,16 @@ public final class PlanningStage implements ExecutionStage {
 
             /*
              * -------------------------------------------------------------
-             * 10. Preserve Goal Intelligence in runtime state
+             * 10. Persist planning artifacts
              * -------------------------------------------------------------
+             *
+             * P0.2 — the PlanningResponse artifact is stored in the
+             * immutable cognitive state. Goal-analysis metadata stays in
+             * the execution metadata map (external SDK consumers).
              */
+
+            state.updateCognitiveState(
+                    cs -> cs.withPlanning(planningResponse));
 
             state.addMetadata(
                     "goalAnalysis",
@@ -498,11 +504,6 @@ public final class PlanningStage implements ExecutionStage {
             state.addMetadata(
                     "goalReplanningRelevant",
                     goalAnalysis.replanningRelevant()
-            );
-
-            state.addMetadata(
-                    "goalEvolutionSignals",
-                    goalAnalysis.evolutionSignals()
             );
 
             state.addMetadata(
@@ -620,36 +621,62 @@ public final class PlanningStage implements ExecutionStage {
     }
 
     /**
-     * Reads the authoritative reasoning result.
+     * Reads the authoritative reasoning result from the immutable
+     * cognitive state (P0.2).
      */
     private ReasoningResult readReasoningResult(
             PipelineExecutionState state) {
 
-        Object value =
-                state.getMetadata()
-                        .get("reasoningResult");
-
-        if (value instanceof ReasoningResult result) {
-            return result;
-        }
-
-        return null;
+        return state.getCognitiveState().reasoning();
     }
 
     /**
-     * Reads a string metadata value safely.
+     * Derives the supporting-evidence list for goal intelligence from the
+     * immutable cognitive artifacts (P0.2).
+     *
+     * <p>Preserves the previous metadata-path semantics exactly: prefer the
+     * inference result's own supporting evidence; when absent, recover the
+     * authoritative reasoning conclusion as a single evidence entry.</p>
+     *
+     * @param inferenceResult the inference artifact (may be null)
+     * @param reasoningResult the reasoning artifact (may be null)
+     * @return an immutable supporting-evidence list (never null)
      */
-    private String stringMetadata(
-            PipelineExecutionState state,
-            String key) {
+    private List<String> deriveSupportingEvidence(
+            InferenceResult inferenceResult,
+            ReasoningResult reasoningResult) {
 
-        Object value =
-                state.getMetadata()
-                        .get(key);
+        List<String> existing =
+                inferenceResult != null
+                        ? safeList(inferenceResult.supportingEvidence())
+                        : List.of();
 
-        return value != null
-                ? String.valueOf(value)
-                : "";
+        if (!existing.isEmpty()) {
+            return existing;
+        }
+
+        String conclusion =
+                reasoningResult != null
+                        ? reasoningResult.conclusion()
+                        : null;
+
+        if (conclusion == null || conclusion.isBlank()) {
+            return List.of();
+        }
+
+        return List.of("Reasoning conclusion: " + conclusion);
+    }
+
+    /**
+     * Returns an immutable safe copy of the given list.
+     */
+    private <T> List<T> safeList(List<T> value) {
+
+        if (value == null || value.isEmpty()) {
+            return List.of();
+        }
+
+        return List.copyOf(value);
     }
 
     /**
@@ -674,37 +701,6 @@ public final class PlanningStage implements ExecutionStage {
         return value != null
                 ? String.valueOf(value).trim()
                 : "";
-    }
-
-    /**
-     * Reads list metadata while protecting the pipeline from
-     * incompatible metadata values.
-     */
-    private List<String> readStringList(
-            PipelineExecutionState state,
-            String key) {
-
-        Object value =
-                state.getMetadata()
-                        .get(key);
-
-        if (!(value instanceof List<?> list)) {
-            return List.of();
-        }
-
-        List<String> result =
-                new ArrayList<>();
-
-        for (Object item : list) {
-
-            if (item != null) {
-                result.add(
-                        String.valueOf(item)
-                );
-            }
-        }
-
-        return List.copyOf(result);
     }
 
     /**

@@ -1403,11 +1403,13 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
                     pipelineResult = effectivePipeline.execute(pipelineContext);
 
+                    // P0.2 — reflection outcome is read from the immutable
+                    // cognitive state of the execution state.
                     boolean retryAdvised = pipelineResult != null
                             && pipelineResult.getExecutionState() != null
-                            && Boolean.TRUE.equals(
-                                    pipelineResult.getExecutionState().getMetadata()
-                                            .get("reflectionRetryAdvised"));
+                            && pipelineResult.getExecutionState().getCognitiveState().reflection() != null
+                            && pipelineResult.getExecutionState().getCognitiveState()
+                                    .reflection().retryAdvised();
 
                     if (!retryAdvised || attempt == maxAttempts) {
                         break;
@@ -1415,10 +1417,13 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
                     // Carry the reflection lessons into the next attempt so the
                     // planning stage can adjust strategy.
-                    Object lessons = pipelineResult.getExecutionState().getMetadata()
-                            .get("reflectionLessons");
-                    if (lessons instanceof List<?> lessonList) {
-                        retryLessons = List.copyOf(lessonList);
+                    if (pipelineResult.getExecutionState().getCognitiveState().reflection() != null) {
+                        List<String> reflectionLessonList = pipelineResult
+                                .getExecutionState().getCognitiveState()
+                                .reflection().lessons();
+                        if (reflectionLessonList != null && !reflectionLessonList.isEmpty()) {
+                            retryLessons = List.copyOf(reflectionLessonList);
+                        }
                     }
 
                     eventBus.publish(new RuntimeEvent(
@@ -1488,16 +1493,16 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 // empty state. The generated response was then discarded.
                 // Fix: extract evidence AFTER the pipeline populates the state.
                 if (pipelineResult != null && pipelineResult.getExecutionState() != null) {
-                    Map<String, Object> pipelineStateMeta =
-                            pipelineResult.getExecutionState().getMetadata();
-                    if (pipelineStateMeta != null && !pipelineStateMeta.isEmpty()) {
-                        try {
-                            com.shreeai.os.platform.runtime.agents.EvidenceAgent evidenceAgent =
-                                    new com.shreeai.os.platform.runtime.agents.EvidenceAgent();
-                            // Use extractFromMetadata() to read from the pipeline state
-                            // which now contains knowledgeResults, reasoningConclusion, etc.
-                            com.shreeai.os.platform.runtime.model.EvidenceBundle evidenceBundle =
-                                    evidenceAgent.extractFromMetadata(pipelineStateMeta);
+                    try {
+                        com.shreeai.os.platform.runtime.agents.EvidenceAgent evidenceAgent =
+                                new com.shreeai.os.platform.runtime.agents.EvidenceAgent();
+                        // P0.2 — extractFromPipelineState reads knowledge/memory
+                        // results from the metadata map and cognitive artifacts
+                        // (reasoning/inference/planning/reflection) from the
+                        // immutable CognitiveState.
+                        com.shreeai.os.platform.runtime.model.EvidenceBundle evidenceBundle =
+                                evidenceAgent.extractFromPipelineState(
+                                        pipelineResult.getExecutionState());
                             if (evidenceBundle != null && !evidenceBundle.isEmpty()) {
                                 // Sprint-21: ONLY override the synthesizer output
                                 // in the canonical CHAT path (route == null)
@@ -1581,10 +1586,8 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                             ));
                             // Synthesizer output (response) is preserved on error.
                         }
+                        // When the bundle is empty: synthesizer output is preserved.
                     }
-                    // When pipelineStateMeta is null/empty: synthesizer output
-                    // is preserved. No buildEmptyBundleResponse needed here.
-                }
                 // When getExecutionState() is null: synthesizer output is preserved.
 
                 Map<String, Object> payload = Map.copyOf(structured);
