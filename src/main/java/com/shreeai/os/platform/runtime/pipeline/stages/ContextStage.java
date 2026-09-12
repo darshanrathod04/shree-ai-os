@@ -2,6 +2,10 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
+import com.shreeai.os.platform.kernels.context.engine.DefaultPrimaryIntentDetector;
+import com.shreeai.os.platform.kernels.context.engine.PrimaryIntentDetector;
+import com.shreeai.os.platform.kernels.context.model.IntentProfile;
+import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
@@ -32,8 +36,18 @@ public final class ContextStage implements ExecutionStage {
             .priority(2)
             .enabled(true)
             .version("1.0")
-            .description("Builds and enriches execution context")
+            .description("Builds and enriches execution context with primary intent detection")
             .build();
+
+    private final PrimaryIntentDetector intentDetector;
+
+    public ContextStage() {
+        this.intentDetector = new DefaultPrimaryIntentDetector();
+    }
+
+    public ContextStage(PrimaryIntentDetector intentDetector) {
+        this.intentDetector = intentDetector;
+    }
 
     @Override
     public PipelineResult process(PipelineContext context, ExecutionChain chain, PipelineExecutionState state) {
@@ -46,10 +60,16 @@ public final class ContextStage implements ExecutionStage {
             String contextId = "ctx-" + System.currentTimeMillis();
             String contextType = "EXECUTION_CONTEXT";
 
+            // P1.1: Detect primary intent from user input
+            String userInput = context.getExecutionRequest() != null
+                    && context.getExecutionRequest().getUserInput() != null
+                    ? context.getExecutionRequest().getUserInput()
+                    : "";
+            IntentProfile intentProfile = intentDetector.detect(userInput);
+            CognitiveState updatedCognitiveState = state.getCognitiveState().withIntentProfile(intentProfile);
+            state.setCognitiveState(updatedCognitiveState);
+
             // Build the structured IntelligenceContext from the request metadata.
-            // If the SDK provided an intelligence context, it is preserved intact.
-            // Otherwise a minimal context is constructed so downstream kernels
-            // always receive structured context instead of only a raw String.
             IntelligenceContext intelligenceContext = null;
             if (context.getExecutionRequest() != null
                     && context.getExecutionRequest().getMetadata() != null) {
@@ -61,13 +81,9 @@ public final class ContextStage implements ExecutionStage {
             }
 
             if (intelligenceContext == null && context.getExecutionRequest() != null) {
-                // No structured context supplied; build a minimal one from the
-                // request so the pipeline always has structured context available.
                 intelligenceContext = IntelligenceContextBuilder.fromExecution(
                         context.getExecutionRequest().getRequestId(),
-                        context.getExecutionRequest().getUserInput() != null
-                                ? context.getExecutionRequest().getUserInput()
-                                : "",
+                        userInput,
                         java.util.Map.of()
                 );
             }
@@ -76,10 +92,13 @@ public final class ContextStage implements ExecutionStage {
             state.addMetadata("contextId", contextId);
             state.addMetadata("contextType", contextType);
             state.addMetadata("contextBuilt", true);
+            state.addMetadata("primaryIntent", intentProfile.primaryIntent().name());
+            state.addMetadata("intentConfidence", intentProfile.confidence());
             if (intelligenceContext != null) {
                 state.addMetadata("intelligenceContext", intelligenceContext);
             }
-            state.addMessage("Context built: " + contextId + " for identity " + identityId);
+            state.addMessage("Context built: " + contextId + " for identity " + identityId
+                    + " | Intent: " + intentProfile.primaryIntent());
 
             // Continue to next stage
             return chain.next(context, state);
