@@ -75,10 +75,10 @@ public final class PipelineExecutionState {
      * segment (Reasoning → Inference → Planning → Reflection) together with
      * the reflection loop bookkeeping (iteration count and quality history).
      *
-     * <p>P0.2 — replaces the previous mutable cognitive metadata entries
+     * <p>P0.2 - replaces the previous mutable cognitive metadata entries
      * ({@code reasoningResult}, reflection pass counters and quality score
      * list) with a single immutable value object. Every update replaces this
-     * reference with a new {@link CognitiveState} — the artifacts are never
+     * reference with a new {@link CognitiveState} - the artifacts are never
      * stored in the {@link #metadata} map.</p>
      */
     private CognitiveState cognitiveState;
@@ -437,7 +437,7 @@ public final class PipelineExecutionState {
     }
 
     // =====================================================
-    // P0.2 — COGNITIVE STATE
+    // P0.2 - COGNITIVE STATE
     // =====================================================
 
     /**
@@ -479,13 +479,13 @@ public final class PipelineExecutionState {
     }
 
     // =====================================================
-    // P0.1 — REFLECTION LOOP TRACKING
+    // P0.1 - REFLECTION LOOP TRACKING
     // =====================================================
 
     /**
      * Returns the number of reflection passes completed so far.
      *
-     * <p>Delegates to {@link CognitiveState#reflectionIteration()} — the
+     * <p>Delegates to {@link CognitiveState#reflectionIteration()} - the
      * iteration count is part of the immutable cognitive state, not a
      * separate mutable field.</p>
      *
@@ -514,13 +514,14 @@ public final class PipelineExecutionState {
      */
     public void resetReflectionIteration() {
         CognitiveState cs = cognitiveState;
-        cognitiveState = new CognitiveState(
+                 cognitiveState = new CognitiveState(
                 cs.reasoning(),
                 cs.inference(),
                 cs.planning(),
                 cs.reflection(),
                 0,
-                List.of());
+                List.of(),
+                cs.evidencePackage());
         requiresReReason = false;
     }
 
@@ -561,7 +562,7 @@ public final class PipelineExecutionState {
      * Records the quality score of a completed reflection pass.
      *
      * <p>The score is appended to the immutable quality history inside
-     * {@link CognitiveState} — a new state instance is produced; the
+     * {@link CognitiveState} - a new state instance is produced; the
      * previous state (and any reader holding it) is unaffected.</p>
      *
      * @param score the reflection quality score (0.0-1.0)
@@ -570,13 +571,14 @@ public final class PipelineExecutionState {
         CognitiveState cs = cognitiveState;
         List<Double> history = new ArrayList<>(cs.qualityHistory());
         history.add(score);
-        cognitiveState = new CognitiveState(
+                cognitiveState = new CognitiveState(
                 cs.reasoning(),
                 cs.inference(),
                 cs.planning(),
                 cs.reflection(),
                 cs.reflectionIteration(),
-                List.copyOf(history));
+                List.copyOf(history),
+                cs.evidencePackage());
     }
 
     /**

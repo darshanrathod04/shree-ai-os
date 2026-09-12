@@ -2,6 +2,8 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 
 import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
 import com.shreeai.os.platform.kernels.inference.engine.DefaultInferenceEngine;
+import com.shreeai.os.platform.kernels.inference.engine.DefaultEvidenceConflictResolver;
+import com.shreeai.os.platform.kernels.inference.model.EvidencePackage;
 import com.shreeai.os.platform.kernels.inference.model.InferenceResult;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 import com.shreeai.os.platform.kernels.memory.model.Memory;
@@ -155,29 +157,48 @@ public final class InferenceStage implements ExecutionStage {
             ReasoningResult reasoningResult =
                     readReasoningResult(state);
 
-            /*
-             * -------------------------------------------------------------
-             * 5. Backward-compatible reconstruction
-             * -------------------------------------------------------------
-             *
-             * Older pipeline paths may only contain decomposed reasoning
-             * metadata. Preserve compatibility without allowing the
-             * inference stage to operate without a reasoning object.
-             */
+                         /*
+              * -------------------------------------------------------------
+              * 5. Backward-compatible reconstruction
+              * -------------------------------------------------------------
+              *
+              * Older pipeline paths may only contain decomposed reasoning
+              * metadata. Preserve compatibility without allowing the
+              * inference stage to operate without a reasoning object.
+              */
             if (reasoningResult == null) {
                 reasoningResult = reconstructReasoningResult();
             }
 
             /*
-             * -------------------------------------------------------------
-             * 6. Execute inference
-             * -------------------------------------------------------------
-             */
+              * -------------------------------------------------------------
+              * 5.5. Deterministic evidence conflict resolution (P0.3)
+              * -------------------------------------------------------------
+              *
+              * Before inference executes, all conflicting evidence is resolved
+              * into one immutable EvidencePackage stored inside CognitiveState.
+              * Inference must never consume raw conflicting evidence - it must
+              * consume the resolved EvidencePackage from CognitiveState.
+              */
+            EvidencePackage evidencePackage = DefaultEvidenceConflictResolver.resolve(
+                    reasoningResult,
+                    rankedMemories,
+                    rankedKnowledge
+            );
+            state.updateCognitiveState(cs -> cs.withEvidencePackage(evidencePackage));
+
+            /*
+              * -------------------------------------------------------------
+              * 6. Execute inference (P0.3 - consumes EvidencePackage)
+              * -------------------------------------------------------------
+              *
+              * The inference engine consumes the resolved EvidencePackage
+              * from CognitiveState, never raw conflicting evidence.
+              */
             InferenceResult result = inferenceEngine.infer(
                     requestText,
                     reasoningResult,
-                    rankedMemories,
-                    rankedKnowledge,
+                    evidencePackage,
                     "request-" + requestId
             );
 
@@ -188,7 +209,7 @@ public final class InferenceStage implements ExecutionStage {
             /*
              * -------------------------------------------------------------
              * 7. Store the inference artifact in the immutable cognitive
-             *    state (P0.2). The reasoning artifact stays untouched —
+             *    state (P0.2). The reasoning artifact stays untouched -
              *    inference never rewrites another stage's output. The
              *    evidence lists remain part of the InferenceResult itself;
              *    they are no longer duplicated into the metadata map.
