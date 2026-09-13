@@ -2,13 +2,20 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
+import com.shreeai.os.platform.kernels.context.engine.AmbiguityDetectionEngine;
 import com.shreeai.os.platform.kernels.context.engine.ConstraintExtractionEngine;
+import com.shreeai.os.platform.kernels.context.engine.DefaultAmbiguityDetectionEngine;
 import com.shreeai.os.platform.kernels.context.engine.DefaultConstraintExtractionEngine;
 import com.shreeai.os.platform.kernels.context.engine.DefaultDomainDetector;
 import com.shreeai.os.platform.kernels.context.engine.DefaultPrimaryIntentDetector;
 import com.shreeai.os.platform.kernels.context.engine.DomainDetector;
 import com.shreeai.os.platform.kernels.context.engine.PrimaryIntentDetector;
+import com.shreeai.os.platform.kernels.context.engine.GoalIdentificationEngine;
+import com.shreeai.os.platform.kernels.context.engine.DefaultGoalIdentificationEngine;
+import com.shreeai.os.platform.kernels.context.model.AmbiguityProfile;
+import com.shreeai.os.platform.kernels.context.model.ContextIntelligence;
 import com.shreeai.os.platform.kernels.context.model.DomainProfile;
+import com.shreeai.os.platform.kernels.context.model.GoalStructure;
 import com.shreeai.os.platform.kernels.context.model.IntentProfile;
 import com.shreeai.os.platform.kernels.context.model.UserConstraints;
 import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
@@ -42,7 +49,7 @@ public final class ContextStage implements ExecutionStage {
             .priority(2)
             .enabled(true)
             .version("1.0")
-            .description("Builds and enriches execution context with primary intent detection")
+            .description("Builds execution context with intent, domain, constraints, goals, and ambiguity diagnosis")
             .build();
 
     private final PrimaryIntentDetector intentDetector;
@@ -92,6 +99,23 @@ public final class ContextStage implements ExecutionStage {
             CognitiveState updatedCognitiveStateWithConstraints = state.getCognitiveState().withUserConstraints(userConstraints);
             state.setCognitiveState(updatedCognitiveStateWithConstraints);
 
+            // P1.4: Identify goals from user input (Deterministic Goal Identification)
+            GoalIdentificationEngine goalIdentificationEngine = new DefaultGoalIdentificationEngine();
+            GoalStructure goalStructure = goalIdentificationEngine.identify(userInput);
+            CognitiveState updatedCognitiveStateWithGoal = updatedCognitiveStateWithConstraints.withGoalStructure(goalStructure);
+            state.setCognitiveState(updatedCognitiveStateWithGoal);
+
+            // P1.5: Diagnose ambiguity from the cognitive artifacts (never the raw prompt)
+            AmbiguityDetectionEngine ambiguityDetectionEngine = new DefaultAmbiguityDetectionEngine();
+            AmbiguityProfile ambiguityProfile = ambiguityDetectionEngine.diagnose(
+                    intentProfile, domainProfile, userConstraints, goalStructure);
+            CognitiveState updatedCognitiveStateWithAmbiguity = updatedCognitiveStateWithGoal.withAmbiguityProfile(ambiguityProfile);
+            state.setCognitiveState(updatedCognitiveStateWithAmbiguity);
+
+            // Build the canonical context intelligence aggregate.
+            ContextIntelligence contextIntelligence = ContextIntelligence.of(
+                    intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+
             // Build the structured IntelligenceContext from the request metadata.
             IntelligenceContext intelligenceContext = null;
             if (context.getExecutionRequest() != null
@@ -124,7 +148,9 @@ public final class ContextStage implements ExecutionStage {
             }
             state.addMessage("Context built: " + contextId + " for identity " + identityId
                     + " | Intent: " + intentProfile.primaryIntent()
-                    + " | Domain: " + domainProfile.primaryDomain());
+                    + " | Domain: " + domainProfile.primaryDomain()
+                    + " | Goal: " + goalStructure.primaryGoal().title()
+                    + " | Ambiguity: " + contextIntelligence.ambiguityProfile().ambiguityScore());
 
             // Continue to next stage
             return chain.next(context, state);
