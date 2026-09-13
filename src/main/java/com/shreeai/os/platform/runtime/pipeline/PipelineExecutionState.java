@@ -522,7 +522,9 @@ public final class PipelineExecutionState {
                 0,
                 List.of(),
                 cs.evidencePackage(),
-                cs.intentProfile());
+                cs.intentProfile(),
+                cs.domainProfile(),
+                cs.userConstraints());
         requiresReReason = false;
     }
 
@@ -580,7 +582,9 @@ public final class PipelineExecutionState {
                 cs.reflectionIteration(),
                 List.copyOf(history),
                 cs.evidencePackage(),
-                cs.intentProfile());
+                cs.intentProfile(),
+                cs.domainProfile(),
+                cs.userConstraints());
     }
 
     /**
