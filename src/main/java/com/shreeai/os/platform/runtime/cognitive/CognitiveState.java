@@ -4,6 +4,7 @@ import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionAnalysis;
 import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
 import com.shreeai.os.platform.kernels.context.model.DomainProfile;
 import com.shreeai.os.platform.kernels.context.model.IntentProfile;
+import com.shreeai.os.platform.kernels.context.model.UserConstraints;
 import com.shreeai.os.platform.kernels.inference.model.EvidencePackage;
 import com.shreeai.os.platform.kernels.inference.model.InferenceResult;
 import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
@@ -48,6 +49,7 @@ import java.util.Objects;
  * @param evidencePackage     the resolved evidence package (null before InferenceStage)
  * @param intentProfile       the detected primary intent (null before ContextStage)
  * @param domainProfile       the detected domain profile (null before ContextStage)
+ * @param userConstraints      the extracted user constraints (null before ContextStage)
  */
 public record CognitiveState(
         ReasoningResult reasoning,
@@ -58,7 +60,8 @@ public record CognitiveState(
         List<Double> qualityHistory,
         EvidencePackage evidencePackage,
         IntentProfile intentProfile,
-        DomainProfile domainProfile) {
+        DomainProfile domainProfile,
+        UserConstraints userConstraints) {
 
     /** Creates a deeply-immutable CognitiveState with defensive copies. */
     public CognitiveState {
@@ -73,7 +76,7 @@ public record CognitiveState(
      * @return an empty state (never null)
      */
         public static CognitiveState empty() {
-        return new CognitiveState(null, null, null, null, 0, List.of(), null, null, null);
+        return new CognitiveState(null, null, null, null, 0, List.of(), null, null, null, null);
     }
 
     /**
@@ -85,7 +88,7 @@ public record CognitiveState(
         public CognitiveState withReasoning(ReasoningResult reasoning) {
         Objects.requireNonNull(reasoning, "reasoning must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints);
     }
 
     /**
@@ -97,7 +100,7 @@ public record CognitiveState(
         public CognitiveState withInference(InferenceResult inference) {
         Objects.requireNonNull(inference, "inference must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints);
     }
 
     /**
@@ -109,7 +112,7 @@ public record CognitiveState(
         public CognitiveState withPlanning(PlanningResponse planning) {
         Objects.requireNonNull(planning, "planning must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints);
     }
 
     /**
@@ -125,7 +128,7 @@ public record CognitiveState(
         List<Double> history = new ArrayList<>(qualityHistory);
         history.add(qualityScore);
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration + 1, List.copyOf(history), evidencePackage, intentProfile, domainProfile);
+                reflection, reflectionIteration + 1, List.copyOf(history), evidencePackage, intentProfile, domainProfile, userConstraints);
     }
 
         /**
@@ -151,7 +154,7 @@ public record CognitiveState(
     public CognitiveState withEvidencePackage(EvidencePackage pkg) {
         Objects.requireNonNull(pkg, "evidencePackage must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, pkg, intentProfile, domainProfile);
+                reflection, reflectionIteration, qualityHistory, pkg, intentProfile, domainProfile, userConstraints);
     }
 
     /**
@@ -162,7 +165,7 @@ public record CognitiveState(
      */
         public CognitiveState incrementReflection() {
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration + 1, qualityHistory, evidencePackage, intentProfile, domainProfile);
+                reflection, reflectionIteration + 1, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints);
     }
 
     /**
@@ -175,7 +178,7 @@ public record CognitiveState(
     public CognitiveState withIntentProfile(IntentProfile intentProfile) {
         Objects.requireNonNull(intentProfile, "intentProfile must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints);
     }
 
     /**
@@ -188,7 +191,20 @@ public record CognitiveState(
     public CognitiveState withDomainProfile(DomainProfile domainProfile) {
         Objects.requireNonNull(domainProfile, "domainProfile must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints);
+    }
+
+    /**
+     * Returns a new cognitive state with the given user constraints,
+     * preserving all existing cognitive artifacts.
+     *
+     * @param userConstraints the extracted user constraints (must not be null)
+     * @return a new CognitiveState with the user constraints set (never null)
+     */
+    public CognitiveState withUserConstraints(UserConstraints userConstraints) {
+        Objects.requireNonNull(userConstraints, "userConstraints must not be null");
+        return new CognitiveState(reasoning, inference, planning,
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints);
     }
 
     /**
@@ -211,6 +227,7 @@ public record CognitiveState(
                                  + ", qualityHistory=" + qualityHistory
                 + ", evidencePackage=" + (evidencePackage != null)
                 + ", intentProfile=" + intentProfile
-                + ", domainProfile=" + domainProfile + '}';
+                + ", domainProfile=" + domainProfile
+                + ", userConstraints=" + userConstraints + '}';
     }
 }
