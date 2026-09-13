@@ -524,7 +524,8 @@ public final class PipelineExecutionState {
                 cs.evidencePackage(),
                 cs.intentProfile(),
                 cs.domainProfile(),
-                cs.userConstraints());
+                cs.userConstraints(),
+                cs.goalStructure());
         requiresReReason = false;
     }
 
@@ -584,7 +585,8 @@ public final class PipelineExecutionState {
                 cs.evidencePackage(),
                 cs.intentProfile(),
                 cs.domainProfile(),
-                cs.userConstraints());
+                cs.userConstraints(),
+                cs.goalStructure());
     }
 
     /**
