@@ -2,8 +2,11 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
+import com.shreeai.os.platform.kernels.context.engine.DefaultDomainDetector;
 import com.shreeai.os.platform.kernels.context.engine.DefaultPrimaryIntentDetector;
+import com.shreeai.os.platform.kernels.context.engine.DomainDetector;
 import com.shreeai.os.platform.kernels.context.engine.PrimaryIntentDetector;
+import com.shreeai.os.platform.kernels.context.model.DomainProfile;
 import com.shreeai.os.platform.kernels.context.model.IntentProfile;
 import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
@@ -40,13 +43,16 @@ public final class ContextStage implements ExecutionStage {
             .build();
 
     private final PrimaryIntentDetector intentDetector;
+    private final DomainDetector domainDetector;
 
     public ContextStage() {
         this.intentDetector = new DefaultPrimaryIntentDetector();
+        this.domainDetector = new DefaultDomainDetector();
     }
 
-    public ContextStage(PrimaryIntentDetector intentDetector) {
+    public ContextStage(PrimaryIntentDetector intentDetector, DomainDetector domainDetector) {
         this.intentDetector = intentDetector;
+        this.domainDetector = domainDetector;
     }
 
     @Override
@@ -68,6 +74,11 @@ public final class ContextStage implements ExecutionStage {
             IntentProfile intentProfile = intentDetector.detect(userInput);
             CognitiveState updatedCognitiveState = state.getCognitiveState().withIntentProfile(intentProfile);
             state.setCognitiveState(updatedCognitiveState);
+
+            // P1.2: Detect domain from user input
+            DomainProfile domainProfile = domainDetector.detect(userInput);
+            CognitiveState updatedCognitiveStateWithDomain = state.getCognitiveState().withDomainProfile(domainProfile);
+            state.setCognitiveState(updatedCognitiveStateWithDomain);
 
             // Build the structured IntelligenceContext from the request metadata.
             IntelligenceContext intelligenceContext = null;
@@ -94,11 +105,14 @@ public final class ContextStage implements ExecutionStage {
             state.addMetadata("contextBuilt", true);
             state.addMetadata("primaryIntent", intentProfile.primaryIntent().name());
             state.addMetadata("intentConfidence", intentProfile.confidence());
+            state.addMetadata("primaryDomain", domainProfile.primaryDomain().name());
+            state.addMetadata("domainConfidence", domainProfile.confidence());
             if (intelligenceContext != null) {
                 state.addMetadata("intelligenceContext", intelligenceContext);
             }
             state.addMessage("Context built: " + contextId + " for identity " + identityId
-                    + " | Intent: " + intentProfile.primaryIntent());
+                    + " | Intent: " + intentProfile.primaryIntent()
+                    + " | Domain: " + domainProfile.primaryDomain());
 
             // Continue to next stage
             return chain.next(context, state);
