@@ -9,6 +9,9 @@ import com.shreeai.os.platform.kernels.knowledge.model.ReliabilityResult;
 import com.shreeai.os.platform.kernels.reasoning.engine.MultiHopReasoningEngine;
 import com.shreeai.os.platform.kernels.reasoning.engine.DefaultEvidenceSynthesisEngine;
 import com.shreeai.os.platform.kernels.reasoning.engine.EvidenceSynthesisEngine;
+import com.shreeai.os.platform.kernels.reasoning.engine.CausalReasoningEngine;
+import com.shreeai.os.platform.kernels.reasoning.engine.DefaultCausalReasoningEngine;
+import com.shreeai.os.platform.kernels.reasoning.model.CausalGraph;
 import com.shreeai.os.platform.kernels.reasoning.model.SynthesisGraph;
 import com.shreeai.os.platform.kernels.reasoning.model.ReasoningGraph;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
@@ -56,6 +59,7 @@ public final class ReasoningStage implements ExecutionStage {
     private final DefaultReasoningEngine reasoningEngine;
     private final MultiHopReasoningEngine multiHopEngine;
     private final EvidenceSynthesisEngine synthesisEngine;
+    private final CausalReasoningEngine causalEngine;
 
     /**
      * Creates a new ReasoningStage with a real reasoning engine.
@@ -64,10 +68,12 @@ public final class ReasoningStage implements ExecutionStage {
      */
     public ReasoningStage(DefaultReasoningEngine reasoningEngine,
                           MultiHopReasoningEngine multiHopEngine,
-                          EvidenceSynthesisEngine synthesisEngine) {
+                          EvidenceSynthesisEngine synthesisEngine,
+                          CausalReasoningEngine causalEngine) {
         this.reasoningEngine = reasoningEngine;
         this.multiHopEngine = multiHopEngine;
         this.synthesisEngine = synthesisEngine;
+        this.causalEngine = causalEngine;
     }
 
     /**
@@ -77,7 +83,8 @@ public final class ReasoningStage implements ExecutionStage {
     public ReasoningStage() {
         this(new DefaultReasoningEngine(),
              new com.shreeai.os.platform.kernels.reasoning.engine.DefaultMultiHopReasoningEngine(),
-             new DefaultEvidenceSynthesisEngine());
+             new DefaultEvidenceSynthesisEngine(),
+             new DefaultCausalReasoningEngine());
     }
 
     @Override
@@ -133,6 +140,18 @@ public final class ReasoningStage implements ExecutionStage {
                         state.addMessage("R2 evidence synthesis completed: "
                                 + synthesisGraph.clusterCount() + " clusters, "
                                 + synthesisGraph.factCount() + " facts");
+
+                        // R3 - Causal Reasoning: discover cause-effect relationships
+                        // from the SynthesisGraph and ReasoningGraph.
+                        try {
+                            CausalGraph causalGraph = causalEngine.analyze(reasoningGraph, synthesisGraph, conceptGraph);
+                            state.updateCognitiveState(cs -> cs.withCausalGraph(causalGraph));
+                            state.addMessage("R3 causal reasoning completed: "
+                                    + causalGraph.nodes().size() + " nodes, "
+                                    + causalGraph.chains().size() + " chains");
+                        } catch (Exception e) {
+                            state.addMessage("R3 causal reasoning skipped: " + e.getMessage());
+                        }
                     } catch (Exception e) {
                         state.addMessage("R2 evidence synthesis skipped: " + e.getMessage());
                     }
