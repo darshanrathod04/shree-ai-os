@@ -2,6 +2,9 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultSourceDiscoveryEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.SourceDiscoveryEngine;
+import com.shreeai.os.platform.kernels.acquisition.model.KnowledgeRequirementSet;
 import com.shreeai.os.platform.kernels.context.engine.AmbiguityDetectionEngine;
 import com.shreeai.os.platform.kernels.context.engine.ConstraintExtractionEngine;
 import com.shreeai.os.platform.kernels.context.engine.DefaultAmbiguityDetectionEngine;
@@ -112,6 +115,18 @@ public final class ContextStage implements ExecutionStage {
             CognitiveState updatedCognitiveStateWithAmbiguity = updatedCognitiveStateWithGoal.withAmbiguityProfile(ambiguityProfile);
             state.setCognitiveState(updatedCognitiveStateWithAmbiguity);
 
+            // K0.6.1: Discover knowledge requirements from the canonical context
+            // intelligence aggregate. Deterministic, rule-based discovery only -
+            // no provider routing, no acquisition, no LLM (those are K0.6.2+).
+            SourceDiscoveryEngine sourceDiscoveryEngine = new DefaultSourceDiscoveryEngine();
+            KnowledgeRequirementSet knowledgeRequirements = sourceDiscoveryEngine.discover(
+                    ContextIntelligence.of(
+                            intentProfile, domainProfile, userConstraints,
+                            goalStructure, ambiguityProfile));
+            CognitiveState updatedCognitiveStateWithRequirements =
+                    state.getCognitiveState().withKnowledgeRequirements(knowledgeRequirements);
+            state.setCognitiveState(updatedCognitiveStateWithRequirements);
+
             // Build the canonical context intelligence aggregate.
             ContextIntelligence contextIntelligence = ContextIntelligence.of(
                     intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
@@ -150,7 +165,8 @@ public final class ContextStage implements ExecutionStage {
                     + " | Intent: " + intentProfile.primaryIntent()
                     + " | Domain: " + domainProfile.primaryDomain()
                     + " | Goal: " + goalStructure.primaryGoal().title()
-                    + " | Ambiguity: " + contextIntelligence.ambiguityProfile().ambiguityScore());
+                    + " | Ambiguity: " + contextIntelligence.ambiguityProfile().ambiguityScore()
+                    + " | KnowledgeRequirements: " + knowledgeRequirements.topics().size());
 
             // Continue to next stage
             return chain.next(context, state);
