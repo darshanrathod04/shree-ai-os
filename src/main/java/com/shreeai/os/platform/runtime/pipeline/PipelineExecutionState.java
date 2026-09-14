@@ -528,7 +528,8 @@ public final class PipelineExecutionState {
                 cs.goalStructure(), cs.ambiguityProfile(),
                 cs.reasoningGraph(),
                 cs.synthesisGraph(),
-                cs.causalGraph());
+                cs.causalGraph(),
+                cs.verificationGraph());
         requiresReReason = false;
     }
 
@@ -592,7 +593,8 @@ public final class PipelineExecutionState {
                 cs.goalStructure(), cs.ambiguityProfile(),
                 cs.reasoningGraph(),
                 cs.synthesisGraph(),
-                cs.causalGraph());
+                cs.causalGraph(),
+                cs.verificationGraph());
     }
 
     /**

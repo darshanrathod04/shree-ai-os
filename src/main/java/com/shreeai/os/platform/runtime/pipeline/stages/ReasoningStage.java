@@ -11,9 +11,11 @@ import com.shreeai.os.platform.kernels.reasoning.engine.DefaultEvidenceSynthesis
 import com.shreeai.os.platform.kernels.reasoning.engine.EvidenceSynthesisEngine;
 import com.shreeai.os.platform.kernels.reasoning.engine.CausalReasoningEngine;
 import com.shreeai.os.platform.kernels.reasoning.engine.DefaultCausalReasoningEngine;
+import com.shreeai.os.platform.kernels.reasoning.engine.DefaultSelfVerificationEngine;
 import com.shreeai.os.platform.kernels.reasoning.model.CausalGraph;
 import com.shreeai.os.platform.kernels.reasoning.model.SynthesisGraph;
 import com.shreeai.os.platform.kernels.reasoning.model.ReasoningGraph;
+import com.shreeai.os.platform.kernels.reasoning.model.VerificationGraph;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
@@ -65,6 +67,9 @@ public final class ReasoningStage implements ExecutionStage {
      * Creates a new ReasoningStage with a real reasoning engine.
      *
      * @param reasoningEngine the reasoning engine
+     * @param multiHopEngine  the R1 multi-hop reasoning engine
+     * @param synthesisEngine the R2 evidence synthesis engine
+     * @param causalEngine    the R3 causal reasoning engine
      */
     public ReasoningStage(DefaultReasoningEngine reasoningEngine,
                           MultiHopReasoningEngine multiHopEngine,
@@ -151,6 +156,21 @@ public final class ReasoningStage implements ExecutionStage {
                                     + causalGraph.chains().size() + " chains");
                         } catch (Exception e) {
                             state.addMessage("R3 causal reasoning skipped: " + e.getMessage());
+                        }
+
+                        // R4 - Self Verification: verify coverage, consistency,
+                        // completeness and trust of the reasoning artifacts.
+                        try {
+                            VerificationGraph verificationGraph =
+                                    new DefaultSelfVerificationEngine(conceptGraph)
+                                            .verify(reasoningGraph, synthesisGraph, causalGraph);
+                            state.updateCognitiveState(cs -> cs.withVerificationGraph(verificationGraph));
+                            state.addMessage("R4 self verification completed: "
+                                    + verificationGraph.nodes().size() + " nodes, "
+                                    + verificationGraph.issues().size() + " issues, "
+                                    + "score=" + verificationGraph.verificationScore());
+                        } catch (Exception e) {
+                            state.addMessage("R4 self verification skipped: " + e.getMessage());
                         }
                     } catch (Exception e) {
                         state.addMessage("R2 evidence synthesis skipped: " + e.getMessage());
