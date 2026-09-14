@@ -12,10 +12,12 @@ import com.shreeai.os.platform.kernels.reasoning.engine.EvidenceSynthesisEngine;
 import com.shreeai.os.platform.kernels.reasoning.engine.CausalReasoningEngine;
 import com.shreeai.os.platform.kernels.reasoning.engine.DefaultCausalReasoningEngine;
 import com.shreeai.os.platform.kernels.reasoning.engine.DefaultSelfVerificationEngine;
+import com.shreeai.os.platform.kernels.reasoning.engine.DefaultUncertaintyModelingEngine;
 import com.shreeai.os.platform.kernels.reasoning.model.CausalGraph;
 import com.shreeai.os.platform.kernels.reasoning.model.SynthesisGraph;
 import com.shreeai.os.platform.kernels.reasoning.model.ReasoningGraph;
 import com.shreeai.os.platform.kernels.reasoning.model.VerificationGraph;
+import com.shreeai.os.platform.kernels.reasoning.model.UncertaintyGraph;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
@@ -154,23 +156,40 @@ public final class ReasoningStage implements ExecutionStage {
                             state.addMessage("R3 causal reasoning completed: "
                                     + causalGraph.nodes().size() + " nodes, "
                                     + causalGraph.chains().size() + " chains");
+
+                            // R4 - Self Verification: verify coverage, consistency,
+                            // completeness and trust of the reasoning artifacts.
+                            try {
+                                VerificationGraph verificationGraph =
+                                        new DefaultSelfVerificationEngine(conceptGraph)
+                                                .verify(reasoningGraph, synthesisGraph, causalGraph);
+                                state.updateCognitiveState(cs -> cs.withVerificationGraph(verificationGraph));
+                                state.addMessage("R4 self verification completed: "
+                                        + verificationGraph.nodes().size() + " nodes, "
+                                        + verificationGraph.issues().size() + " issues, "
+                                        + "score=" + verificationGraph.verificationScore());
+
+                                // R5 - Uncertainty Modeling: evaluate certainty,
+                                // uncertainty and knowledge gaps from the verified
+                                // reasoning artifacts.
+                                try {
+                                    UncertaintyGraph uncertaintyGraph =
+                                            new DefaultUncertaintyModelingEngine()
+                                                    .model(reasoningGraph, synthesisGraph,
+                                                            causalGraph, verificationGraph, reliability);
+                                    state.updateCognitiveState(cs -> cs.withUncertaintyGraph(uncertaintyGraph));
+                                    state.addMessage("R5 uncertainty modeling completed: "
+                                            + uncertaintyGraph.nodes().size() + " nodes, "
+                                            + uncertaintyGraph.issues().size() + " issues, "
+                                            + "certainty=" + uncertaintyGraph.overallCertainty());
+                                } catch (Exception e) {
+                                    state.addMessage("R5 uncertainty modeling skipped: " + e.getMessage());
+                                }
+                            } catch (Exception e) {
+                                state.addMessage("R4 self verification skipped: " + e.getMessage());
+                            }
                         } catch (Exception e) {
                             state.addMessage("R3 causal reasoning skipped: " + e.getMessage());
-                        }
-
-                        // R4 - Self Verification: verify coverage, consistency,
-                        // completeness and trust of the reasoning artifacts.
-                        try {
-                            VerificationGraph verificationGraph =
-                                    new DefaultSelfVerificationEngine(conceptGraph)
-                                            .verify(reasoningGraph, synthesisGraph, causalGraph);
-                            state.updateCognitiveState(cs -> cs.withVerificationGraph(verificationGraph));
-                            state.addMessage("R4 self verification completed: "
-                                    + verificationGraph.nodes().size() + " nodes, "
-                                    + verificationGraph.issues().size() + " issues, "
-                                    + "score=" + verificationGraph.verificationScore());
-                        } catch (Exception e) {
-                            state.addMessage("R4 self verification skipped: " + e.getMessage());
                         }
                     } catch (Exception e) {
                         state.addMessage("R2 evidence synthesis skipped: " + e.getMessage());
