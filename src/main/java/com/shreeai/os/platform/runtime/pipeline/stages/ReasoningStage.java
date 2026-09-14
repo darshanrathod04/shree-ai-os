@@ -7,6 +7,9 @@ import com.shreeai.os.platform.kernels.memory.model.Memory;
 import com.shreeai.os.platform.kernels.knowledge.model.ConceptGraph;
 import com.shreeai.os.platform.kernels.knowledge.model.ReliabilityResult;
 import com.shreeai.os.platform.kernels.reasoning.engine.MultiHopReasoningEngine;
+import com.shreeai.os.platform.kernels.reasoning.engine.DefaultEvidenceSynthesisEngine;
+import com.shreeai.os.platform.kernels.reasoning.engine.EvidenceSynthesisEngine;
+import com.shreeai.os.platform.kernels.reasoning.model.SynthesisGraph;
 import com.shreeai.os.platform.kernels.reasoning.model.ReasoningGraph;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
@@ -52,6 +55,7 @@ public final class ReasoningStage implements ExecutionStage {
 
     private final DefaultReasoningEngine reasoningEngine;
     private final MultiHopReasoningEngine multiHopEngine;
+    private final EvidenceSynthesisEngine synthesisEngine;
 
     /**
      * Creates a new ReasoningStage with a real reasoning engine.
@@ -59,9 +63,11 @@ public final class ReasoningStage implements ExecutionStage {
      * @param reasoningEngine the reasoning engine
      */
     public ReasoningStage(DefaultReasoningEngine reasoningEngine,
-                          MultiHopReasoningEngine multiHopEngine) {
+                          MultiHopReasoningEngine multiHopEngine,
+                          EvidenceSynthesisEngine synthesisEngine) {
         this.reasoningEngine = reasoningEngine;
         this.multiHopEngine = multiHopEngine;
+        this.synthesisEngine = synthesisEngine;
     }
 
     /**
@@ -69,7 +75,9 @@ public final class ReasoningStage implements ExecutionStage {
      * Uses a new DefaultReasoningEngine instance.
      */
     public ReasoningStage() {
-        this(new DefaultReasoningEngine(), new com.shreeai.os.platform.kernels.reasoning.engine.DefaultMultiHopReasoningEngine());
+        this(new DefaultReasoningEngine(),
+             new com.shreeai.os.platform.kernels.reasoning.engine.DefaultMultiHopReasoningEngine(),
+             new DefaultEvidenceSynthesisEngine());
     }
 
     @Override
@@ -116,14 +124,26 @@ public final class ReasoningStage implements ExecutionStage {
                     state.addMessage("R1 multi-hop reasoning completed: "
                             + reasoningGraph.nodes().size() + " nodes, "
                             + reasoningGraph.hypotheses().size() + " hypotheses");
+
+                    // R2 - Evidence Synthesis: merge trusted evidence into a
+                    // unified, provenance-preserving SynthesisGraph.
+                    try {
+                        SynthesisGraph synthesisGraph = synthesisEngine.synthesize(reasoningGraph, reliability, conceptGraph);
+                        state.updateCognitiveState(cs -> cs.withSynthesisGraph(synthesisGraph));
+                        state.addMessage("R2 evidence synthesis completed: "
+                                + synthesisGraph.clusterCount() + " clusters, "
+                                + synthesisGraph.factCount() + " facts");
+                    } catch (Exception e) {
+                        state.addMessage("R2 evidence synthesis skipped: " + e.getMessage());
+                    }
                 }
             } catch (Exception e) {
                 state.addMessage("R1 multi-hop reasoning skipped: " + e.getMessage());
             }
 
-            // P0.2 — Store the reasoning artifact in the immutable cognitive
+            // P0.2 â Store the reasoning artifact in the immutable cognitive
             // state. Downstream stages consume the reasoning output via
-            // state.getCognitiveState().reasoning() — the artifact is no
+            // state.getCognitiveState().reasoning() â the artifact is no
             // longer decomposed into the metadata map.
             state.updateCognitiveState(cs -> cs.withReasoning(result));
             state.addMessage("Reasoning completed: " + result.conclusion());

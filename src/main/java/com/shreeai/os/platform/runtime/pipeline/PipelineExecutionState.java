@@ -526,7 +526,8 @@ public final class PipelineExecutionState {
                 cs.domainProfile(),
                 cs.userConstraints(),
                 cs.goalStructure(), cs.ambiguityProfile(),
-                cs.reasoningGraph());
+                cs.reasoningGraph(),
+                cs.synthesisGraph());
         requiresReReason = false;
     }
 
@@ -588,7 +589,8 @@ public final class PipelineExecutionState {
                 cs.domainProfile(),
                 cs.userConstraints(),
                 cs.goalStructure(), cs.ambiguityProfile(),
-                cs.reasoningGraph());
+                cs.reasoningGraph(),
+                cs.synthesisGraph());
     }
 
     /**
