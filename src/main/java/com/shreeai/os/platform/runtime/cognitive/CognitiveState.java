@@ -14,6 +14,8 @@ import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import com.shreeai.os.platform.kernels.reasoning.model.ReasoningGraph;
+
 
 /**
  * <b>CognitiveState</b>
@@ -54,6 +56,8 @@ import java.util.Objects;
  * @param userConstraints      the extracted user constraints (null before ContextStage)
  * @param goalStructure        the identified goal structure (null before ContextStage)
  * @param ambiguityProfile     the ambiguity diagnosis (null before ContextStage)
+ * @param reasoningGraph       the multi-hop reasoning graph (null before
+ *                            ReasoningStage R1)
  */
 public record CognitiveState(
         ReasoningResult reasoning,
@@ -67,7 +71,8 @@ public record CognitiveState(
         DomainProfile domainProfile,
         UserConstraints userConstraints,
         GoalStructure goalStructure,
-        AmbiguityProfile ambiguityProfile) {
+        AmbiguityProfile ambiguityProfile,
+        ReasoningGraph reasoningGraph) {
 
     /** Creates a deeply-immutable CognitiveState with defensive copies. */
     public CognitiveState {
@@ -82,7 +87,7 @@ public record CognitiveState(
      * @return an empty state (never null)
      */
         public static CognitiveState empty() {
-        return new CognitiveState(null, null, null, null, 0, List.of(), null, null, null, null, null, null);
+        return new CognitiveState(null, null, null, null, 0, List.of(), null, null, null, null, null, null, null);
     }
 
     /**
@@ -94,7 +99,8 @@ public record CognitiveState(
         public CognitiveState withReasoning(ReasoningResult reasoning) {
         Objects.requireNonNull(reasoning, "reasoning must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
     }
 
     /**
@@ -106,7 +112,8 @@ public record CognitiveState(
         public CognitiveState withInference(InferenceResult inference) {
         Objects.requireNonNull(inference, "inference must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
     }
 
     /**
@@ -118,7 +125,8 @@ public record CognitiveState(
         public CognitiveState withPlanning(PlanningResponse planning) {
         Objects.requireNonNull(planning, "planning must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
     }
 
     /**
@@ -134,7 +142,8 @@ public record CognitiveState(
         List<Double> history = new ArrayList<>(qualityHistory);
         history.add(qualityScore);
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration + 1, List.copyOf(history), evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+                reflection, reflectionIteration + 1, List.copyOf(history), evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
     }
 
         /**
@@ -160,7 +169,8 @@ public record CognitiveState(
     public CognitiveState withEvidencePackage(EvidencePackage pkg) {
         Objects.requireNonNull(pkg, "evidencePackage must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, pkg, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+                reflection, reflectionIteration, qualityHistory, pkg, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
     }
 
     /**
@@ -171,7 +181,8 @@ public record CognitiveState(
      */
         public CognitiveState incrementReflection() {
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration + 1, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+                reflection, reflectionIteration + 1, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
     }
 
     /**
@@ -184,7 +195,8 @@ public record CognitiveState(
     public CognitiveState withIntentProfile(IntentProfile intentProfile) {
         Objects.requireNonNull(intentProfile, "intentProfile must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
     }
 
     /**
@@ -197,7 +209,8 @@ public record CognitiveState(
     public CognitiveState withDomainProfile(DomainProfile domainProfile) {
         Objects.requireNonNull(domainProfile, "domainProfile must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
     }
 
     /**
@@ -210,7 +223,8 @@ public record CognitiveState(
     public CognitiveState withUserConstraints(UserConstraints userConstraints) {
         Objects.requireNonNull(userConstraints, "userConstraints must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
     }
 
     /**
@@ -223,7 +237,8 @@ public record CognitiveState(
     public CognitiveState withGoalStructure(GoalStructure goalStructure) {
         Objects.requireNonNull(goalStructure, "goalStructure must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
     }
 
     /**
@@ -236,7 +251,23 @@ public record CognitiveState(
     public CognitiveState withAmbiguityProfile(AmbiguityProfile ambiguityProfile) {
         Objects.requireNonNull(ambiguityProfile, "ambiguityProfile must not be null");
         return new CognitiveState(reasoning, inference, planning,
-                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
+    }
+
+
+    /**
+     * Returns a new cognitive state with the given reasoning graph,
+     * preserving all existing cognitive artifacts.
+     *
+     * @param reasoningGraph the multi-hop reasoning graph (must not be null)
+     * @return a new CognitiveState with the reasoning graph set (never null)
+     */
+    public CognitiveState withReasoningGraph(ReasoningGraph reasoningGraph) {
+        Objects.requireNonNull(reasoningGraph, "reasoningGraph must not be null");
+        return new CognitiveState(reasoning, inference, planning,
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph);
     }
 
     /**
