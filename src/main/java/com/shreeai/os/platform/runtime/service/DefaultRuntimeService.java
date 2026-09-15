@@ -627,7 +627,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
 
         stages.add(knowledgeStage);
 
-        stages.add(new ReasoningStage(reasoningEngine));
+        stages.add(new ReasoningStage());
         stages.add(new InferenceStage(inferenceEngine));
 
         PlanningStage planningStage = new PlanningStage(planningService);
