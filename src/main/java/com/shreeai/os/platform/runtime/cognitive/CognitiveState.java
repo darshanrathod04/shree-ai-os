@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.runtime.cognitive;
 
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionPlan;
 import com.shreeai.os.platform.kernels.acquisition.model.KnowledgeRequirementSet;
 import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionAnalysis;
 import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
@@ -73,6 +74,8 @@ import com.shreeai.os.platform.kernels.reasoning.model.UncertaintyGraph;
  *                            ReasoningStage R5)
  * @param knowledgeRequirements the discovered knowledge requirement set (null
  *                            before ContextStage K0.6.1)
+ * @param acquisitionPlan      the routed acquisition plan (null before
+ *                            ContextStage K0.6.2)
  */
 public record CognitiveState(
         ReasoningResult reasoning,
@@ -92,7 +95,8 @@ public record CognitiveState(
         CausalGraph causalGraph,
         VerificationGraph verificationGraph,
         UncertaintyGraph uncertaintyGraph,
-        KnowledgeRequirementSet knowledgeRequirements) {
+        KnowledgeRequirementSet knowledgeRequirements,
+        AcquisitionPlan acquisitionPlan) {
 
     /** Creates a deeply-immutable CognitiveState with defensive copies. */
     public CognitiveState {
@@ -149,7 +153,7 @@ public record CognitiveState(
                 qualityHistory, evidencePackage, intentProfile, domainProfile,
                 userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph,
-                null, null);
+                null, null, null);
     }
 
     /**
@@ -203,7 +207,64 @@ public record CognitiveState(
                 qualityHistory, evidencePackage, intentProfile, domainProfile,
                 userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph,
-                uncertaintyGraph, null);
+                uncertaintyGraph, null, null);
+    }
+
+    /**
+     * Backward-compatible constructor accepting the K0.6.1 shape (eighteen
+     * artifacts without an acquisition plan). The acquisition plan is
+     * initialized to {@code null}.
+     *
+     * @param reasoning             the reasoning result (null before ReasoningStage)
+     * @param inference             the inference result (null before InferenceStage)
+     * @param planning              the planning response (null before PlanningStage)
+     * @param reflection            the latest reflection analysis (null before
+     *                              ReflectionStage)
+     * @param reflectionIteration   the number of completed reflection passes
+     * @param qualityHistory        quality scores recorded per reflection pass
+     * @param evidencePackage       the resolved evidence package (null before InferenceStage)
+     * @param intentProfile         the detected primary intent (null before ContextStage)
+     * @param domainProfile         the detected domain profile (null before ContextStage)
+     * @param userConstraints       the extracted user constraints (null before ContextStage)
+     * @param goalStructure         the identified goal structure (null before ContextStage)
+     * @param ambiguityProfile      the ambiguity diagnosis (null before ContextStage)
+     * @param reasoningGraph        the multi-hop reasoning graph (null before
+     *                              ReasoningStage R1)
+     * @param synthesisGraph        the evidence synthesis graph (null before
+     *                              ReasoningStage R2)
+     * @param causalGraph           the causal reasoning graph (null before
+     *                              ReasoningStage R3)
+     * @param verificationGraph     the self verification graph (null before
+     *                              ReasoningStage R4)
+     * @param uncertaintyGraph      the uncertainty modeling graph (null before
+     *                              ReasoningStage R5)
+     * @param knowledgeRequirements the discovered knowledge requirement set (null
+     *                              before ContextStage K0.6.1)
+     */
+    public CognitiveState(
+            ReasoningResult reasoning,
+            InferenceResult inference,
+            PlanningResponse planning,
+            ReflectionAnalysis reflection,
+            int reflectionIteration,
+            List<Double> qualityHistory,
+            EvidencePackage evidencePackage,
+            IntentProfile intentProfile,
+            DomainProfile domainProfile,
+            UserConstraints userConstraints,
+            GoalStructure goalStructure,
+            AmbiguityProfile ambiguityProfile,
+            ReasoningGraph reasoningGraph,
+            SynthesisGraph synthesisGraph,
+            CausalGraph causalGraph,
+            VerificationGraph verificationGraph,
+            UncertaintyGraph uncertaintyGraph,
+            KnowledgeRequirementSet knowledgeRequirements) {
+        this(reasoning, inference, planning, reflection, reflectionIteration,
+                qualityHistory, evidencePackage, intentProfile, domainProfile,
+                userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph, synthesisGraph, causalGraph, verificationGraph,
+                uncertaintyGraph, knowledgeRequirements, null);
     }
 
     /**
@@ -212,7 +273,7 @@ public record CognitiveState(
      * @return an empty state (never null)
      */
         public static CognitiveState empty() {
-        return new CognitiveState(null, null, null, null, 0, List.of(), null, null, null, null, null, null, null, null, null, null, null, null);
+        return new CognitiveState(null, null, null, null, 0, List.of(), null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -226,7 +287,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -240,7 +302,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -254,7 +317,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -272,7 +336,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration + 1, List.copyOf(history), evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -299,7 +364,8 @@ public record CognitiveState(
         Objects.requireNonNull(pkg, "evidencePackage must not be null");
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, pkg, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile, reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -311,7 +377,8 @@ public record CognitiveState(
         public CognitiveState incrementReflection() {
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration + 1, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile, reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -326,7 +393,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -341,7 +409,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -356,7 +425,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -371,7 +441,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -386,7 +457,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
 
@@ -402,7 +474,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
 
@@ -418,7 +491,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -433,7 +507,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
 
@@ -449,7 +524,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
 
@@ -465,7 +541,8 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**
@@ -483,7 +560,24 @@ public record CognitiveState(
         return new CognitiveState(reasoning, inference, planning,
                 reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
-                knowledgeRequirements);
+                knowledgeRequirements,
+                acquisitionPlan);
+    }
+
+    /**
+     * Returns a new cognitive state with the given acquisition plan,
+     * preserving all existing cognitive artifacts.
+     *
+     * @param acquisitionPlan the routed acquisition plan (must not be null)
+     * @return a new CognitiveState with the acquisition plan set (never null)
+     */
+    public CognitiveState withAcquisitionPlan(AcquisitionPlan acquisitionPlan) {
+        Objects.requireNonNull(acquisitionPlan, "acquisitionPlan must not be null");
+        return new CognitiveState(reasoning, inference, planning,
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
+                knowledgeRequirements,
+                acquisitionPlan);
     }
 
     /**

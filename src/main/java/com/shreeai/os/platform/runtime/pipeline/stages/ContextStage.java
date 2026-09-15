@@ -2,8 +2,11 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultProviderRouter;
 import com.shreeai.os.platform.kernels.acquisition.engine.DefaultSourceDiscoveryEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.ProviderRouter;
 import com.shreeai.os.platform.kernels.acquisition.engine.SourceDiscoveryEngine;
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionPlan;
 import com.shreeai.os.platform.kernels.acquisition.model.KnowledgeRequirementSet;
 import com.shreeai.os.platform.kernels.context.engine.AmbiguityDetectionEngine;
 import com.shreeai.os.platform.kernels.context.engine.ConstraintExtractionEngine;
@@ -127,6 +130,15 @@ public final class ContextStage implements ExecutionStage {
                     state.getCognitiveState().withKnowledgeRequirements(knowledgeRequirements);
             state.setCognitiveState(updatedCognitiveStateWithRequirements);
 
+            // K0.6.2: Route every required knowledge topic to a provider type.
+            // Deterministic, dictionary-driven routing only - no network calls,
+            // no trust ranking, no ingestion (those are K0.6.3+).
+            ProviderRouter providerRouter = new DefaultProviderRouter();
+            AcquisitionPlan acquisitionPlan = providerRouter.route(knowledgeRequirements);
+            CognitiveState updatedCognitiveStateWithPlan =
+                    state.getCognitiveState().withAcquisitionPlan(acquisitionPlan);
+            state.setCognitiveState(updatedCognitiveStateWithPlan);
+
             // Build the canonical context intelligence aggregate.
             ContextIntelligence contextIntelligence = ContextIntelligence.of(
                     intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
@@ -166,7 +178,8 @@ public final class ContextStage implements ExecutionStage {
                     + " | Domain: " + domainProfile.primaryDomain()
                     + " | Goal: " + goalStructure.primaryGoal().title()
                     + " | Ambiguity: " + contextIntelligence.ambiguityProfile().ambiguityScore()
-                    + " | KnowledgeRequirements: " + knowledgeRequirements.topics().size());
+                    + " | KnowledgeRequirements: " + knowledgeRequirements.topics().size()
+                    + " | AcquisitionTargets: " + acquisitionPlan.targets().size());
 
             // Continue to next stage
             return chain.next(context, state);
