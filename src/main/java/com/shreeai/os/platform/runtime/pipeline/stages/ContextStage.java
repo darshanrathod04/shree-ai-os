@@ -4,14 +4,17 @@ import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
 import com.shreeai.os.platform.kernels.acquisition.engine.DefaultProviderRouter;
 import com.shreeai.os.platform.kernels.acquisition.engine.DefaultFreshnessPolicyEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultKnowledgeAcquisitionOrchestrator;
 import com.shreeai.os.platform.kernels.acquisition.engine.DefaultSourceDiscoveryEngine;
 import com.shreeai.os.platform.kernels.acquisition.engine.DefaultTrustSelectionEngine;
 import com.shreeai.os.platform.kernels.acquisition.engine.FreshnessPolicyEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.KnowledgeAcquisitionOrchestrator;
 import com.shreeai.os.platform.kernels.acquisition.engine.ProviderRouter;
 import com.shreeai.os.platform.kernels.acquisition.engine.SourceDiscoveryEngine;
 import com.shreeai.os.platform.kernels.acquisition.engine.TrustSelectionEngine;
 import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionDecisionPlan;
 import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionPlan;
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionResult;
 import com.shreeai.os.platform.kernels.acquisition.model.KnowledgeRequirementSet;
 import com.shreeai.os.platform.kernels.acquisition.model.SourceSelectionPlan;
 import com.shreeai.os.platform.kernels.context.engine.AmbiguityDetectionEngine;
@@ -30,7 +33,9 @@ import com.shreeai.os.platform.kernels.context.model.DomainProfile;
 import com.shreeai.os.platform.kernels.context.model.GoalStructure;
 import com.shreeai.os.platform.kernels.context.model.IntentProfile;
 import com.shreeai.os.platform.kernels.context.model.UserConstraints;
+import com.shreeai.os.platform.kernels.knowledge.engine.DefaultDocumentIngestionEngine;
 import com.shreeai.os.platform.kernels.knowledge.engine.DefaultKnowledgeSourceRegistry;
+import com.shreeai.os.platform.kernels.knowledge.engine.DocumentIngestionEngine;
 import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeSourceRegistry;
 import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
@@ -193,6 +198,21 @@ public final class ContextStage implements ExecutionStage {
                     state.getCognitiveState().withAcquisitionDecisionPlan(acquisitionDecisionPlan);
             state.setCognitiveState(updatedCognitiveStateWithDecision);
 
+            // K0.6.5: Execute the locked acquisition workflow for every decision
+            // of the plan. Deterministic execution only - the orchestrator never
+            // re-decides what to acquire. With no content supply wired into the
+            // runtime yet, pending acquisitions are isolated and recorded as
+            // FAILED; cache reuses without a cached document fail the same way.
+            DocumentIngestionEngine ingestionEngine =
+                    new DefaultDocumentIngestionEngine(sourceRegistry);
+            KnowledgeAcquisitionOrchestrator acquisitionOrchestrator =
+                    new DefaultKnowledgeAcquisitionOrchestrator(sourceRegistry, ingestionEngine);
+            AcquisitionResult acquisitionResult =
+                    acquisitionOrchestrator.execute(acquisitionDecisionPlan);
+            CognitiveState updatedCognitiveStateWithResult =
+                    state.getCognitiveState().withAcquisitionResult(acquisitionResult);
+            state.setCognitiveState(updatedCognitiveStateWithResult);
+
             // Build the canonical context intelligence aggregate.
             ContextIntelligence contextIntelligence = ContextIntelligence.of(
                     intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
@@ -237,7 +257,12 @@ public final class ContextStage implements ExecutionStage {
                     + " | SelectedSources: " + sourceSelectionPlan.size()
                     + " | AcquisitionDecisions: " + acquisitionDecisionPlan.size()
                     + " | PendingAcquisition: "
-                    + acquisitionDecisionPlan.targetsRequiringAcquisition().size());
+                    + acquisitionDecisionPlan.targetsRequiringAcquisition().size()
+                    + " | AcquisitionRecords: " + acquisitionResult.size()
+                    + " | Documents: " + acquisitionResult.documents().size()
+                    + " | Acquired: " + acquisitionResult.acquiredCount()
+                    + " | Skipped: " + acquisitionResult.skippedCount()
+                    + " | Failed: " + acquisitionResult.failedCount());
 
             // Continue to next stage
             return chain.next(context, state);
