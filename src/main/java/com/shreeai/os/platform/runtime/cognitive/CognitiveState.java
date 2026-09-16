@@ -2,6 +2,7 @@ package com.shreeai.os.platform.runtime.cognitive;
 
 import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionDecisionPlan;
 import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionResult;
+import com.shreeai.os.platform.kernels.inference.model.AlternativeSet;
 import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionPlan;
 import com.shreeai.os.platform.kernels.acquisition.model.KnowledgeRequirementSet;
 import com.shreeai.os.platform.kernels.acquisition.model.SourceSelectionPlan;
@@ -85,6 +86,8 @@ import com.shreeai.os.platform.kernels.reasoning.model.UncertaintyGraph;
  *                            ContextStage K0.6.4)
  * @param acquisitionResult    the executed acquisition result (null before
  *                            ContextStage K0.6.5)
+ * @param alternativeSet       the generated alternative set (null before
+ *                            ReasoningStage I1)
  */
 public record CognitiveState(
         ReasoningResult reasoning,
@@ -108,7 +111,8 @@ public record CognitiveState(
         AcquisitionPlan acquisitionPlan,
         SourceSelectionPlan sourceSelectionPlan,
         AcquisitionDecisionPlan acquisitionDecisionPlan,
-        AcquisitionResult acquisitionResult) {
+        AcquisitionResult acquisitionResult,
+        AlternativeSet alternativeSet) {
 
     /** Creates a deeply-immutable CognitiveState with defensive copies. */
     public CognitiveState {
@@ -459,6 +463,76 @@ public record CognitiveState(
                 uncertaintyGraph, knowledgeRequirements, acquisitionPlan,
                 sourceSelectionPlan, acquisitionDecisionPlan, null);
     }
+    /**
+     * Backward-compatible constructor accepting the K0.6.5 shape (twenty-two
+     * artifacts without an alternative set). The alternative set is
+     * initialized to {@code null}.
+     *
+     * @param reasoning               the reasoning result (null before ReasoningStage)
+     * @param inference               the inference result (null before InferenceStage)
+     * @param planning                the planning response (null before PlanningStage)
+     * @param reflection              the latest reflection analysis (null before
+     *                                ReflectionStage)
+     * @param reflectionIteration     the number of completed reflection passes
+     * @param qualityHistory          quality scores recorded per reflection pass
+     * @param evidencePackage         the resolved evidence package (null before InferenceStage)
+     * @param intentProfile           the detected primary intent (null before ContextStage)
+     * @param domainProfile           the detected domain profile (null before ContextStage)
+     * @param userConstraints         the extracted user constraints (null before ContextStage)
+     * @param goalStructure           the identified goal structure (null before ContextStage)
+     * @param ambiguityProfile        the ambiguity diagnosis (null before ContextStage)
+     * @param reasoningGraph          the multi-hop reasoning graph (null before
+     *                                ReasoningStage R1)
+     * @param synthesisGraph          the evidence synthesis graph (null before
+     *                                ReasoningStage R2)
+     * @param causalGraph             the causal reasoning graph (null before
+     *                                ReasoningStage R3)
+     * @param verificationGraph       the self verification graph (null before
+     *                                ReasoningStage R4)
+     * @param uncertaintyGraph        the uncertainty modeling graph (null before
+     *                                ReasoningStage R5)
+     * @param knowledgeRequirements   the discovered knowledge requirement set (null
+     *                                before ContextStage K0.6.1)
+     * @param acquisitionPlan         the routed acquisition plan (null before
+     *                                ContextStage K0.6.2)
+     * @param sourceSelectionPlan     the trusted source selection plan (null before
+     *                                ContextStage K0.6.3)
+     * @param acquisitionDecisionPlan the cache decision plan (null before
+     *                                ContextStage K0.6.4)
+     * @param acquisitionResult       the executed acquisition result (null before
+     *                                ContextStage K0.6.5)
+     */
+    public CognitiveState(
+            ReasoningResult reasoning,
+            InferenceResult inference,
+            PlanningResponse planning,
+            ReflectionAnalysis reflection,
+            int reflectionIteration,
+            List<Double> qualityHistory,
+            EvidencePackage evidencePackage,
+            IntentProfile intentProfile,
+            DomainProfile domainProfile,
+            UserConstraints userConstraints,
+            GoalStructure goalStructure,
+            AmbiguityProfile ambiguityProfile,
+            ReasoningGraph reasoningGraph,
+            SynthesisGraph synthesisGraph,
+            CausalGraph causalGraph,
+            VerificationGraph verificationGraph,
+            UncertaintyGraph uncertaintyGraph,
+            KnowledgeRequirementSet knowledgeRequirements,
+            AcquisitionPlan acquisitionPlan,
+            SourceSelectionPlan sourceSelectionPlan,
+            AcquisitionDecisionPlan acquisitionDecisionPlan,
+            AcquisitionResult acquisitionResult) {
+        this(reasoning, inference, planning, reflection, reflectionIteration,
+                qualityHistory, evidencePackage, intentProfile, domainProfile,
+                userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph, synthesisGraph, causalGraph, verificationGraph,
+                uncertaintyGraph, knowledgeRequirements, acquisitionPlan,
+                sourceSelectionPlan, acquisitionDecisionPlan, acquisitionResult,
+                null);
+    }
 
     /**
      * Returns the initial empty cognitive state (no artifacts, iteration 0).
@@ -466,7 +540,7 @@ public record CognitiveState(
      * @return an empty state (never null)
      */
         public static CognitiveState empty() {
-        return new CognitiveState(null, null, null, null, 0, List.of(), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        return new CognitiveState(null, null, null, null, 0, List.of(), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -484,7 +558,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -502,7 +577,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -520,7 +596,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -542,7 +619,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -573,7 +651,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -589,7 +668,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -608,7 +688,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -627,7 +708,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -646,7 +728,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -665,7 +748,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -684,7 +768,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
 
@@ -704,7 +789,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
 
@@ -724,7 +810,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -743,7 +830,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
 
@@ -763,7 +851,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
 
@@ -783,7 +872,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -805,7 +895,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -824,7 +915,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -845,7 +937,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -866,7 +959,8 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
     }
 
     /**
@@ -887,7 +981,29 @@ public record CognitiveState(
                 acquisitionPlan,
                 sourceSelectionPlan,
                 acquisitionDecisionPlan,
-                acquisitionResult);
+                acquisitionResult,
+                alternativeSet);
+    }
+
+    /**
+     * Returns a new cognitive state with the given alternative set,
+     * preserving all existing cognitive artifacts.
+     *
+     * @param alternativeSet the generated solution alternatives (must not be
+     *                       null)
+     * @return a new CognitiveState with the alternative set set (never null)
+     */
+    public CognitiveState withAlternativeSet(AlternativeSet alternativeSet) {
+        Objects.requireNonNull(alternativeSet, "alternativeSet must not be null");
+        return new CognitiveState(reasoning, inference, planning,
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
+                knowledgeRequirements,
+                acquisitionPlan,
+                sourceSelectionPlan,
+                acquisitionDecisionPlan,
+                acquisitionResult,
+                alternativeSet);
     }
     /**
      * Returns the latest reflection quality score, or NaN when no reflection

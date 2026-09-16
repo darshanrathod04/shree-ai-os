@@ -6,6 +6,9 @@ import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 import com.shreeai.os.platform.kernels.memory.model.Memory;
 import com.shreeai.os.platform.kernels.knowledge.model.ConceptGraph;
 import com.shreeai.os.platform.kernels.knowledge.model.ReliabilityResult;
+import com.shreeai.os.platform.kernels.inference.engine.DefaultAlternativeGenerationEngine;
+import com.shreeai.os.platform.kernels.inference.engine.AlternativeGenerationEngine;
+import com.shreeai.os.platform.kernels.inference.model.AlternativeSet;
 import com.shreeai.os.platform.kernels.reasoning.engine.MultiHopReasoningEngine;
 import com.shreeai.os.platform.kernels.reasoning.engine.DefaultEvidenceSynthesisEngine;
 import com.shreeai.os.platform.kernels.reasoning.engine.EvidenceSynthesisEngine;
@@ -184,6 +187,24 @@ public final class ReasoningStage implements ExecutionStage {
                                             + "certainty=" + uncertaintyGraph.overallCertainty());
                                 } catch (Exception e) {
                                     state.addMessage("R5 uncertainty modeling skipped: " + e.getMessage());
+                                }
+
+                                // I1 - Alternative Generation: transform the
+                                // verified knowledge into deterministic,
+                                // executable solution alternatives. No
+                                // ranking, no selection - comparison belongs
+                                // to I2 Trade-off Analysis.
+                                try {
+                                    AlternativeSet alternativeSet =
+                                            new DefaultAlternativeGenerationEngine().generate(
+                                                    reasoningGraph, synthesisGraph,
+                                                    causalGraph, verificationGraph);
+                                    state.updateCognitiveState(
+                                            cs -> cs.withAlternativeSet(alternativeSet));
+                                    state.addMessage("I1 alternative generation completed: "
+                                            + alternativeSet.size() + " alternatives");
+                                } catch (Exception e) {
+                                    state.addMessage("I1 alternative generation skipped: " + e.getMessage());
                                 }
                             } catch (Exception e) {
                                 state.addMessage("R4 self verification skipped: " + e.getMessage());
