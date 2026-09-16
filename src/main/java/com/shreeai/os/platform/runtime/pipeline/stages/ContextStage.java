@@ -3,11 +3,14 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
 import com.shreeai.os.platform.kernels.acquisition.engine.DefaultProviderRouter;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultFreshnessPolicyEngine;
 import com.shreeai.os.platform.kernels.acquisition.engine.DefaultSourceDiscoveryEngine;
 import com.shreeai.os.platform.kernels.acquisition.engine.DefaultTrustSelectionEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.FreshnessPolicyEngine;
 import com.shreeai.os.platform.kernels.acquisition.engine.ProviderRouter;
 import com.shreeai.os.platform.kernels.acquisition.engine.SourceDiscoveryEngine;
 import com.shreeai.os.platform.kernels.acquisition.engine.TrustSelectionEngine;
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionDecisionPlan;
 import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionPlan;
 import com.shreeai.os.platform.kernels.acquisition.model.KnowledgeRequirementSet;
 import com.shreeai.os.platform.kernels.acquisition.model.SourceSelectionPlan;
@@ -177,6 +180,19 @@ public final class ContextStage implements ExecutionStage {
                     state.getCognitiveState().withSourceSelectionPlan(sourceSelectionPlan);
             state.setCognitiveState(updatedCognitiveStateWithSelection);
 
+            // K0.6.4: Decide, for every selected source, whether cached knowledge
+            // may be reused or fresh knowledge must be acquired. Deterministic
+            // cache policy only - no downloads, no crawling, no ingestion
+            // (K0.6.5 executes the ACQUIRE / REFRESH decisions).
+            FreshnessPolicyEngine freshnessPolicyEngine = new DefaultFreshnessPolicyEngine();
+            AcquisitionDecisionPlan acquisitionDecisionPlan = freshnessPolicyEngine.decide(
+                    sourceSelectionPlan, sourceRegistry,
+                    ContextIntelligence.of(intentProfile, domainProfile, userConstraints,
+                            goalStructure, ambiguityProfile));
+            CognitiveState updatedCognitiveStateWithDecision =
+                    state.getCognitiveState().withAcquisitionDecisionPlan(acquisitionDecisionPlan);
+            state.setCognitiveState(updatedCognitiveStateWithDecision);
+
             // Build the canonical context intelligence aggregate.
             ContextIntelligence contextIntelligence = ContextIntelligence.of(
                     intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
@@ -218,7 +234,10 @@ public final class ContextStage implements ExecutionStage {
                     + " | Ambiguity: " + contextIntelligence.ambiguityProfile().ambiguityScore()
                     + " | KnowledgeRequirements: " + knowledgeRequirements.topics().size()
                     + " | AcquisitionTargets: " + acquisitionPlan.targets().size()
-                    + " | SelectedSources: " + sourceSelectionPlan.size());
+                    + " | SelectedSources: " + sourceSelectionPlan.size()
+                    + " | AcquisitionDecisions: " + acquisitionDecisionPlan.size()
+                    + " | PendingAcquisition: "
+                    + acquisitionDecisionPlan.targetsRequiringAcquisition().size());
 
             // Continue to next stage
             return chain.next(context, state);
