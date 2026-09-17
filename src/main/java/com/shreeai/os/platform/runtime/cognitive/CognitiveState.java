@@ -16,6 +16,7 @@ import com.shreeai.os.platform.kernels.context.model.UserConstraints;
 import com.shreeai.os.platform.kernels.inference.model.EvidencePackage;
 import com.shreeai.os.platform.kernels.inference.model.InferenceResult;
 import com.shreeai.os.platform.kernels.inference.model.CalibratedDecision;
+import com.shreeai.os.platform.kernels.inference.model.ExplainableDecision;
 import com.shreeai.os.platform.kernels.inference.model.OptimizedDecision;
 import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
 
@@ -94,6 +95,8 @@ import com.shreeai.os.platform.kernels.reasoning.model.UncertaintyGraph;
  *                            ReasoningStage I3)
  * @param calibratedDecision   the calibrated decision (null before
  *                            ReasoningStage I4)
+ * @param explainableDecision  the explainable decision (null before
+ *                            ReasoningStage I5)
  */
 public record CognitiveState(
         ReasoningResult reasoning,
@@ -120,7 +123,8 @@ public record CognitiveState(
         AcquisitionResult acquisitionResult,
         AlternativeSet alternativeSet,
         OptimizedDecision optimizedDecision,
-        CalibratedDecision calibratedDecision) {
+        CalibratedDecision calibratedDecision,
+        ExplainableDecision explainableDecision) {
 
     /** Creates a deeply-immutable CognitiveState with defensive copies. */
     public CognitiveState {
@@ -403,7 +407,7 @@ public record CognitiveState(
                 userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph,
                 uncertaintyGraph, knowledgeRequirements, acquisitionPlan,
-                sourceSelectionPlan, null, null, null, null, null);
+                sourceSelectionPlan, null, null, null, null, null, null);
     }
     /**
      * Backward-compatible constructor accepting the K0.6.4 shape (twenty-one
@@ -469,7 +473,7 @@ public record CognitiveState(
                 userConstraints, goalStructure, ambiguityProfile,
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph,
                 uncertaintyGraph, knowledgeRequirements, acquisitionPlan,
-                sourceSelectionPlan, acquisitionDecisionPlan, null, null, null, null);
+                sourceSelectionPlan, acquisitionDecisionPlan, null, null, null, null, null);
     }
     /**
      * Backward-compatible constructor accepting the K0.6.5 shape (twenty-two
@@ -539,7 +543,7 @@ public record CognitiveState(
                 reasoningGraph, synthesisGraph, causalGraph, verificationGraph,
                 uncertaintyGraph, knowledgeRequirements, acquisitionPlan,
                 sourceSelectionPlan, acquisitionDecisionPlan, acquisitionResult,
-                null, null, null);
+                null, null, null, null);
     }
 
     /**
@@ -550,7 +554,7 @@ public record CognitiveState(
     public static CognitiveState empty() {
         return new CognitiveState(null, null, null, null, 0, List.of(),
                 null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -570,7 +574,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -590,7 +594,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -610,7 +614,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -634,7 +638,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -667,7 +671,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -685,7 +689,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -706,7 +710,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -727,7 +731,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -748,7 +752,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -769,7 +773,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -790,7 +794,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
 
@@ -812,7 +816,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
 
@@ -834,7 +838,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -855,7 +859,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
 
@@ -877,7 +881,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
 
@@ -899,7 +903,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -923,7 +927,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -944,7 +948,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -967,7 +971,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -990,7 +994,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -1013,7 +1017,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -1035,7 +1039,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -1057,7 +1061,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -1080,7 +1084,30 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision);
+                optimizedDecision, calibratedDecision, explainableDecision);
+    }
+
+    /**
+     * Returns a new cognitive state with the given explainable decision,
+     * preserving all existing cognitive artifacts.
+     *
+     * @param explainableDecision the I5 explainable decision (must not be
+     *                            null)
+     * @return a new CognitiveState with the explainable decision set (never
+     *         null)
+     */
+    public CognitiveState withExplainableDecision(ExplainableDecision explainableDecision) {
+        Objects.requireNonNull(explainableDecision, "explainableDecision must not be null");
+        return new CognitiveState(reasoning, inference, planning,
+                reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile,
+                reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph,
+                knowledgeRequirements,
+                acquisitionPlan,
+                sourceSelectionPlan,
+                acquisitionDecisionPlan,
+                acquisitionResult,
+                alternativeSet,
+                optimizedDecision, calibratedDecision, explainableDecision);
     }
 
     /**
@@ -1108,6 +1135,7 @@ public record CognitiveState(
                 + ", goalStructure=" + goalStructure + ", ambiguityProfile=" + ambiguityProfile
                 + ", alternativeSet=" + (alternativeSet != null)
                 + ", optimizedDecision=" + (optimizedDecision != null)
-                + ", calibratedDecision=" + (calibratedDecision != null) + '}';
+                + ", calibratedDecision=" + (calibratedDecision != null)
+                + ", explainableDecision=" + (explainableDecision != null) + '}';
     }
 }

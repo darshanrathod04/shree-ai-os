@@ -9,10 +9,12 @@ import com.shreeai.os.platform.kernels.knowledge.model.ReliabilityResult;
 import com.shreeai.os.platform.kernels.inference.engine.DefaultAlternativeGenerationEngine;
 import com.shreeai.os.platform.kernels.inference.engine.AlternativeGenerationEngine;
 import com.shreeai.os.platform.kernels.inference.engine.DefaultConfidenceCalibrationEngine;
+import com.shreeai.os.platform.kernels.inference.engine.DefaultExplainableDecisionEngine;
 import com.shreeai.os.platform.kernels.inference.engine.DefaultDecisionOptimizationEngine;
 import com.shreeai.os.platform.kernels.inference.engine.DefaultTradeoffAnalysisEngine;
 import com.shreeai.os.platform.kernels.inference.model.AlternativeSet;
 import com.shreeai.os.platform.kernels.inference.model.CalibratedDecision;
+import com.shreeai.os.platform.kernels.inference.model.ExplainableDecision;
 import com.shreeai.os.platform.kernels.inference.model.OptimizedDecision;
 import com.shreeai.os.platform.kernels.inference.model.TradeoffAnalysisSet;
 import com.shreeai.os.platform.kernels.reasoning.engine.MultiHopReasoningEngine;
@@ -281,6 +283,33 @@ public final class ReasoningStage implements ExecutionStage {
                                             }
                                         } catch (Exception e) {
                                             state.addMessage("I4 confidence calibration skipped: " + e.getMessage());
+                                        }
+
+                                        // I5 - Explainable Decision: convert
+                                        // all cognitive artifacts into a
+                                        // single structured, display-ready
+                                        // decision explanation. The engine
+                                        // generates structure only - never
+                                        // natural language.
+                                        try {
+                                            if (state.getCognitiveState().calibratedDecision() != null) {
+                                                ExplainableDecision explainableDecision =
+                                                        new DefaultExplainableDecisionEngine().explain(
+                                                                state.getCognitiveState().optimizedDecision(),
+                                                                state.getCognitiveState().calibratedDecision(),
+                                                                generated,
+                                                                analysisSet,
+                                                                state.getCognitiveState().goalStructure(),
+                                                                state.getCognitiveState().userConstraints(),
+                                                                verificationGraph);
+                                                state.updateCognitiveState(
+                                                        cs -> cs.withExplainableDecision(explainableDecision));
+                                                state.addMessage("I5 explainable decision completed: "
+                                                        + explainableDecision.sections().size()
+                                                        + " sections");
+                                            }
+                                        } catch (Exception e) {
+                                            state.addMessage("I5 explainable decision skipped: " + e.getMessage());
                                         }
                                     }
                                 } catch (Exception e) {
