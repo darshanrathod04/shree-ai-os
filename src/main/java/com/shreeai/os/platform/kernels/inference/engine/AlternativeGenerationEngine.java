@@ -11,7 +11,7 @@ import com.shreeai.os.platform.kernels.reasoning.model.VerificationGraph;
  *
  * <p>The I1 contract that transforms verified knowledge into multiple
  * executable solution alternatives. The engine never chooses the best
- * alternative - selection belongs to I2 Trade-off Analysis; its single
+ * alternative - selection belongs to I3 Decision Optimization; its single
  * responsibility is deterministic strategy generation.</p>
  *
  * <p><b>Locked generation pipeline:</b></p>
