@@ -1,6 +1,6 @@
 package com.shreeai.os.platform.kernels.planning.engine;
 
-import com.shreeai.os.platform.kernels.planning.model.Milestone;
+import com.shreeai.os.platform.kernels.planning.model.PlanMilestone;
 import com.shreeai.os.platform.kernels.planning.model.Phase;
 
 import java.util.ArrayList;
@@ -24,10 +24,10 @@ public final class MilestoneGenerator {
      * @param template      template for milestone name (e.g. "{title} Complete")
      * @return list of milestones, one per phase
      */
-    public static List<Milestone> generateFromPhases(List<Phase> phases, String template) {
+    public static List<PlanMilestone> generateFromPhases(List<Phase> phases, String template) {
         if (phases == null || phases.isEmpty()) return List.of();
 
-        List<Milestone> milestones = new ArrayList<>();
+        List<PlanMilestone> milestones = new ArrayList<>();
         int cumulative = 0;
 
         for (Phase phase : phases) {
@@ -35,7 +35,7 @@ public final class MilestoneGenerator {
             String name = template
                     .replace("{title}", phase.title())
                     .replace("{week}", String.valueOf(cumulative));
-            milestones.add(new Milestone(
+            milestones.add(new PlanMilestone(
                     name,
                     phase.successCriteria(),
                     cumulative,
@@ -54,14 +54,14 @@ public final class MilestoneGenerator {
      * @param names       ordered list of milestone names
      * @return evenly-distributed milestones
      */
-    public static List<Milestone> generateSpaced(int totalWeeks, int interval, List<String> names) {
+    public static List<PlanMilestone> generateSpaced(int totalWeeks, int interval, List<String> names) {
         if (names == null || names.isEmpty()) return List.of();
         int weeks = Math.max(1, totalWeeks);
         int step = Math.max(1, interval);
-        List<Milestone> milestones = new ArrayList<>();
+        List<PlanMilestone> milestones = new ArrayList<>();
         int idx = 0;
         for (int week = step; week <= weeks && idx < names.size(); week += step) {
-            milestones.add(new Milestone(
+            milestones.add(new PlanMilestone(
                     names.get(idx),
                     List.of("All tasks up to week " + week + " completed"),
                     week,
@@ -72,7 +72,7 @@ public final class MilestoneGenerator {
         }
         // If there are remaining names, place at final week
         while (idx < names.size()) {
-            milestones.add(new Milestone(
+            milestones.add(new PlanMilestone(
                     names.get(idx),
                     List.of("All phases complete"),
                     weeks,

@@ -2,7 +2,7 @@ package com.shreeai.os.platform.kernels.planning.engine.planners;
 
 import com.shreeai.os.platform.kernels.planning.engine.MilestoneGenerator;
 import com.shreeai.os.platform.kernels.planning.engine.TaskGraphBuilder;
-import com.shreeai.os.platform.kernels.planning.model.Milestone;
+import com.shreeai.os.platform.kernels.planning.model.PlanMilestone;
 import com.shreeai.os.platform.kernels.planning.model.Phase;
 import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
 import com.shreeai.os.platform.kernels.planning.model.PlanningAnalysisResult;
@@ -64,7 +64,7 @@ public final class AIPlanner implements DomainPlanner {
                 }
         );
 
-        List<Milestone> milestones = MilestoneGenerator.generateSpaced(
+        List<PlanMilestone> milestones = MilestoneGenerator.generateSpaced(
                 TaskGraphBuilder.totalWeeks(phases), 4,
                 List.of("Python Ready", "ML Fundamentals", "Deep Learning", "LLM Expert", "Agent Builder", "Capstone Complete")
         );

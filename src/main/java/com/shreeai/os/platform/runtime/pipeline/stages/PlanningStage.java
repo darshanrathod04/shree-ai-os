@@ -7,10 +7,15 @@ import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
 import com.shreeai.os.platform.kernels.inference.model.InferenceResult;
 import com.shreeai.os.platform.kernels.planning.api.PlanningService;
 import com.shreeai.os.platform.kernels.planning.api.PlanningTypes;
+import com.shreeai.os.platform.kernels.planning.engine.DefaultResourceTimeAllocationEngine;
+import com.shreeai.os.platform.kernels.planning.engine.ResourceTimeAllocationEngine;
+import com.shreeai.os.platform.kernels.planning.engine.DefaultTaskDependencyGraphEngine;
+import com.shreeai.os.platform.kernels.planning.engine.TaskDependencyGraphEngine;
 import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
 import com.shreeai.os.platform.kernels.planning.model.PlanningConstraints;
 import com.shreeai.os.platform.kernels.planning.model.PlanningId;
 import com.shreeai.os.platform.kernels.planning.model.PlanningObjective;
+import com.shreeai.os.platform.kernels.planning.model.TaskGraph;
 import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
 import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
@@ -71,8 +76,12 @@ public final class PlanningStage implements ExecutionStage {
 
     private final PlanningService planningService;
     private final GoalIntelligenceEngine goalIntelligenceEngine;
-    private final PlanningResponseBuilder responseBuilder =
+            private final PlanningResponseBuilder responseBuilder =
             new PlanningResponseBuilder();
+    private final TaskDependencyGraphEngine taskDependencyGraphEngine =
+            new DefaultTaskDependencyGraphEngine();
+    private final ResourceTimeAllocationEngine resourceTimeAllocationEngine =
+            new DefaultResourceTimeAllocationEngine();
 
     /**
      * Creates a PlanningStage with explicit dependencies.
@@ -478,8 +487,20 @@ public final class PlanningStage implements ExecutionStage {
              * the execution metadata map (external SDK consumers).
              */
 
+            /*
+             * P2.2 - executable Task Dependency DAG derived from the
+             * milestone plan. Stored only in the immutable cognitive
+             * state; no metadata mirror.
+             */
+            TaskGraph taskGraph = (planBlueprint == null)
+                    ? TaskGraph.empty()
+                    : taskDependencyGraphEngine.buildTaskGraph(planBlueprint);
+
+            // P2.3: the canonical schedule lives only in cognitive state, never metadata.
             state.updateCognitiveState(
-                    cs -> cs.withPlanning(planningResponse));
+                    cs -> cs.withPlanning(planningResponse).withTaskGraph(taskGraph)
+                            .withExecutionPlan(resourceTimeAllocationEngine.allocate(
+                                    taskGraph, cs.userConstraints())));
 
             state.addMetadata(
                     "goalAnalysis",

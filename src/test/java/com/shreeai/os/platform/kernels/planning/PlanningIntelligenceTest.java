@@ -166,9 +166,9 @@ public class PlanningIntelligenceTest {
         // Verify milestones
         assertFalse(blueprint.milestones().isEmpty(),
                 "SaaS roadmap should have milestones");
-        Milestone firstMilestone = blueprint.milestones().get(0);
+        PlanMilestone firstMilestone = blueprint.milestones().get(0);
         assertNotNull(firstMilestone.estimatedWeek(),
-                "Milestone should have estimated week");
+                "PlanMilestone should have estimated week");
         assertTrue(firstMilestone.estimatedWeek() > 0,
                 "Estimated week should be positive");
 
@@ -299,10 +299,10 @@ public class PlanningIntelligenceTest {
         // Milestones
         assertNotNull(blueprint.milestones(), "Milestones should not be null");
         assertFalse(blueprint.milestones().isEmpty(), "Milestones should not be empty");
-        for (Milestone m : blueprint.milestones()) {
-            assertNotNull(m.name(), "Milestone should have a name");
+        for (PlanMilestone m : blueprint.milestones()) {
+            assertNotNull(m.name(), "PlanMilestone should have a name");
             assertTrue(m.estimatedWeek() > 0,
-                    "Milestone " + m.name() + " should have positive week");
+                    "PlanMilestone " + m.name() + " should have positive week");
         }
 
         // Risks
@@ -418,7 +418,7 @@ public class PlanningIntelligenceTest {
     @Test
     @DisplayName("MilestoneGenerator produces correctly-spaced milestones")
     void milestoneGeneratorProducesSpacedMilestones() {
-        List<Milestone> milestones = MilestoneGenerator.generateSpaced(
+        List<PlanMilestone> milestones = MilestoneGenerator.generateSpaced(
                 12, 4,
                 List.of("Core Done", "API Ready", "Project Live")
         );

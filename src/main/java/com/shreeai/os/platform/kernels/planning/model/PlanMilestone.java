@@ -12,7 +12,7 @@ import java.util.Objects;
  *
  * @since Sprint-11
  */
-public final class Milestone {
+public final class PlanMilestone {
 
     private final String name;
     private final List<String> completionCriteria;
@@ -20,7 +20,7 @@ public final class Milestone {
     private final String output;
     private final Map<String, Object> metadata;
 
-    public Milestone(
+    public PlanMilestone(
             String name,
             List<String> completionCriteria,
             int estimatedWeek,
@@ -43,7 +43,7 @@ public final class Milestone {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Milestone m)) return false;
+        if (!(o instanceof PlanMilestone m)) return false;
         return name.equals(m.name);
     }
 
@@ -52,6 +52,6 @@ public final class Milestone {
 
     @Override
     public String toString() {
-        return "Milestone{name='" + name + "', week=" + estimatedWeek + "}";
+        return "PlanMilestone{name='" + name + "', week=" + estimatedWeek + "}";
     }
 }
