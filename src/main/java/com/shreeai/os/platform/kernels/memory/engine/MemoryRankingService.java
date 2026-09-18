@@ -107,20 +107,24 @@ public final class MemoryRankingService {
         } else if (textContains) {
             score += 30.0; // Content contains query
         } else {
-            // Check for word overlap
-            String[] queryWords = queryLower.split("\\s+");
-            String[] textWords = text.split("\\s+");
+            // Check for word overlap against both title and content text
+            String combined = (title + " " + text).replace('_', ' ').toLowerCase();
+            String[] queryWords = queryLower.replaceAll("[^a-zA-Z0-9\\s]", " ").split("\\s+");
+            String[] targetWords = combined.replaceAll("[^a-zA-Z0-9\\s]", " ").split("\\s+");
             long matches = 0;
+            long meaningfulWords = 0;
             for (String queryWord : queryWords) {
-                for (String textWord : textWords) {
-                    if (textWord.contains(queryWord)) {
+                if (queryWord.isBlank() || queryWord.length() < 3) continue;
+                meaningfulWords++;
+                for (String targetWord : targetWords) {
+                    if (targetWord.contains(queryWord)) {
                         matches++;
                         break;
                     }
                 }
             }
-            if (queryWords.length > 0) {
-                score += (matches * 10.0) / queryWords.length;
+            if (meaningfulWords > 0) {
+                score += (matches * 25.0) / meaningfulWords;
             }
         }
 

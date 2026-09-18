@@ -58,8 +58,8 @@ public final class QueryNormalizer {
             normalized = normalized.replaceFirst(pattern, "");
         }
 
-        // Final trim after prefix removal
-        normalized = normalized.trim();
+        // Final trim after prefix removal, stripping leading/trailing punctuation
+        normalized = normalized.replaceAll("^[\\p{Punct}\\s]+|[\\p{Punct}\\s]+$", "").trim();
 
         return normalized;
     }

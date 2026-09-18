@@ -114,6 +114,21 @@ public final class KnowledgeSDK {
      * @throws SDKException            if the runtime ingestion fails or no
      *                                 consumer answered in time
      */
+    /**
+     * Ingests a document permanently using automatic title extraction.
+     *
+     * @param content document content (must not be null or blank)
+     * @return SDKResponse acknowledging the ingestion
+     * @throws ValidationException if content is null or blank
+     */
+    public SDKResponse ingest(String content) {
+        if (content == null || content.isBlank()) {
+            throw new ValidationException("content must not be null or blank");
+        }
+        String title = content.length() > 40 ? content.substring(0, 40).trim() : content;
+        return ingest(title, content);
+    }
+
     public SDKResponse ingest(String title, String content) {
 
         if (title == null || title.isBlank()) {

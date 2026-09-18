@@ -255,8 +255,57 @@ public final class ShreeClient {
     public Runtime runtime() {
         return runtime;
     }
+    /**
+     * Creates a new builder for ShreeClient.
+     *
+     * @return a new client builder
+     */
+    public static ShreeClientBuilder builder() {
+        return new ShreeClientBuilder();
+    }
+
+    /**
+     * Builder for constructing standalone ShreeClient instances.
+     */
+    public static final class ShreeClientBuilder {
+        private final ShreeBuilder delegate = ShreeAI.builder();
+
+        public ShreeClientBuilder apiKey(String apiKey) {
+            delegate.apiKey(apiKey);
+            return this;
+        }
+
+        public ShreeClientBuilder configuration(SDKConfiguration configuration) {
+            delegate.configuration(configuration);
+            return this;
+        }
+
+        public ShreeClientBuilder runtime(Runtime runtime) {
+            delegate.runtime(runtime);
+            return this;
+        }
+
+        public ShreeClient build() {
+            return delegate.build().client();
+        }
+    }
+
     public EventManager events() {
         return new EventManager(eventBus);
+    }
+
+    /**
+     * Memory Kernel SDK facade.
+     */
+    public MemorySDK memory() {
+        return new MemorySDK(this);
+    }
+
+    /**
+     * Knowledge Kernel SDK facade.
+     */
+    public KnowledgeSDK knowledge() {
+        return new KnowledgeSDK(this);
     }
 
     /**
