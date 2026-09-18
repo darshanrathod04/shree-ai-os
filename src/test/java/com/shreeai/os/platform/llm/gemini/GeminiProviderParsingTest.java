@@ -63,4 +63,48 @@ class GeminiProviderParsingTest {
         assertNull(GeminiProvider.extractText("data: {\"candidates\":[]}"));
         assertNull(GeminiProvider.extractText(null));
     }
+
+    @Test
+    void cleanApiKeyStripsWhitespaceAndQuotes() {
+        assertEquals("my-key", GeminiProvider.cleanApiKey("  my-key  "));
+        assertEquals("my-key", GeminiProvider.cleanApiKey("\"my-key\""));
+        assertEquals("my-key", GeminiProvider.cleanApiKey("'my-key'"));
+        assertEquals("my-key", GeminiProvider.cleanApiKey("  \"my-key\"  "));
+        assertEquals("", GeminiProvider.cleanApiKey(null));
+    }
+
+    @Test
+    void buildHttpRequestHasQueryKeyAndNoAuthorizationHeader() {
+        GeminiProvider provider = new GeminiProvider("  \"AIzaSyTest123\"  ");
+        LlmRequest request = LlmRequest.builder()
+                .model("gemini-2.0-flash")
+                .prompt("ping")
+                .build();
+
+        okhttp3.Request httpRequest = provider.buildHttpRequest(request);
+
+        // Verify URL contains the cleaned key
+        String urlString = httpRequest.url().toString();
+        assertTrue(urlString.contains("key=AIzaSyTest123"), "URL must contain ?key= parameter with cleaned key: " + urlString);
+        assertTrue(urlString.contains("/models/gemini-2.0-flash:generateContent"), "URL must contain correct model and action: " + urlString);
+
+        // Verify headers
+        assertEquals("AIzaSyTest123", httpRequest.header("x-goog-api-key"), "x-goog-api-key header must match cleaned key");
+        assertNull(httpRequest.header("Authorization"), "Authorization header must NOT be present on Gemini request");
+    }
+
+    @Test
+    void buildHttpRequestHandlesBaseUrlWithoutTrailingSlash() {
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();
+        GeminiProvider provider = new GeminiProvider("https://generativelanguage.googleapis.com/v1beta/models", "key-xyz", client);
+        LlmRequest request = LlmRequest.builder()
+                .model("gemini-1.5-pro")
+                .prompt("test")
+                .build();
+
+        okhttp3.Request httpRequest = provider.buildHttpRequest(request);
+        String urlString = httpRequest.url().toString();
+        assertTrue(urlString.contains("/models/gemini-1.5-pro:generateContent?key=key-xyz"),
+                "URL must format slash cleanly when baseUrl has no trailing slash: " + urlString);
+    }
 }

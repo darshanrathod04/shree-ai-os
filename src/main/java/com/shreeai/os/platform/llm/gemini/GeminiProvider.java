@@ -47,11 +47,23 @@ public final class GeminiProvider implements LlmProvider {
 
     public GeminiProvider(String baseUrl, String apiKey, OkHttpClient client) {
         this.baseUrl = Objects.requireNonNull(baseUrl, "baseUrl must not be null");
-        this.apiKey = Objects.requireNonNull(apiKey, "apiKey must not be null");
-        if (apiKey.isBlank()) {
+        this.apiKey = cleanApiKey(Objects.requireNonNull(apiKey, "apiKey must not be null"));
+        if (this.apiKey.isBlank()) {
             throw new IllegalArgumentException("apiKey must not be blank");
         }
         this.client = Objects.requireNonNull(client, "client must not be null");
+    }
+
+    static String cleanApiKey(String raw) {
+        if (raw == null) return "";
+        String trimmed = raw.trim();
+        if ((trimmed.startsWith("\"") && trimmed.endsWith("\""))
+                || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+            if (trimmed.length() >= 2) {
+                trimmed = trimmed.substring(1, trimmed.length() - 1).trim();
+            }
+        }
+        return trimmed;
     }
 
     private static OkHttpClient createDefaultClient() {
@@ -73,15 +85,10 @@ public final class GeminiProvider implements LlmProvider {
         Objects.requireNonNull(request, "request must not be null");
 
         String safeModel = resolveModel(request.model());
-        String url = baseUrl + safeModel + ":generateContent?key=" + apiKey;
-        String jsonBody = buildBody(request);
+        String effectiveBaseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
+        System.out.println(">>> GEMINI CALLING URL: " + effectiveBaseUrl + safeModel + ":generateContent?key=MASKED");
 
-        Request httpRequest = new Request.Builder()
-                .url(url)
-                .header("Content-Type", "application/json")
-                .header("x-goog-api-key", this.apiKey)
-                .post(RequestBody.create(jsonBody, JSON))
-                .build();
+        Request httpRequest = buildHttpRequest(request);
 
         Response response;
         try {
@@ -116,12 +123,28 @@ public final class GeminiProvider implements LlmProvider {
         }
     }
 
+    Request buildHttpRequest(LlmRequest request) {
+        String safeModel = resolveModel(request.model());
+        String effectiveBaseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
+        String url = effectiveBaseUrl + safeModel + ":generateContent?key=" + this.apiKey.trim();
+        String jsonBody = buildBody(request);
+
+        return new Request.Builder()
+                .url(url)
+                .header("Content-Type", "application/json")
+                .header("x-goog-api-key", this.apiKey.trim())
+                .removeHeader("Authorization")
+                .post(RequestBody.create(jsonBody, JSON))
+                .build();
+    }
+
     /**
      * Preserved for backward-compatibility and GeminiProviderParsingTest.
      */
     String streamUrl(String model) {
         String safeModel = resolveModel(model);
-        return baseUrl + safeModel + ":streamGenerateContent?alt=sse&key=" + apiKey;
+        String effectiveBaseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
+        return effectiveBaseUrl + safeModel + ":streamGenerateContent?alt=sse&key=" + apiKey.trim();
     }
 
     static String resolveModel(String model) {
