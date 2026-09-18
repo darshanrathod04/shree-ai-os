@@ -2,7 +2,7 @@ package com.shreeai.os.platform.kernels.response.engine;
 
 import com.shreeai.os.platform.kernels.cognitive.engine.GoalIntelligenceEngine.GoalAnalysis;
 import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
-import com.shreeai.os.platform.kernels.planning.model.Milestone;
+import com.shreeai.os.platform.kernels.planning.model.PlanMilestone;
 import com.shreeai.os.platform.kernels.planning.model.Phase;
 import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
 import com.shreeai.os.platform.kernels.planning.model.PlanningObjective;
@@ -990,7 +990,7 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         // Milestones
         if (!blueprint.milestones().isEmpty()) {
             answer.append("## Milestones\n\n");
-            for (Milestone m : blueprint.milestones()) {
+            for (PlanMilestone m : blueprint.milestones()) {
                 answer.append("* Week ").append(m.estimatedWeek())
                         .append(" — ").append(m.name()).append("\n");
             }
@@ -998,7 +998,7 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
             sections.add(new ResponseSection("Milestones", renderMilestones(blueprint.milestones())));
             structuredData.put("milestones",
                     blueprint.milestones().stream()
-                            .map(Milestone::name)
+                            .map(PlanMilestone::name)
                             .toList());
         }
 
@@ -1120,9 +1120,9 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         return sb.toString();
     }
 
-    private String renderMilestones(List<Milestone> milestones) {
+    private String renderMilestones(List<PlanMilestone> milestones) {
         StringBuilder sb = new StringBuilder();
-        for (Milestone m : milestones) {
+        for (PlanMilestone m : milestones) {
             sb.append("Week ").append(m.estimatedWeek()).append(" — ")
                     .append(m.name()).append("\n");
         }

@@ -7,10 +7,17 @@ import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
 import com.shreeai.os.platform.kernels.inference.model.InferenceResult;
 import com.shreeai.os.platform.kernels.planning.api.PlanningService;
 import com.shreeai.os.platform.kernels.planning.api.PlanningTypes;
+import com.shreeai.os.platform.kernels.planning.engine.DefaultResourceTimeAllocationEngine;
+import com.shreeai.os.platform.kernels.planning.engine.ResourceTimeAllocationEngine;
+import com.shreeai.os.platform.kernels.planning.engine.DefaultTaskDependencyGraphEngine;
+import com.shreeai.os.platform.kernels.planning.engine.TaskDependencyGraphEngine;
+import com.shreeai.os.platform.kernels.planning.engine.DefaultExecutablePlanningGraphEngine;
+import com.shreeai.os.platform.kernels.planning.engine.ExecutablePlanningGraphEngine;
 import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
 import com.shreeai.os.platform.kernels.planning.model.PlanningConstraints;
 import com.shreeai.os.platform.kernels.planning.model.PlanningId;
 import com.shreeai.os.platform.kernels.planning.model.PlanningObjective;
+import com.shreeai.os.platform.kernels.planning.model.TaskGraph;
 import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
 import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
@@ -23,6 +30,12 @@ import com.shreeai.os.platform.sdk.events.EventType;
 import com.shreeai.os.platform.sdk.events.RuntimeEvent;
 import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 import com.shreeai.os.platform.kernels.planning.response.PlanningResponseBuilder;
+
+import com.shreeai.os.platform.kernels.planning.engine.DefaultAdaptiveReplanningEngine;
+import com.shreeai.os.platform.kernels.planning.model.ProgressSnapshot;
+import com.shreeai.os.platform.kernels.planning.model.ReplanningReason;
+import com.shreeai.os.platform.kernels.context.model.UserConstraints;
+import java.util.Objects;
 
 import java.time.Instant;
 import java.util.Map;
@@ -71,8 +84,14 @@ public final class PlanningStage implements ExecutionStage {
 
     private final PlanningService planningService;
     private final GoalIntelligenceEngine goalIntelligenceEngine;
-    private final PlanningResponseBuilder responseBuilder =
+            private final PlanningResponseBuilder responseBuilder =
             new PlanningResponseBuilder();
+    private final TaskDependencyGraphEngine taskDependencyGraphEngine =
+            new DefaultTaskDependencyGraphEngine();
+    private final ResourceTimeAllocationEngine resourceTimeAllocationEngine =
+            new DefaultResourceTimeAllocationEngine();
+    private final ExecutablePlanningGraphEngine executablePlanningGraphEngine =
+            new DefaultExecutablePlanningGraphEngine();
 
     /**
      * Creates a PlanningStage with explicit dependencies.
@@ -104,6 +123,23 @@ public final class PlanningStage implements ExecutionStage {
                 null,
                 new GoalIntelligenceEngine()
         );
+    }
+
+    /**
+     * P2.4 explicit progress update, invoked after P2.3 has produced a schedule.
+     * Does not call planningService, rebuild the graph, or mirror artifacts in metadata.
+     * currentDay is supplied by the caller, never derived from a clock.
+     */
+    public void replan(PipelineExecutionState state, ProgressSnapshot progress,
+            UserConstraints constraints, int currentDay, ReplanningReason reason) {
+        Objects.requireNonNull(state, "state must not be null");
+        state.updateCognitiveState(cs -> {
+            var effectiveConstraints = constraints == null ? cs.userConstraints() : constraints;
+            var result = new DefaultAdaptiveReplanningEngine().replan(
+                    cs.executionPlan(), cs.taskGraph(), progress, effectiveConstraints, currentDay, reason);
+            var updated = cs.withReplanningResult(result).withExecutionPlan(result.executionPlan());
+            return effectiveConstraints == null ? updated : updated.withUserConstraints(effectiveConstraints);
+        });
     }
 
     @Override
@@ -478,8 +514,38 @@ public final class PlanningStage implements ExecutionStage {
              * the execution metadata map (external SDK consumers).
              */
 
+            /*
+             * P2.2 - executable Task Dependency DAG derived from the
+             * milestone plan. Stored only in the immutable cognitive
+             * state; no metadata mirror.
+             */
+            TaskGraph taskGraph = (planBlueprint == null)
+                    ? TaskGraph.empty()
+                    : taskDependencyGraphEngine.buildTaskGraph(planBlueprint);
+
+            // P2.3: the canonical schedule lives only in cognitive state, never metadata.
             state.updateCognitiveState(
-                    cs -> cs.withPlanning(planningResponse));
+                    cs -> {
+                        var executionPlan = resourceTimeAllocationEngine.allocate(
+                                taskGraph, cs.userConstraints());
+
+                        /*
+                         * P2.5 - the execution-ready planning graph derived
+                         * from the schedule. The existing replanning result
+                         * (if a replan already happened) is carried into
+                         * the build; no progress snapshot exists during
+                         * initial planning, so no transitions are applied.
+                         * Stored only in the immutable cognitive state; no
+                         * metadata mirror.
+                         */
+                        var graph = executablePlanningGraphEngine.build(
+                                taskGraph, executionPlan, cs.replanningResult(), null);
+
+                        return cs.withPlanning(planningResponse)
+                                .withTaskGraph(taskGraph)
+                                .withExecutionPlan(executionPlan)
+                                .withExecutablePlanningGraph(graph);
+                    });
 
             state.addMetadata(
                     "goalAnalysis",

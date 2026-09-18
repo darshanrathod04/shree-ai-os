@@ -6,6 +6,17 @@ import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 import com.shreeai.os.platform.kernels.memory.model.Memory;
 import com.shreeai.os.platform.kernels.knowledge.model.ConceptGraph;
 import com.shreeai.os.platform.kernels.knowledge.model.ReliabilityResult;
+import com.shreeai.os.platform.kernels.inference.engine.DefaultAlternativeGenerationEngine;
+import com.shreeai.os.platform.kernels.inference.engine.AlternativeGenerationEngine;
+import com.shreeai.os.platform.kernels.inference.engine.DefaultConfidenceCalibrationEngine;
+import com.shreeai.os.platform.kernels.inference.engine.DefaultExplainableDecisionEngine;
+import com.shreeai.os.platform.kernels.inference.engine.DefaultDecisionOptimizationEngine;
+import com.shreeai.os.platform.kernels.inference.engine.DefaultTradeoffAnalysisEngine;
+import com.shreeai.os.platform.kernels.inference.model.AlternativeSet;
+import com.shreeai.os.platform.kernels.inference.model.CalibratedDecision;
+import com.shreeai.os.platform.kernels.inference.model.ExplainableDecision;
+import com.shreeai.os.platform.kernels.inference.model.OptimizedDecision;
+import com.shreeai.os.platform.kernels.inference.model.TradeoffAnalysisSet;
 import com.shreeai.os.platform.kernels.reasoning.engine.MultiHopReasoningEngine;
 import com.shreeai.os.platform.kernels.reasoning.engine.DefaultEvidenceSynthesisEngine;
 import com.shreeai.os.platform.kernels.reasoning.engine.EvidenceSynthesisEngine;
@@ -184,6 +195,125 @@ public final class ReasoningStage implements ExecutionStage {
                                             + "certainty=" + uncertaintyGraph.overallCertainty());
                                 } catch (Exception e) {
                                     state.addMessage("R5 uncertainty modeling skipped: " + e.getMessage());
+                                }
+
+                                // I1 - Alternative Generation: transform the
+                                // verified knowledge into deterministic,
+                                // executable solution alternatives. No
+                                // ranking, no selection - comparison belongs
+                                // to I2 Trade-off Analysis.
+                                try {
+                                    AlternativeSet alternativeSet =
+                                            new DefaultAlternativeGenerationEngine().generate(
+                                                    reasoningGraph, synthesisGraph,
+                                                    causalGraph, verificationGraph);
+                                    state.updateCognitiveState(
+                                            cs -> cs.withAlternativeSet(alternativeSet));
+                                    state.addMessage("I1 alternative generation completed: "
+                                            + alternativeSet.size() + " alternatives");
+                                } catch (Exception e) {
+                                    state.addMessage("I1 alternative generation skipped: " + e.getMessage());
+                                }
+
+                                // I2 - Trade-off Analysis: compare every
+                                // generated alternative deterministically. The
+                                // engine compares only - selecting the winner
+                                // belongs to I3 Decision Optimization.
+                                try {
+                                    AlternativeSet generated =
+                                            state.getCognitiveState().alternativeSet();
+                                    if (generated != null && !generated.isEmpty()) {
+                                        TradeoffAnalysisSet analysisSet =
+                                                new DefaultTradeoffAnalysisEngine().analyze(
+                                                        generated,
+                                                        state.getCognitiveState().userConstraints(),
+                                                        verificationGraph,
+                                                        state.getCognitiveState().uncertaintyGraph());
+                                        state.addMessage("I2 trade-off analysis completed: "
+                                                + analysisSet.size() + " analyses");
+
+                                        // I3 - Decision Optimization: select the
+                                        // single optimized decision from the
+                                        // trade-off analysis set with deterministic
+                                        // weighted optimization. The engine runs
+                                        // only when a candidate is available - an
+                                        // empty decision space carries no decision.
+                                        try {
+                                            if (!analysisSet.isEmpty()) {
+                                                OptimizedDecision optimizedDecision =
+                                                        new DefaultDecisionOptimizationEngine().decide(
+                                                                generated,
+                                                                analysisSet,
+                                                                state.getCognitiveState().userConstraints(),
+                                                                verificationGraph,
+                                                                state.getCognitiveState().uncertaintyGraph());
+                                                state.updateCognitiveState(
+                                                        cs -> cs.withOptimizedDecision(optimizedDecision));
+                                                state.addMessage("I3 decision optimization completed: "
+                                                        + optimizedDecision.strategy() + " selected"
+                                                        + " (score=" + optimizedDecision.optimizationScore()
+                                                        + ", justifications="
+                                                        + optimizedDecision.justifications().size() + ")");
+                                            }
+                                        } catch (Exception e) {
+                                            state.addMessage("I3 decision optimization skipped: " + e.getMessage());
+                                        }
+
+                                        // I4 - Confidence Calibration: measure
+                                        // how trustworthy the optimized
+                                        // decision is, deterministically. The
+                                        // engine calibrates only - it never
+                                        // changes the selected decision.
+                                        try {
+                                            if (state.getCognitiveState().optimizedDecision() != null) {
+                                                CalibratedDecision calibratedDecision =
+                                                        new DefaultConfidenceCalibrationEngine().calibrate(
+                                                                state.getCognitiveState().optimizedDecision(),
+                                                                analysisSet,
+                                                                generated,
+                                                                state.getCognitiveState().userConstraints(),
+                                                                verificationGraph,
+                                                                state.getCognitiveState().uncertaintyGraph());
+                                                state.updateCognitiveState(
+                                                        cs -> cs.withCalibratedDecision(calibratedDecision));
+                                                state.addMessage("I4 confidence calibration completed: "
+                                                        + calibratedDecision.confidence() + " ("
+                                                        + calibratedDecision.level() + ", factors="
+                                                        + calibratedDecision.factors().size() + ")");
+                                            }
+                                        } catch (Exception e) {
+                                            state.addMessage("I4 confidence calibration skipped: " + e.getMessage());
+                                        }
+
+                                        // I5 - Explainable Decision: convert
+                                        // all cognitive artifacts into a
+                                        // single structured, display-ready
+                                        // decision explanation. The engine
+                                        // generates structure only - never
+                                        // natural language.
+                                        try {
+                                            if (state.getCognitiveState().calibratedDecision() != null) {
+                                                ExplainableDecision explainableDecision =
+                                                        new DefaultExplainableDecisionEngine().explain(
+                                                                state.getCognitiveState().optimizedDecision(),
+                                                                state.getCognitiveState().calibratedDecision(),
+                                                                generated,
+                                                                analysisSet,
+                                                                state.getCognitiveState().goalStructure(),
+                                                                state.getCognitiveState().userConstraints(),
+                                                                verificationGraph);
+                                                state.updateCognitiveState(
+                                                        cs -> cs.withExplainableDecision(explainableDecision));
+                                                state.addMessage("I5 explainable decision completed: "
+                                                        + explainableDecision.sections().size()
+                                                        + " sections");
+                                            }
+                                        } catch (Exception e) {
+                                            state.addMessage("I5 explainable decision skipped: " + e.getMessage());
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    state.addMessage("I2 trade-off analysis skipped: " + e.getMessage());
                                 }
                             } catch (Exception e) {
                                 state.addMessage("R4 self verification skipped: " + e.getMessage());

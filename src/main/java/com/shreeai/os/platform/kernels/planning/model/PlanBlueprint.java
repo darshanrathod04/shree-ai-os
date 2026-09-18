@@ -18,7 +18,7 @@ public final class PlanBlueprint {
     private final String goal;
     private final int timelineWeeks;
     private final List<Phase> phases;
-    private final List<Milestone> milestones;
+    private final List<PlanMilestone> milestones;
     private final List<String> risks;
     private final List<String> successMetrics;
     private final List<String> recommendations;
@@ -29,7 +29,7 @@ public final class PlanBlueprint {
             String goal,
             int timelineWeeks,
             List<Phase> phases,
-            List<Milestone> milestones,
+            List<PlanMilestone> milestones,
             List<String> risks,
             List<String> successMetrics,
             List<String> recommendations,
@@ -50,7 +50,7 @@ public final class PlanBlueprint {
     public String goal() { return goal; }
     public int timelineWeeks() { return timelineWeeks; }
     public List<Phase> phases() { return phases; }
-    public List<Milestone> milestones() { return milestones; }
+    public List<PlanMilestone> milestones() { return milestones; }
     public List<String> risks() { return risks; }
     public List<String> successMetrics() { return successMetrics; }
     public List<String> recommendations() { return recommendations; }

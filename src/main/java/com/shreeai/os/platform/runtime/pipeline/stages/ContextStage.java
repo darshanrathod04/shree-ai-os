@@ -2,6 +2,21 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultProviderRouter;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultFreshnessPolicyEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultKnowledgeAcquisitionOrchestrator;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultSourceDiscoveryEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultTrustSelectionEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.FreshnessPolicyEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.KnowledgeAcquisitionOrchestrator;
+import com.shreeai.os.platform.kernels.acquisition.engine.ProviderRouter;
+import com.shreeai.os.platform.kernels.acquisition.engine.SourceDiscoveryEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.TrustSelectionEngine;
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionDecisionPlan;
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionPlan;
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionResult;
+import com.shreeai.os.platform.kernels.acquisition.model.KnowledgeRequirementSet;
+import com.shreeai.os.platform.kernels.acquisition.model.SourceSelectionPlan;
 import com.shreeai.os.platform.kernels.context.engine.AmbiguityDetectionEngine;
 import com.shreeai.os.platform.kernels.context.engine.ConstraintExtractionEngine;
 import com.shreeai.os.platform.kernels.context.engine.DefaultAmbiguityDetectionEngine;
@@ -18,6 +33,10 @@ import com.shreeai.os.platform.kernels.context.model.DomainProfile;
 import com.shreeai.os.platform.kernels.context.model.GoalStructure;
 import com.shreeai.os.platform.kernels.context.model.IntentProfile;
 import com.shreeai.os.platform.kernels.context.model.UserConstraints;
+import com.shreeai.os.platform.kernels.knowledge.engine.DefaultDocumentIngestionEngine;
+import com.shreeai.os.platform.kernels.knowledge.engine.DefaultKnowledgeSourceRegistry;
+import com.shreeai.os.platform.kernels.knowledge.engine.DocumentIngestionEngine;
+import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeSourceRegistry;
 import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
@@ -55,18 +74,40 @@ public final class ContextStage implements ExecutionStage {
     private final PrimaryIntentDetector intentDetector;
     private final DomainDetector domainDetector;
     private final ConstraintExtractionEngine constraintEngine;
+    private final KnowledgeSourceRegistry sourceRegistry;
 
     public ContextStage() {
-        this.intentDetector = new DefaultPrimaryIntentDetector();
-        this.domainDetector = new DefaultDomainDetector();
-        this.constraintEngine = new DefaultConstraintExtractionEngine();
+        this(new DefaultPrimaryIntentDetector(), new DefaultDomainDetector(),
+                new DefaultConstraintExtractionEngine(),
+                new DefaultKnowledgeSourceRegistry());
     }
 
     public ContextStage(PrimaryIntentDetector intentDetector, DomainDetector domainDetector,
                         ConstraintExtractionEngine constraintEngine) {
+        this(intentDetector, domainDetector, constraintEngine,
+                new DefaultKnowledgeSourceRegistry());
+    }
+
+    /**
+     * Creates a context stage backed by an explicit K1 source registry catalog.
+     *
+     * <p>The registry is the read-only catalog consulted by the K0.6.3 trust and
+     * source selection engine. It is never mutated by this stage; when it holds
+     * no eligible source, acquisition targets are simply left unselected.</p>
+     *
+     * @param intentDetector  the primary intent detector (must not be null)
+     * @param domainDetector  the domain detector (must not be null)
+     * @param constraintEngine the user constraint extraction engine (must not be null)
+     * @param sourceRegistry  the K1 knowledge source registry catalog (must not be null)
+     */
+    public ContextStage(PrimaryIntentDetector intentDetector, DomainDetector domainDetector,
+                        ConstraintExtractionEngine constraintEngine,
+                        KnowledgeSourceRegistry sourceRegistry) {
         this.intentDetector = intentDetector;
         this.domainDetector = domainDetector;
         this.constraintEngine = constraintEngine;
+        this.sourceRegistry = java.util.Objects.requireNonNull(sourceRegistry,
+                "sourceRegistry must not be null");
     }
 
     @Override
@@ -112,6 +153,66 @@ public final class ContextStage implements ExecutionStage {
             CognitiveState updatedCognitiveStateWithAmbiguity = updatedCognitiveStateWithGoal.withAmbiguityProfile(ambiguityProfile);
             state.setCognitiveState(updatedCognitiveStateWithAmbiguity);
 
+            // K0.6.1: Discover knowledge requirements from the canonical context
+            // intelligence aggregate. Deterministic, rule-based discovery only -
+            // no provider routing, no acquisition, no LLM (those are K0.6.2+).
+            SourceDiscoveryEngine sourceDiscoveryEngine = new DefaultSourceDiscoveryEngine();
+            KnowledgeRequirementSet knowledgeRequirements = sourceDiscoveryEngine.discover(
+                    ContextIntelligence.of(
+                            intentProfile, domainProfile, userConstraints,
+                            goalStructure, ambiguityProfile));
+            CognitiveState updatedCognitiveStateWithRequirements =
+                    state.getCognitiveState().withKnowledgeRequirements(knowledgeRequirements);
+            state.setCognitiveState(updatedCognitiveStateWithRequirements);
+
+            // K0.6.2: Route every required knowledge topic to a provider type.
+            // Deterministic, dictionary-driven routing only - no network calls,
+            // no trust ranking, no ingestion (those are K0.6.3+).
+            ProviderRouter providerRouter = new DefaultProviderRouter();
+            AcquisitionPlan acquisitionPlan = providerRouter.route(knowledgeRequirements);
+            CognitiveState updatedCognitiveStateWithPlan =
+                    state.getCognitiveState().withAcquisitionPlan(acquisitionPlan);
+            state.setCognitiveState(updatedCognitiveStateWithPlan);
+
+            // K0.6.3: Select the single most authoritative concrete source for
+            // every routed acquisition target from the K1 source registry.
+            // Deterministic, authority-ranked selection only - no downloads, no
+            // crawling, no ingestion (those are K0.6.4+).
+            TrustSelectionEngine trustSelectionEngine = new DefaultTrustSelectionEngine();
+            SourceSelectionPlan sourceSelectionPlan =
+                    trustSelectionEngine.select(acquisitionPlan, sourceRegistry);
+            CognitiveState updatedCognitiveStateWithSelection =
+                    state.getCognitiveState().withSourceSelectionPlan(sourceSelectionPlan);
+            state.setCognitiveState(updatedCognitiveStateWithSelection);
+
+            // K0.6.4: Decide, for every selected source, whether cached knowledge
+            // may be reused or fresh knowledge must be acquired. Deterministic
+            // cache policy only - no downloads, no crawling, no ingestion
+            // (K0.6.5 executes the ACQUIRE / REFRESH decisions).
+            FreshnessPolicyEngine freshnessPolicyEngine = new DefaultFreshnessPolicyEngine();
+            AcquisitionDecisionPlan acquisitionDecisionPlan = freshnessPolicyEngine.decide(
+                    sourceSelectionPlan, sourceRegistry,
+                    ContextIntelligence.of(intentProfile, domainProfile, userConstraints,
+                            goalStructure, ambiguityProfile));
+            CognitiveState updatedCognitiveStateWithDecision =
+                    state.getCognitiveState().withAcquisitionDecisionPlan(acquisitionDecisionPlan);
+            state.setCognitiveState(updatedCognitiveStateWithDecision);
+
+            // K0.6.5: Execute the locked acquisition workflow for every decision
+            // of the plan. Deterministic execution only - the orchestrator never
+            // re-decides what to acquire. With no content supply wired into the
+            // runtime yet, pending acquisitions are isolated and recorded as
+            // FAILED; cache reuses without a cached document fail the same way.
+            DocumentIngestionEngine ingestionEngine =
+                    new DefaultDocumentIngestionEngine(sourceRegistry);
+            KnowledgeAcquisitionOrchestrator acquisitionOrchestrator =
+                    new DefaultKnowledgeAcquisitionOrchestrator(sourceRegistry, ingestionEngine);
+            AcquisitionResult acquisitionResult =
+                    acquisitionOrchestrator.execute(acquisitionDecisionPlan);
+            CognitiveState updatedCognitiveStateWithResult =
+                    state.getCognitiveState().withAcquisitionResult(acquisitionResult);
+            state.setCognitiveState(updatedCognitiveStateWithResult);
+
             // Build the canonical context intelligence aggregate.
             ContextIntelligence contextIntelligence = ContextIntelligence.of(
                     intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
@@ -150,7 +251,18 @@ public final class ContextStage implements ExecutionStage {
                     + " | Intent: " + intentProfile.primaryIntent()
                     + " | Domain: " + domainProfile.primaryDomain()
                     + " | Goal: " + goalStructure.primaryGoal().title()
-                    + " | Ambiguity: " + contextIntelligence.ambiguityProfile().ambiguityScore());
+                    + " | Ambiguity: " + contextIntelligence.ambiguityProfile().ambiguityScore()
+                    + " | KnowledgeRequirements: " + knowledgeRequirements.topics().size()
+                    + " | AcquisitionTargets: " + acquisitionPlan.targets().size()
+                    + " | SelectedSources: " + sourceSelectionPlan.size()
+                    + " | AcquisitionDecisions: " + acquisitionDecisionPlan.size()
+                    + " | PendingAcquisition: "
+                    + acquisitionDecisionPlan.targetsRequiringAcquisition().size()
+                    + " | AcquisitionRecords: " + acquisitionResult.size()
+                    + " | Documents: " + acquisitionResult.documents().size()
+                    + " | Acquired: " + acquisitionResult.acquiredCount()
+                    + " | Skipped: " + acquisitionResult.skippedCount()
+                    + " | Failed: " + acquisitionResult.failedCount());
 
             // Continue to next stage
             return chain.next(context, state);
