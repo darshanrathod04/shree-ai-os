@@ -22,6 +22,7 @@ import com.shreeai.os.platform.kernels.inference.model.ExplainableDecision;
 import com.shreeai.os.platform.kernels.inference.model.OptimizedDecision;
 import com.shreeai.os.platform.kernels.planning.model.TaskGraph;
 import com.shreeai.os.platform.kernels.planning.model.ExecutionPlan;
+import com.shreeai.os.platform.kernels.planning.model.ExecutablePlanningGraph;
 import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
 
 import java.util.ArrayList;
@@ -131,7 +132,8 @@ public record CognitiveState(
         ExplainableDecision explainableDecision,
         TaskGraph taskGraph,
         ExecutionPlan executionPlan,
-        ReplanningResult replanningResult) {
+        ReplanningResult replanningResult,
+        ExecutablePlanningGraph executablePlanningGraph) {
 
     /** Backward-compatible P2.2 constructor; no schedule exists yet. */
     public CognitiveState(
@@ -162,7 +164,7 @@ public record CognitiveState(
         CalibratedDecision calibratedDecision,
         ExplainableDecision explainableDecision,
         TaskGraph taskGraph) {
-        this(reasoning, inference, planning, reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile, reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph, knowledgeRequirements, acquisitionPlan, sourceSelectionPlan, acquisitionDecisionPlan, acquisitionResult, alternativeSet, optimizedDecision, calibratedDecision, explainableDecision, taskGraph, null);
+        this(reasoning, inference, planning, reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile, reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph, knowledgeRequirements, acquisitionPlan, sourceSelectionPlan, acquisitionDecisionPlan, acquisitionResult, alternativeSet, optimizedDecision, calibratedDecision, explainableDecision, taskGraph, null, null, null);
     }
 
     /** Creates a deeply-immutable CognitiveState with defensive copies. */
@@ -613,7 +615,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -633,7 +635,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -653,7 +655,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -677,7 +679,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -710,7 +712,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -728,7 +730,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -749,7 +751,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -770,7 +772,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -791,7 +793,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -812,7 +814,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -833,7 +835,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
 
@@ -855,7 +857,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
 
@@ -877,7 +879,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -898,7 +900,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
 
@@ -920,7 +922,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
 
@@ -942,7 +944,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -966,7 +968,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -987,7 +989,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -1010,7 +1012,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -1033,7 +1035,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -1056,7 +1058,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -1078,7 +1080,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -1100,7 +1102,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -1123,7 +1125,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -1146,7 +1148,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -1170,7 +1172,7 @@ public record CognitiveState(
                 acquisitionDecisionPlan,
                 acquisitionResult,
                 alternativeSet,
-                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+                optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /**
@@ -1206,7 +1208,7 @@ public record CognitiveState(
     /** Returns a new state with the canonical schedule, preserving all other artifacts. */
     public CognitiveState withExecutionPlan(ExecutionPlan executionPlan) {
         Objects.requireNonNull(executionPlan, "executionPlan must not be null");
-        return new CognitiveState(reasoning, inference, planning, reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile, reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph, knowledgeRequirements, acquisitionPlan, sourceSelectionPlan, acquisitionDecisionPlan, acquisitionResult, alternativeSet, optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+        return new CognitiveState(reasoning, inference, planning, reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile, reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph, knowledgeRequirements, acquisitionPlan, sourceSelectionPlan, acquisitionDecisionPlan, acquisitionResult, alternativeSet, optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 
     /** Backward-compatible P2.3 constructor; no replanning result yet. */
@@ -1239,12 +1241,25 @@ public record CognitiveState(
         ExplainableDecision explainableDecision,
         TaskGraph taskGraph,
         ExecutionPlan executionPlan) {
-        this(reasoning, inference, planning, reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile, reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph, knowledgeRequirements, acquisitionPlan, sourceSelectionPlan, acquisitionDecisionPlan, acquisitionResult, alternativeSet, optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, null);
+        this(reasoning, inference, planning, reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile, reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph, knowledgeRequirements, acquisitionPlan, sourceSelectionPlan, acquisitionDecisionPlan, acquisitionResult, alternativeSet, optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, null, null);
     }
 
     /** Stores the replanning artifact, preserving the schedule and all other artifacts. */
     public CognitiveState withReplanningResult(ReplanningResult replanningResult) {
         Objects.requireNonNull(replanningResult, "replanningResult must not be null");
-        return new CognitiveState(reasoning, inference, planning, reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile, reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph, knowledgeRequirements, acquisitionPlan, sourceSelectionPlan, acquisitionDecisionPlan, acquisitionResult, alternativeSet, optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult);
+        return new CognitiveState(reasoning, inference, planning, reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile, reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph, knowledgeRequirements, acquisitionPlan, sourceSelectionPlan, acquisitionDecisionPlan, acquisitionResult, alternativeSet, optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
+    }
+
+    /**
+     * Stores the executable planning graph, preserving the replanning
+     * artifact and all other artifacts.
+     *
+     * @param executablePlanningGraph the execution-ready graph (must not be
+     *                                null)
+     * @return a new state carrying the graph (never null)
+     */
+    public CognitiveState withExecutablePlanningGraph(ExecutablePlanningGraph executablePlanningGraph) {
+        Objects.requireNonNull(executablePlanningGraph, "executablePlanningGraph must not be null");
+        return new CognitiveState(reasoning, inference, planning, reflection, reflectionIteration, qualityHistory, evidencePackage, intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile, reasoningGraph, synthesisGraph, causalGraph, verificationGraph, uncertaintyGraph, knowledgeRequirements, acquisitionPlan, sourceSelectionPlan, acquisitionDecisionPlan, acquisitionResult, alternativeSet, optimizedDecision, calibratedDecision, explainableDecision, taskGraph, executionPlan, replanningResult, executablePlanningGraph);
     }
 }

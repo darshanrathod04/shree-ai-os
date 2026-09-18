@@ -11,6 +11,8 @@ import com.shreeai.os.platform.kernels.planning.engine.DefaultResourceTimeAlloca
 import com.shreeai.os.platform.kernels.planning.engine.ResourceTimeAllocationEngine;
 import com.shreeai.os.platform.kernels.planning.engine.DefaultTaskDependencyGraphEngine;
 import com.shreeai.os.platform.kernels.planning.engine.TaskDependencyGraphEngine;
+import com.shreeai.os.platform.kernels.planning.engine.DefaultExecutablePlanningGraphEngine;
+import com.shreeai.os.platform.kernels.planning.engine.ExecutablePlanningGraphEngine;
 import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
 import com.shreeai.os.platform.kernels.planning.model.PlanningConstraints;
 import com.shreeai.os.platform.kernels.planning.model.PlanningId;
@@ -88,6 +90,8 @@ public final class PlanningStage implements ExecutionStage {
             new DefaultTaskDependencyGraphEngine();
     private final ResourceTimeAllocationEngine resourceTimeAllocationEngine =
             new DefaultResourceTimeAllocationEngine();
+    private final ExecutablePlanningGraphEngine executablePlanningGraphEngine =
+            new DefaultExecutablePlanningGraphEngine();
 
     /**
      * Creates a PlanningStage with explicit dependencies.
@@ -521,9 +525,27 @@ public final class PlanningStage implements ExecutionStage {
 
             // P2.3: the canonical schedule lives only in cognitive state, never metadata.
             state.updateCognitiveState(
-                    cs -> cs.withPlanning(planningResponse).withTaskGraph(taskGraph)
-                            .withExecutionPlan(resourceTimeAllocationEngine.allocate(
-                                    taskGraph, cs.userConstraints())));
+                    cs -> {
+                        var executionPlan = resourceTimeAllocationEngine.allocate(
+                                taskGraph, cs.userConstraints());
+
+                        /*
+                         * P2.5 - the execution-ready planning graph derived
+                         * from the schedule. The existing replanning result
+                         * (if a replan already happened) is carried into
+                         * the build; no progress snapshot exists during
+                         * initial planning, so no transitions are applied.
+                         * Stored only in the immutable cognitive state; no
+                         * metadata mirror.
+                         */
+                        var graph = executablePlanningGraphEngine.build(
+                                taskGraph, executionPlan, cs.replanningResult(), null);
+
+                        return cs.withPlanning(planningResponse)
+                                .withTaskGraph(taskGraph)
+                                .withExecutionPlan(executionPlan)
+                                .withExecutablePlanningGraph(graph);
+                    });
 
             state.addMetadata(
                     "goalAnalysis",
