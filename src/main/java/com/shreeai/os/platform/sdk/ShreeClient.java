@@ -122,16 +122,13 @@ public final class ShreeClient {
             throw e;
 
         } catch (GatewayException e) {
-            // Gateway failure — fall back to foundation mode
-            String answer = "Processed: " + request.message();
-            return SDKResponse.builder()
-                    .answer(answer)
-                    .confidence(1.0)
-                    .reasoningAvailable(true)
-                    .metadata("sdk-version:" + configuration.version())
-                    .structuredPayload(Map.of())
-                    .build();
-
+            throw new SDKException(
+                    SDKErrorCode.RUNTIME_ERROR,
+                    "GATEWAY",
+                    request.sessionId(),
+                    "Gateway request failed: " + e.getMessage(),
+                    e
+            );
         } catch (Exception e) {
 
             throw new SDKException(

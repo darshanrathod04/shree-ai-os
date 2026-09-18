@@ -13,7 +13,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -292,16 +295,20 @@ public class DefaultDocumentIngestionEngineTest {
     @Test
     @DisplayName("Test 16: Same input produces byte-identical canonical output")
     void testSameInputIdenticalOutput() {
-        IngestionResult first = engine.ingest(
+        // Fixed clock makes the engine fully deterministic, including ingestedAt.
+        DefaultDocumentIngestionEngine fixedClockEngine =
+                new DefaultDocumentIngestionEngine(registry,
+                        Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC));
+
+        IngestionResult first = fixedClockEngine.ingest(
                 sourceId, "Java Guide", ParserType.MARKDOWN, MARKDOWN_DOC);
-        IngestionResult second = engine.ingest(
+        IngestionResult second = fixedClockEngine.ingest(
                 sourceId, "Java Guide", ParserType.MARKDOWN, MARKDOWN_DOC);
 
         assertEquals(first.document().documentId(), second.document().documentId());
         assertEquals(first.document().chunks(), second.document().chunks());
-        assertEquals(first.document().documentId() + first.document().title(),
-                second.document().documentId() + second.document().title());
-        assertNotEquals(first.document().ingestedAt(), second.document().ingestedAt());
+        assertEquals(first.document().ingestedAt(), second.document().ingestedAt());
+        assertEquals(first.document(), second.document());
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionAnalysis;
 import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
 import com.shreeai.os.platform.kernels.inference.model.InferenceResult;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
+import com.shreeai.os.platform.kernels.memory.model.Memory;
 import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
 import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
@@ -53,11 +54,13 @@ public final class EvidenceAgent {
     private static final String KEY_INFERENCE_RESULT = "inferenceResult";
     private static final String KEY_PLANNING_RESULT = "planningResult";
     private static final String KEY_PLAN_SUMMARY = "planSummary";
+    private static final String KEY_RANKED_MEMORIES = "rankedMemories";
     private static final String KEY_MEMORY_RESULTS = "memoryResults";
     private static final String KEY_REFLECTION_RESULT = "reflectionResult";
     private static final String KEY_PROJECT_SUMMARY = "projectSummary";
     private static final String KEY_PROJECT_NAME = "projectName";
     private static final String KEY_EXECUTION_RESULT = "executionResult";
+    private static final String KEY_EXECUTION_ID = "executionId";
     private static final String KEY_TASK_ID = "taskId";
     private static final String KEY_EXECUTION_STATUS = "executionStatus";
     private static final String KEY_CITATIONS = "knowledgeCitations";
@@ -252,18 +255,33 @@ public final class EvidenceAgent {
     }
 
     private void extractMemoryEvidence(EvidenceBundle.Builder builder, Map<String, Object> metadata) {
-        Object raw = metadata.get(KEY_MEMORY_RESULTS);
+        Object raw = metadata.get(KEY_RANKED_MEMORIES);
+        if (!(raw instanceof List<?> list) || list.isEmpty()) {
+            raw = metadata.get(KEY_MEMORY_RESULTS);
+        }
         if (!(raw instanceof List<?> list) || list.isEmpty()) return;
 
         for (Object item : list) {
-            String content = extractString(item, "content");
-            String summary = extractString(item, "summary");
-            if (content.isBlank() && summary.isBlank()) continue;
+            String content = "";
+            if (item instanceof Memory memory) {
+                if (memory.content() != null && memory.content().text() != null) {
+                    content = memory.content().text().trim();
+                }
+            } else if (item instanceof Map<?, ?>) {
+                String c = extractString(item, "content");
+                String s = extractString(item, "summary");
+                String t = extractString(item, "text");
+                content = !c.isBlank() ? c : (!s.isBlank() ? s : t);
+            } else if (item != null) {
+                content = String.valueOf(item).trim();
+            }
+
+            if (content.isBlank()) continue;
 
             builder.addItem(EvidenceItem.builder()
                     .sourceType(SourceType.MEMORY)
                     .title("Memory Recall")
-                    .content(content.isBlank() ? summary : content)
+                    .content(content)
                     .confidenceHint(0.60)
                     .build());
         }
@@ -313,10 +331,38 @@ public final class EvidenceAgent {
 
     private void extractExecutionEvidence(EvidenceBundle.Builder builder, Map<String, Object> metadata) {
         Object exec = metadata.get(KEY_EXECUTION_RESULT);
-        if (exec == null) return;
+        String taskId = "";
+        String status = "";
 
-        String taskId = extractString(exec, KEY_TASK_ID);
-        String status = extractString(exec, KEY_EXECUTION_STATUS);
+        if (exec instanceof Map<?, ?> map) {
+            taskId = extractString(map, KEY_TASK_ID);
+            if (taskId.isBlank()) {
+                taskId = extractString(map, KEY_EXECUTION_ID);
+            }
+            status = extractString(map, KEY_EXECUTION_STATUS);
+            if (status.isBlank()) {
+                status = extractString(map, "status");
+            }
+        } else if (exec != null) {
+            taskId = String.valueOf(exec).trim();
+            Object st = metadata.get(KEY_EXECUTION_STATUS);
+            status = st != null ? String.valueOf(st).trim() : "COMPLETED";
+        } else {
+            // Scalar metadata keys written by ActionExecutionStage
+            Object execIdObj = metadata.get(KEY_EXECUTION_ID);
+            if (execIdObj == null) {
+                execIdObj = metadata.get(KEY_TASK_ID);
+            }
+            Object statusObj = metadata.get(KEY_EXECUTION_STATUS);
+            if (execIdObj != null || statusObj != null) {
+                taskId = execIdObj != null ? String.valueOf(execIdObj).trim() : "";
+                status = statusObj != null ? String.valueOf(statusObj).trim() : "COMPLETED";
+            }
+        }
+
+        if (taskId.isBlank() && status.isBlank()) {
+            return;
+        }
 
         String content = "Task: " + taskId + " | Status: " + status;
 

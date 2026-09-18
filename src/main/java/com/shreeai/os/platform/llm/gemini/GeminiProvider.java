@@ -73,7 +73,7 @@ public final class GeminiProvider implements LlmProvider {
         Objects.requireNonNull(request, "request must not be null");
 
         String safeModel = resolveModel(request.model());
-        String url = baseUrl + safeModel + ":generateContent?key=" + apiKey;
+        String url = baseUrl + safeModel + ":generateContent";
         String jsonBody = buildBody(request);
 
         Request httpRequest = new Request.Builder()

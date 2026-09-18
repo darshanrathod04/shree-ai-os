@@ -99,6 +99,9 @@ jobs:
                   <gpg.keyname>${GPG_KEY_FPR}</gpg.keyname>
                   <gpg.passphrase>${GPG_PASSPHRASE}</gpg.passphrase>
                   <gpg.executable>gpg</gpg.executable>
+                  <!-- Re-enable artifact signing for the Maven Central release
+                       build (the pom defaults gpg.skip to true for local builds). -->
+                  <gpg.skip>false</gpg.skip>
                 </properties>
               </profile>
             </profiles>

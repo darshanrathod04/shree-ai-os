@@ -1,6 +1,7 @@
 package com.shreeai.os.platform.runtime.service;
 
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
+import com.shreeai.os.platform.runtime.execution.ExecutionRequest;
 import com.shreeai.os.platform.runtime.execution.ExecutionResult;
 import com.shreeai.os.platform.runtime.AbstractRuntimeService;
 import com.shreeai.os.platform.runtime.RuntimeState;
@@ -1461,9 +1462,18 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                     response = buildEmptyBundleResponse(llmRouter, request);
                 }
 
+                // Preserve baseline synthesizer response so rich structured output
+                // is never completely lost when canonical Evidence Mode runs.
+                final SynthesizedResponse baselineSynthesizerResponse = response;
+
                 Map<String, Object> structured = new LinkedHashMap<>();
 
                 structured.put("response", response);
+                structured.put("synthesizerResponse", baselineSynthesizerResponse);
+                if (baselineSynthesizerResponse != null && baselineSynthesizerResponse.answer() != null
+                        && !baselineSynthesizerResponse.answer().isBlank()) {
+                    structured.put("groundingAnswer", baselineSynthesizerResponse.answer());
+                }
                 structured.putAll(buildStructuredPayload(request));
 
                 // Additive, backward-compatible routing evidence so callers can
@@ -1541,12 +1551,72 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                                     // generate() call invokes the LLM when available,
                                     // and falls back to the deterministic renderer
                                     // when the LLM is absent / unreachable.
+                                    //
+                                    // Provide baseline synthesis as grounding in the
+                                    // execution request metadata so NaturalResponseAgent
+                                    // receives the full structured context.
+                                    ExecutionRequest naturalRequest = request;
+                                    if (baselineSynthesizerResponse != null
+                                            && baselineSynthesizerResponse.answer() != null
+                                            && !baselineSynthesizerResponse.answer().isBlank()) {
+                                        Map<String, Object> enrichedMeta = new LinkedHashMap<>(request.metadata());
+                                        enrichedMeta.put("synthesizerGrounding", baselineSynthesizerResponse.answer());
+                                        if (baselineSynthesizerResponse.structuredData() != null) {
+                                            enrichedMeta.putAll(baselineSynthesizerResponse.structuredData());
+                                        }
+                                        naturalRequest = ExecutionRequest.builder()
+                                                .requestId(request.requestId())
+                                                .requestType(request.requestType())
+                                                .payload(request.payload())
+                                                .context(request.context())
+                                                .metadata(enrichedMeta)
+                                                .build();
+                                    }
+
                                     com.shreeai.os.platform.runtime.agents.NaturalResponseAgent naturalAgent =
                                             new com.shreeai.os.platform.runtime.agents.NaturalResponseAgent(
                                                     llmRouter);
 
-                                    response = naturalAgent.generate(verificationReport, request);
+                                    SynthesizedResponse naturalResponse =
+                                            naturalAgent.generate(verificationReport, naturalRequest);
+
+                                    // Preserve structured sections and metadata from baselineResponse
+                                    // into naturalResponse so structured facts are maintained.
+                                    List<com.shreeai.os.platform.kernels.response.model.ResponseSection> combinedSections =
+                                            new java.util.ArrayList<>(naturalResponse.sections());
+                                    if (baselineSynthesizerResponse != null
+                                            && baselineSynthesizerResponse.sections() != null) {
+                                        for (var sec : baselineSynthesizerResponse.sections()) {
+                                            if (!combinedSections.contains(sec)) {
+                                                combinedSections.add(sec);
+                                            }
+                                        }
+                                    }
+                                    Map<String, Object> combinedStructuredData = new LinkedHashMap<>();
+                                    if (baselineSynthesizerResponse != null
+                                            && baselineSynthesizerResponse.structuredData() != null) {
+                                        combinedStructuredData.putAll(baselineSynthesizerResponse.structuredData());
+                                    }
+                                    if (naturalResponse.structuredData() != null) {
+                                        combinedStructuredData.putAll(naturalResponse.structuredData());
+                                    }
+
+                                    response = new com.shreeai.os.platform.kernels.response.model.SynthesizedResponse(
+                                            naturalResponse.answer(),
+                                            combinedSections,
+                                            naturalResponse.confidence(),
+                                            naturalResponse.style(),
+                                            naturalResponse.generatedAt(),
+                                            combinedStructuredData
+                                    );
+
                                     structured.put("response", response);
+                                    structured.put("synthesizerResponse", baselineSynthesizerResponse);
+                                    if (baselineSynthesizerResponse != null
+                                            && baselineSynthesizerResponse.answer() != null
+                                            && !baselineSynthesizerResponse.answer().isBlank()) {
+                                        structured.put("groundingAnswer", baselineSynthesizerResponse.answer());
+                                    }
                                     structured.put("confidence", verificationReport.confidence());
                                     structured.put("verificationTier",
                                             verificationReport.tier().name());
