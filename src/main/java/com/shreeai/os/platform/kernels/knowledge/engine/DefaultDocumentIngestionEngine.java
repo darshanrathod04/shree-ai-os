@@ -16,6 +16,7 @@ import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeSource;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumMap;
@@ -55,15 +56,34 @@ public final class DefaultDocumentIngestionEngine implements DocumentIngestionEn
 
     private final KnowledgeSourceRegistry registry;
     private final Map<ParserType, DocumentParser> parsers;
+    private final Clock clock;
 
     /**
      * Creates an engine bound to the registry that owns the knowledge sources.
+     * Uses {@link Clock#systemUTC()} for observability timestamps.
      *
      * @param registry the source registry used to resolve and validate sources
      *                 (must not be null)
      */
     public DefaultDocumentIngestionEngine(KnowledgeSourceRegistry registry) {
+        this(registry, Clock.systemUTC());
+    }
+
+    /**
+     * Creates an engine bound to the registry with an injectable {@link Clock}.
+     *
+     * <p>Production code uses {@code Clock.systemUTC()}; deterministic tests
+     * may inject {@code Clock.fixed(...)} so that the same input always
+     * produces byte-identical canonical output, including {@code ingestedAt}.</p>
+     *
+     * @param registry the source registry used to resolve and validate sources
+     *                 (must not be null)
+     * @param clock    the clock supplying the {@code ingestedAt} timestamp
+     *                 (must not be null)
+     */
+    public DefaultDocumentIngestionEngine(KnowledgeSourceRegistry registry, Clock clock) {
         this.registry = Objects.requireNonNull(registry, "registry must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
         DocumentParser html = new HtmlDocumentParser();
         Map<ParserType, DocumentParser> map = new EnumMap<>(ParserType.class);
         map.put(ParserType.MARKDOWN, new MarkdownDocumentParser());
@@ -107,7 +127,7 @@ public final class DefaultDocumentIngestionEngine implements DocumentIngestionEn
                 documentId, title, sourceId, language, sections);
 
         KnowledgeDocument document = new KnowledgeDocument(
-                documentId, sourceId, title, parserType, chunks, Instant.now());
+                documentId, sourceId, title, parserType, chunks, clock.instant());
         Duration processingTime = Duration.ofNanos(System.nanoTime() - startNanos);
         return new IngestionResult(document, chunks.size(), totalCharacters(chunks), processingTime);
     }
