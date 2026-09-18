@@ -29,6 +29,12 @@ import com.shreeai.os.platform.sdk.events.RuntimeEvent;
 import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 import com.shreeai.os.platform.kernels.planning.response.PlanningResponseBuilder;
 
+import com.shreeai.os.platform.kernels.planning.engine.DefaultAdaptiveReplanningEngine;
+import com.shreeai.os.platform.kernels.planning.model.ProgressSnapshot;
+import com.shreeai.os.platform.kernels.planning.model.ReplanningReason;
+import com.shreeai.os.platform.kernels.context.model.UserConstraints;
+import java.util.Objects;
+
 import java.time.Instant;
 import java.util.Map;
 
@@ -113,6 +119,23 @@ public final class PlanningStage implements ExecutionStage {
                 null,
                 new GoalIntelligenceEngine()
         );
+    }
+
+    /**
+     * P2.4 explicit progress update, invoked after P2.3 has produced a schedule.
+     * Does not call planningService, rebuild the graph, or mirror artifacts in metadata.
+     * currentDay is supplied by the caller, never derived from a clock.
+     */
+    public void replan(PipelineExecutionState state, ProgressSnapshot progress,
+            UserConstraints constraints, int currentDay, ReplanningReason reason) {
+        Objects.requireNonNull(state, "state must not be null");
+        state.updateCognitiveState(cs -> {
+            var effectiveConstraints = constraints == null ? cs.userConstraints() : constraints;
+            var result = new DefaultAdaptiveReplanningEngine().replan(
+                    cs.executionPlan(), cs.taskGraph(), progress, effectiveConstraints, currentDay, reason);
+            var updated = cs.withReplanningResult(result).withExecutionPlan(result.executionPlan());
+            return effectiveConstraints == null ? updated : updated.withUserConstraints(effectiveConstraints);
+        });
     }
 
     @Override
