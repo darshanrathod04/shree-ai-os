@@ -162,6 +162,9 @@ public final class EvidenceAgent {
     // ─── Per-source extraction ────────────────────────────────────────────────
 
     private void extractKnowledgeEvidence(EvidenceBundle.Builder builder, Map<String, Object> metadata) {
+        if (Boolean.FALSE.equals(metadata.get("knowledgeFound"))) {
+            return;
+        }
         Object raw = metadata.get(KEY_KNOWLEDGE_RESULTS);
         if (!(raw instanceof List<?> list) || list.isEmpty()) return;
 

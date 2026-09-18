@@ -236,7 +236,7 @@ public final class ContextStage implements ExecutionStage {
             for (AcquisitionDecisionTarget target : acquisitionDecisionPlan.targets()) {
                 if (target.decision().requiresAcquisition()) {
                     sourceRegistry.findById(target.sourceId()).ifPresent(src -> {
-                        String content = contentResolver.resolveContent(src, target);
+                        String content = contentResolver.resolveContent(src, target, userInput);
                         if (content != null && !content.isBlank()) {
                             rawContentBySourceId.put(target.sourceId(), content);
                         }

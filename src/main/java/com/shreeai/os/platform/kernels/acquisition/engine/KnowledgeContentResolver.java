@@ -23,4 +23,16 @@ public interface KnowledgeContentResolver {
      * @return raw document content (e.g. Markdown, HTML, or plain text), or null if content cannot be resolved
      */
     String resolveContent(KnowledgeSource source, AcquisitionDecisionTarget target);
+
+    /**
+     * Resolves raw document content with query context for domain-aware acquisition.
+     *
+     * @param source the knowledge source being acquired (never null)
+     * @param target the acquisition decision target (never null)
+     * @param query  the user query or context keyword (may be null)
+     * @return raw document content, or null if content cannot be resolved
+     */
+    default String resolveContent(KnowledgeSource source, AcquisitionDecisionTarget target, String query) {
+        return resolveContent(source, target);
+    }
 }

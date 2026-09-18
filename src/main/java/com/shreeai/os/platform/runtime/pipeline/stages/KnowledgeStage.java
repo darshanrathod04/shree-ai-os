@@ -190,8 +190,16 @@ public final class KnowledgeStage implements ExecutionStage {
             // Normalize the query to enable proper matching (removes interrogative prefixes, etc.)
             String normalizedQuery = QueryNormalizer.normalize(requestText);
 
-            // Search for relevant knowledge
-            List<KnowledgeNode> allKnowledge = new ArrayList<>(knowledgeSearchService.search(normalizedQuery));
+            // Search for relevant knowledge and discard items below the minimum relevance threshold (0.65)
+            List<KnowledgeNode> rawSearchResults = knowledgeSearchService.search(normalizedQuery);
+            List<KnowledgeNode> allKnowledge = new ArrayList<>();
+            if (rawSearchResults != null) {
+                for (KnowledgeNode node : rawSearchResults) {
+                    if (knowledgeRankingService.calculateRelevance(normalizedQuery, node) >= KnowledgeRankingService.MIN_RELEVANCE_THRESHOLD) {
+                        allKnowledge.add(node);
+                    }
+                }
+            }
 
             // Wire K0.6: If allKnowledge is empty (missing knowledge), integrate acquired documents from orchestrator
             if (allKnowledge.isEmpty()) {
@@ -260,7 +268,7 @@ public final class KnowledgeStage implements ExecutionStage {
                 }
             }
 
-            // Rank knowledge by relevance
+            // Rank knowledge by relevance (enforces MIN_RELEVANCE_THRESHOLD = 0.65)
             List<KnowledgeNode> rankedKnowledge = knowledgeRankingService.rankByRelevance(
                     normalizedQuery,
                     allKnowledge,
@@ -305,6 +313,10 @@ public final class KnowledgeStage implements ExecutionStage {
                 state.addMetadata("knowledgeTitle", title);
                 state.addMetadata("knowledgeSummary", top.getDescription());
                 state.addMetadata("knowledgeMetadata", top.getMetadata());
+            } else {
+                state.addMetadata("knowledgeTitle", "");
+                state.addMetadata("knowledgeSummary", "");
+                state.addMetadata("knowledgeMetadata", Map.of());
             }
 
             state.addMessage("Knowledge retrieved: " + knowledgeCount + " items for memory " + memoryId);

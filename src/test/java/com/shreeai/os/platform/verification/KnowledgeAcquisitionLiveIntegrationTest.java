@@ -127,4 +127,81 @@ public class KnowledgeAcquisitionLiveIntegrationTest {
         assertTrue(hasKnowledgeEvidence, "EvidenceBundle must contain KNOWLEDGE evidence for architecture query");
         System.out.println("[SUCCESS] Architecture query successfully acquired and grounded knowledge!");
     }
+
+    @Test
+    @DisplayName("Verify Python query does not inject Java Platform Architecture or Spring Boot docs")
+    public void testPythonQueryDoesNotInjectJavaKnowledge() {
+        System.out.println("===============================================================");
+        System.out.println("TEST: Verify Python Query Does Not Inject Java Knowledge");
+        System.out.println("===============================================================");
+
+        SDKResponse response = client.chat("whats is python");
+
+        assertNotNull(response, "Response must not be null");
+        assertNotNull(response.answer(), "Answer must not be null");
+        assertFalse(response.answer().isBlank(), "Answer must not be blank");
+
+        System.out.println("[Python Query Answer]\n" + response.answer());
+
+        // Assert answer does NOT contain Java Platform Architecture or Spring Boot
+        assertFalse(response.answer().contains("Java Platform Architecture and Specifications"),
+                "Python query answer must NOT contain Java Platform Architecture");
+        assertFalse(response.answer().contains("Spring Framework and Spring Boot Architecture"),
+                "Python query answer must NOT contain Spring Boot Architecture");
+
+        Map<String, Object> payload = response.structuredPayload();
+        assertNotNull(payload, "Structured payload must not be null");
+
+        Object evidenceRaw = payload.get("evidence");
+        if (evidenceRaw instanceof List<?> evidenceList) {
+            for (Object item : evidenceList) {
+                if (item instanceof Map<?, ?> itemMap) {
+                    String title = String.valueOf(itemMap.get("title"));
+                    String content = String.valueOf(itemMap.get("content"));
+                    assertFalse(title.contains("Java Platform Architecture"),
+                            "Evidence title must not be Java for Python query: " + title);
+                    assertFalse(content.contains("JVM Execution: Bytecode compilation"),
+                            "Evidence content must not contain JVM bytecode for Python query");
+                }
+            }
+        }
+        System.out.println("[SUCCESS] Python query is clean of Java Platform Architecture injection!");
+    }
+
+    @Test
+    @DisplayName("Verify Hospital Management query does not inject Java Platform Architecture or JVM specs")
+    public void testHospitalManagementDoesNotInjectJavaKnowledge() {
+        System.out.println("===============================================================");
+        System.out.println("TEST: Verify Hospital Management Query Does Not Inject Java Knowledge");
+        System.out.println("===============================================================");
+
+        SDKResponse response = client.chat("Create a hospital management system");
+
+        assertNotNull(response, "Response must not be null");
+        assertNotNull(response.answer(), "Answer must not be null");
+        assertFalse(response.answer().isBlank(), "Answer must not be blank");
+
+        System.out.println("[Hospital Management Answer]\n" + response.answer());
+
+        // Assert answer does NOT contain Java JVM / Spring Boot specs
+        assertFalse(response.answer().contains("Java Platform Architecture and Specifications"),
+                "Hospital management answer must NOT contain Java Platform Architecture");
+        assertFalse(response.answer().contains("JVM Execution: Bytecode compilation"),
+                "Hospital management answer must NOT contain JVM specs");
+
+        Map<String, Object> payload = response.structuredPayload();
+        if (payload != null && payload.get("evidence") instanceof List<?> evidenceList) {
+            for (Object item : evidenceList) {
+                if (item instanceof Map<?, ?> itemMap) {
+                    String title = String.valueOf(itemMap.get("title"));
+                    String content = String.valueOf(itemMap.get("content"));
+                    assertFalse(title.contains("Java Platform Architecture"),
+                            "Evidence title must not be Java for hospital management query: " + title);
+                    assertFalse(content.contains("JVM Execution: Bytecode compilation"),
+                            "Evidence content must not contain JVM bytecode for hospital management query");
+                }
+            }
+        }
+        System.out.println("[SUCCESS] Hospital management query is clean of Java Platform Architecture injection!");
+    }
 }

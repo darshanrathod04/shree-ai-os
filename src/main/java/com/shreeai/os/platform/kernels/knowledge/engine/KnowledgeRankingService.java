@@ -27,24 +27,34 @@ import java.util.Map;
 public final class KnowledgeRankingService {
 
     /**
-     * Ranks knowledge nodes by relevance to the query.
-     *
-     * <p>Ranking factors (in order of importance):</p>
-     * <ol>
-     *   <li>Text relevance (label/description match)</li>
-     *   <li>Confidence (higher confidence ranks higher)</li>
-     *   <li>Authority (source authority)</li>
-     *   <li>Freshness (newer knowledge ranks higher)</li>
-     *   <li>Relationship strength (number of relationships)</li>
-     * </ol>
+     * Strict minimum relevance/similarity threshold required for knowledge to be attached.
+     * Documents scoring below this threshold (0.65 on 0.0-1.0 scale) are discarded.
+     */
+    public static final double MIN_RELEVANCE_THRESHOLD = 0.65;
+
+    /**
+     * Ranks knowledge nodes by relevance to the query, discarding items below {@link #MIN_RELEVANCE_THRESHOLD}.
      *
      * @param query          the search query
      * @param knowledgeNodes the knowledge nodes to rank
      * @param limit          the maximum number of results to return
-     * @return ranked list of knowledge nodes (most relevant first)
+     * @return ranked list of knowledge nodes meeting the threshold (most relevant first)
      */
     public List<KnowledgeNode> rankByRelevance(String query, List<KnowledgeNode> knowledgeNodes, int limit) {
-        if (query == null || query.isBlank()) {
+        return rankByRelevance(query, knowledgeNodes, limit, MIN_RELEVANCE_THRESHOLD);
+    }
+
+    /**
+     * Ranks knowledge nodes by relevance with an explicit threshold.
+     *
+     * @param query          the search query
+     * @param knowledgeNodes the knowledge nodes to rank
+     * @param limit          the maximum number of results to return
+     * @param minThreshold   the minimum relevance threshold (0.0 - 1.0)
+     * @return ranked list of knowledge nodes (most relevant first)
+     */
+    public List<KnowledgeNode> rankByRelevance(String query, List<KnowledgeNode> knowledgeNodes, int limit, double minThreshold) {
+        if (query == null || query.isBlank() || knowledgeNodes == null) {
             return List.of();
         }
 
@@ -52,6 +62,7 @@ public final class KnowledgeRankingService {
         String queryLower = QueryNormalizer.normalize(query);
 
         return knowledgeNodes.stream()
+                .filter(node -> (calculateRelevanceScore(queryLower, node) / 100.0) >= minThreshold)
                 .sorted((a, b) -> {
                     double scoreA = calculateRelevanceScore(queryLower, a);
                     double scoreB = calculateRelevanceScore(queryLower, b);
@@ -59,6 +70,21 @@ public final class KnowledgeRankingService {
                 })
                 .limit(limit)
                 .toList();
+    }
+
+    /**
+     * Calculates normalized relevance (0.0 - 1.0) for a knowledge node against a query.
+     *
+     * @param query the query string
+     * @param node  the knowledge node
+     * @return normalized relevance score between 0.0 and 1.0
+     */
+    public double calculateRelevance(String query, KnowledgeNode node) {
+        if (query == null || query.isBlank() || node == null) {
+            return 0.0;
+        }
+        String queryLower = QueryNormalizer.normalize(query);
+        return calculateRelevanceScore(queryLower, node) / 100.0;
     }
 
     /**
@@ -73,23 +99,27 @@ public final class KnowledgeRankingService {
      *   <li>Relationship strength: 0-5 points</li>
      * </ul>
      *
-     * @param queryLower the lowercase query
+     * @param queryLower the lowercase normalized query
      * @param node       the knowledge node to score
      * @return relevance score (0-100)
      */
-    private double calculateRelevanceScore(String queryLower, KnowledgeNode node) {
-        double score = 0.0;
+    public double calculateRelevanceScore(String queryLower, KnowledgeNode node) {
+        if (queryLower == null || queryLower.isBlank() || node == null) {
+            return 0.0;
+        }
+
+        double textRelevance = 0.0;
 
         // Text relevance (0-50 points)
-        String label = node.getLabel().toLowerCase();
+        String label = node.getLabel() != null ? node.getLabel().toLowerCase() : "";
         String description = node.getDescription() != null ? node.getDescription().toLowerCase() : "";
 
         if (label.equals(queryLower)) {
-            score += 50.0; // Exact label match
-        } else if (label.contains(queryLower)) {
-            score += 35.0; // Label contains query
-        } else if (description.contains(queryLower)) {
-            score += 25.0; // Description contains query
+            textRelevance = 50.0; // Exact label match
+        } else if (label.contains(queryLower) || (!label.isBlank() && queryLower.contains(label))) {
+            textRelevance = 40.0; // Label contains query or query contains label
+        } else if (description.contains(queryLower) || (!description.isBlank() && queryLower.contains(description))) {
+            textRelevance = 30.0; // Description contains query
         } else {
             // Check for word overlap
             String[] queryWords = queryLower.split("\\s+");
@@ -97,14 +127,19 @@ public final class KnowledgeRankingService {
             String[] descWords = description.split("\\s+");
 
             long matches = 0;
+            int validQueryWords = 0;
             for (String queryWord : queryWords) {
+                if (queryWord.isBlank() || queryWord.length() < 2) continue;
+                validQueryWords++;
+                boolean matched = false;
                 for (String labelWord : labelWords) {
                     if (labelWord.contains(queryWord)) {
                         matches++;
+                        matched = true;
                         break;
                     }
                 }
-                if (matches == 0) { // Check description if not in label
+                if (!matched) { // Check description if not in label
                     for (String descWord : descWords) {
                         if (descWord.contains(queryWord)) {
                             matches++;
@@ -113,34 +148,49 @@ public final class KnowledgeRankingService {
                     }
                 }
             }
-            if (queryWords.length > 0) {
-                score += (matches * 10.0) / queryWords.length;
+            if (validQueryWords > 0) {
+                textRelevance = (matches * 40.0) / validQueryWords;
             }
         }
 
+        // Strictly enforce that documents with ZERO text relevance score 0.0
+        if (textRelevance <= 0.0) {
+            return 0.0;
+        }
+
+        double score = textRelevance;
+
         // Confidence (0-20 points)
         Map<String, Object> metadata = node.getMetadata();
-        if (metadata.containsKey("confidence")) {
+        if (metadata != null && metadata.containsKey("confidence")) {
             double confidence = ((Number) metadata.get("confidence")).doubleValue();
             score += confidence * 20.0;
+        } else {
+            score += 15.0;
         }
 
         // Authority (0-15 points)
-        if (metadata.containsKey("authority")) {
+        if (metadata != null && metadata.containsKey("authority")) {
             double authority = ((Number) metadata.get("authority")).doubleValue();
             score += authority * 15.0;
+        } else {
+            score += 10.0;
         }
 
         // Freshness (0-10 points) - newer knowledge ranks higher
-        long hoursSinceUpdate = java.time.Duration.between(
-                node.getUpdatedAt(),
-                Instant.now()
-        ).toHours();
-        double freshnessScore = Math.max(0, 10.0 - (hoursSinceUpdate / 24.0)); // Decay over days
-        score += freshnessScore;
+        if (node.getUpdatedAt() != null) {
+            long hoursSinceUpdate = java.time.Duration.between(
+                    node.getUpdatedAt(),
+                    Instant.now()
+            ).toHours();
+            double freshnessScore = Math.max(0, 10.0 - (hoursSinceUpdate / 24.0)); // Decay over days
+            score += freshnessScore;
+        } else {
+            score += 10.0;
+        }
 
         // Relationship strength (0-5 points) - based on metadata if available
-        if (metadata.containsKey("relationshipCount")) {
+        if (metadata != null && metadata.containsKey("relationshipCount")) {
             int relationshipCount = ((Number) metadata.get("relationshipCount")).intValue();
             score += Math.min(5.0, relationshipCount * 1.0);
         }
@@ -157,13 +207,27 @@ public final class KnowledgeRankingService {
      * @return ranked knowledge nodes
      */
     public List<KnowledgeNode> rankBySimilarity(String text, List<KnowledgeNode> knowledgeNodes, int limit) {
-        if (text == null || text.isBlank()) {
+        return rankBySimilarity(text, knowledgeNodes, limit, MIN_RELEVANCE_THRESHOLD);
+    }
+
+    /**
+     * Ranks knowledge nodes by similarity with an explicit threshold.
+     *
+     * @param text           the reference text
+     * @param knowledgeNodes the knowledge nodes to rank
+     * @param limit          the maximum number of results
+     * @param minThreshold   the minimum similarity threshold
+     * @return ranked knowledge nodes
+     */
+    public List<KnowledgeNode> rankBySimilarity(String text, List<KnowledgeNode> knowledgeNodes, int limit, double minThreshold) {
+        if (text == null || text.isBlank() || knowledgeNodes == null) {
             return List.of();
         }
 
         String textLower = text.toLowerCase();
 
         return knowledgeNodes.stream()
+                .filter(node -> (calculateTextSimilarity(textLower, node.getLabel() + " " + (node.getDescription() != null ? node.getDescription() : "")) / 100.0) >= minThreshold)
                 .sorted((a, b) -> {
                     double similarityA = calculateTextSimilarity(textLower, a.getLabel() + " " + (a.getDescription() != null ? a.getDescription() : ""));
                     double similarityB = calculateTextSimilarity(textLower, b.getLabel() + " " + (b.getDescription() != null ? b.getDescription() : ""));
