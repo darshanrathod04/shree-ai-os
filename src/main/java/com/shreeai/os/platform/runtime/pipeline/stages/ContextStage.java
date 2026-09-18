@@ -12,7 +12,10 @@ import com.shreeai.os.platform.kernels.acquisition.engine.KnowledgeAcquisitionOr
 import com.shreeai.os.platform.kernels.acquisition.engine.ProviderRouter;
 import com.shreeai.os.platform.kernels.acquisition.engine.SourceDiscoveryEngine;
 import com.shreeai.os.platform.kernels.acquisition.engine.TrustSelectionEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.KnowledgeContentResolver;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultKnowledgeContentResolver;
 import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionDecisionPlan;
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionDecisionTarget;
 import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionPlan;
 import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionResult;
 import com.shreeai.os.platform.kernels.acquisition.model.KnowledgeRequirementSet;
@@ -75,17 +78,20 @@ public final class ContextStage implements ExecutionStage {
     private final DomainDetector domainDetector;
     private final ConstraintExtractionEngine constraintEngine;
     private final KnowledgeSourceRegistry sourceRegistry;
+    private final KnowledgeContentResolver contentResolver;
 
     public ContextStage() {
         this(new DefaultPrimaryIntentDetector(), new DefaultDomainDetector(),
                 new DefaultConstraintExtractionEngine(),
-                new DefaultKnowledgeSourceRegistry());
+                DefaultKnowledgeSourceRegistry.withDefaults(),
+                new DefaultKnowledgeContentResolver());
     }
 
     public ContextStage(PrimaryIntentDetector intentDetector, DomainDetector domainDetector,
                         ConstraintExtractionEngine constraintEngine) {
         this(intentDetector, domainDetector, constraintEngine,
-                new DefaultKnowledgeSourceRegistry());
+                DefaultKnowledgeSourceRegistry.withDefaults(),
+                new DefaultKnowledgeContentResolver());
     }
 
     /**
@@ -103,11 +109,30 @@ public final class ContextStage implements ExecutionStage {
     public ContextStage(PrimaryIntentDetector intentDetector, DomainDetector domainDetector,
                         ConstraintExtractionEngine constraintEngine,
                         KnowledgeSourceRegistry sourceRegistry) {
+        this(intentDetector, domainDetector, constraintEngine, sourceRegistry,
+                new DefaultKnowledgeContentResolver());
+    }
+
+    /**
+     * Creates a context stage backed by explicit registry catalog and content resolver.
+     *
+     * @param intentDetector   the primary intent detector (must not be null)
+     * @param domainDetector   the domain detector (must not be null)
+     * @param constraintEngine the user constraint extraction engine (must not be null)
+     * @param sourceRegistry   the K1 knowledge source registry catalog (must not be null)
+     * @param contentResolver  the content resolver for acquisitions (must not be null)
+     */
+    public ContextStage(PrimaryIntentDetector intentDetector, DomainDetector domainDetector,
+                        ConstraintExtractionEngine constraintEngine,
+                        KnowledgeSourceRegistry sourceRegistry,
+                        KnowledgeContentResolver contentResolver) {
         this.intentDetector = intentDetector;
         this.domainDetector = domainDetector;
         this.constraintEngine = constraintEngine;
         this.sourceRegistry = java.util.Objects.requireNonNull(sourceRegistry,
                 "sourceRegistry must not be null");
+        this.contentResolver = java.util.Objects.requireNonNull(contentResolver,
+                "contentResolver must not be null");
     }
 
     @Override
@@ -200,18 +225,32 @@ public final class ContextStage implements ExecutionStage {
 
             // K0.6.5: Execute the locked acquisition workflow for every decision
             // of the plan. Deterministic execution only - the orchestrator never
-            // re-decides what to acquire. With no content supply wired into the
-            // runtime yet, pending acquisitions are isolated and recorded as
-            // FAILED; cache reuses without a cached document fail the same way.
+            // re-decides what to acquire. Targets requiring acquisition (ACQUIRE / REFRESH)
+            // have content resolved via the configured KnowledgeContentResolver.
             DocumentIngestionEngine ingestionEngine =
                     new DefaultDocumentIngestionEngine(sourceRegistry);
             KnowledgeAcquisitionOrchestrator acquisitionOrchestrator =
                     new DefaultKnowledgeAcquisitionOrchestrator(sourceRegistry, ingestionEngine);
+
+            java.util.Map<String, String> rawContentBySourceId = new java.util.LinkedHashMap<>();
+            for (AcquisitionDecisionTarget target : acquisitionDecisionPlan.targets()) {
+                if (target.decision().requiresAcquisition()) {
+                    sourceRegistry.findById(target.sourceId()).ifPresent(src -> {
+                        String content = contentResolver.resolveContent(src, target);
+                        if (content != null && !content.isBlank()) {
+                            rawContentBySourceId.put(target.sourceId(), content);
+                        }
+                    });
+                }
+            }
+
             AcquisitionResult acquisitionResult =
-                    acquisitionOrchestrator.execute(acquisitionDecisionPlan);
+                    acquisitionOrchestrator.execute(acquisitionDecisionPlan, java.util.List.of(), rawContentBySourceId);
             CognitiveState updatedCognitiveStateWithResult =
                     state.getCognitiveState().withAcquisitionResult(acquisitionResult);
             state.setCognitiveState(updatedCognitiveStateWithResult);
+            state.addMetadata("acquisitionResult", acquisitionResult);
+            state.addMetadata("acquiredKnowledgeDocuments", acquisitionResult.documents());
 
             // Build the canonical context intelligence aggregate.
             ContextIntelligence contextIntelligence = ContextIntelligence.of(

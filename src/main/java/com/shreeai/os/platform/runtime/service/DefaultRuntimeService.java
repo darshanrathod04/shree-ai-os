@@ -623,7 +623,8 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                         knowledgeQueryService,
                         knowledgeSearchService,
                         knowledgeRankingService,
-                        knowledgeGroundingService
+                        knowledgeGroundingService,
+                        knowledgeService
                 );
 
         stages.add(knowledgeStage);
@@ -1514,36 +1515,46 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                                 evidenceAgent.extractFromPipelineState(
                                         pipelineResult.getExecutionState());
                             if (evidenceBundle != null && !evidenceBundle.isEmpty()) {
+                                com.shreeai.os.platform.runtime.agents.VerificationAgent verificationAgent =
+                                        new com.shreeai.os.platform.runtime.agents.VerificationAgent();
+                                com.shreeai.os.platform.runtime.model.VerificationReport verificationReport =
+                                        verificationAgent.verify(evidenceBundle);
+
+                                // Build a serializable evidence summary for the API response
+                                java.util.List<java.util.Map<String, Object>> evidenceSummary =
+                                        new java.util.ArrayList<>();
+                                for (com.shreeai.os.platform.runtime.model.EvidenceItem item
+                                        : evidenceBundle.items()) {
+                                    java.util.Map<String, Object> itemMap = new java.util.LinkedHashMap<>();
+                                    itemMap.put("itemId", item.itemId());
+                                    itemMap.put("sourceType", item.sourceType().name());
+                                    itemMap.put("title", item.title());
+                                    itemMap.put("content", item.content());
+                                    itemMap.put("confidenceHint", item.confidenceHint());
+                                    itemMap.put("citations", item.citations());
+                                    itemMap.put("attributes", item.attributes());
+                                    evidenceSummary.add(itemMap);
+                                }
+
+                                structured.put("evidence", evidenceSummary);
+                                structured.put("evidenceCount", evidenceBundle.size());
+                                structured.put("evidenceBundleId", evidenceBundle.bundleId());
+                                structured.put("verificationTier", verificationReport.tier().name());
+                                structured.put("verificationConfidence", verificationReport.confidence());
+                                structured.put("citationCount", verificationReport.citations().size());
+                                if (!verificationReport.citations().isEmpty()) {
+                                    structured.put("citations", verificationReport.citations());
+                                }
+                                if (!verificationReport.gaps().isEmpty()) {
+                                    structured.put("gaps", verificationReport.gaps());
+                                }
+
                                 // Sprint-21: ONLY override the synthesizer output
                                 // in the canonical CHAT path (route == null)
                                 // when evidence is present. Routed operations
                                 // (Planning, Memory, etc.) keep the synthesizer
                                 // output which contains domain-specific content.
                                 if (route == null) {
-                                    com.shreeai.os.platform.runtime.agents.VerificationAgent verificationAgent =
-                                            new com.shreeai.os.platform.runtime.agents.VerificationAgent();
-                                    com.shreeai.os.platform.runtime.model.VerificationReport verificationReport =
-                                            verificationAgent.verify(evidenceBundle);
-
-                                    // Build a serializable evidence summary for the API response
-                                    java.util.List<java.util.Map<String, Object>> evidenceSummary =
-                                            new java.util.ArrayList<>();
-                                    for (com.shreeai.os.platform.runtime.model.EvidenceItem item
-                                            : evidenceBundle.items()) {
-                                        java.util.Map<String, Object> itemMap = new java.util.LinkedHashMap<>();
-                                        itemMap.put("itemId", item.itemId());
-                                        itemMap.put("sourceType", item.sourceType().name());
-                                        itemMap.put("title", item.title());
-                                        itemMap.put("content", item.content());
-                                        itemMap.put("confidenceHint", item.confidenceHint());
-                                        itemMap.put("citations", item.citations());
-                                        itemMap.put("attributes", item.attributes());
-                                        evidenceSummary.add(itemMap);
-                                    }
-
-                                    structured.put("evidence", evidenceSummary);
-                                    structured.put("evidenceCount", evidenceBundle.size());
-                                    structured.put("evidenceBundleId", evidenceBundle.bundleId());
 
                                     // Sprint-21: the single authoritative synthesis
                                     // point in the canonical CHAT path. The agent is
@@ -1618,20 +1629,6 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                                         structured.put("groundingAnswer", baselineSynthesizerResponse.answer());
                                     }
                                     structured.put("confidence", verificationReport.confidence());
-                                    structured.put("verificationTier",
-                                            verificationReport.tier().name());
-                                    structured.put("verificationConfidence",
-                                            verificationReport.confidence());
-                                    structured.put("citationCount",
-                                            verificationReport.citations().size());
-                                    if (!verificationReport.citations().isEmpty()) {
-                                        structured.put("citations",
-                                                verificationReport.citations());
-                                    }
-                                    if (!verificationReport.gaps().isEmpty()) {
-                                        structured.put("gaps",
-                                                verificationReport.gaps());
-                                    }
                                 }
                                 // When route != null (routed operation): synthesizer
                                 // output is preserved — skip NaturalResponseAgent.

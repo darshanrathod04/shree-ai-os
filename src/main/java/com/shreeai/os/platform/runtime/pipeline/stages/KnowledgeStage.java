@@ -1,12 +1,20 @@
 package com.shreeai.os.platform.runtime.pipeline.stages;
 
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionResult;
+import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeIngestionService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeQueryService;
 import com.shreeai.os.platform.kernels.knowledge.api.KnowledgeSearchService;
 import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeGroundingService;
 import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeRankingService;
 import com.shreeai.os.platform.kernels.knowledge.engine.QueryNormalizer;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeDocument;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeDocumentChunk;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeId;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgePayload;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeScope;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeState;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeType;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
@@ -18,6 +26,8 @@ import com.shreeai.os.platform.sdk.events.RuntimeEvent;
 import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.Objects;
@@ -53,6 +63,7 @@ public final class KnowledgeStage implements ExecutionStage {
     private final KnowledgeSearchService knowledgeSearchService;
     private final KnowledgeRankingService knowledgeRankingService;
     private final KnowledgeGroundingService knowledgeGroundingService;
+    private final KnowledgeIngestionService knowledgeIngestionService;
 
     /**
      * Creates a new KnowledgeStage with real knowledge kernel services.
@@ -86,11 +97,34 @@ public final class KnowledgeStage implements ExecutionStage {
             KnowledgeSearchService knowledgeSearchService,
             KnowledgeRankingService knowledgeRankingService,
             KnowledgeGroundingService knowledgeGroundingService) {
+        this(knowledgeQueryService, knowledgeSearchService, knowledgeRankingService,
+                knowledgeGroundingService,
+                knowledgeSearchService instanceof KnowledgeIngestionService kis ? kis : null);
+    }
+
+    /**
+     * Creates a new KnowledgeStage with explicit grounding and ingestion services.
+     *
+     * @param knowledgeQueryService     the knowledge query service
+     * @param knowledgeSearchService    the knowledge search service
+     * @param knowledgeRankingService   the knowledge ranking service
+     * @param knowledgeGroundingService the grounding service (must not be null)
+     * @param knowledgeIngestionService the ingestion service for acquired documents (may be null)
+     */
+    public KnowledgeStage(
+            KnowledgeQueryService knowledgeQueryService,
+            KnowledgeSearchService knowledgeSearchService,
+            KnowledgeRankingService knowledgeRankingService,
+            KnowledgeGroundingService knowledgeGroundingService,
+            KnowledgeIngestionService knowledgeIngestionService) {
         this.knowledgeQueryService = knowledgeQueryService;
         this.knowledgeSearchService = knowledgeSearchService;
         this.knowledgeRankingService = knowledgeRankingService;
         this.knowledgeGroundingService = Objects.requireNonNull(
                 knowledgeGroundingService, "knowledgeGroundingService must not be null");
+        this.knowledgeIngestionService = knowledgeIngestionService != null
+                ? knowledgeIngestionService
+                : (knowledgeSearchService instanceof KnowledgeIngestionService kis ? kis : null);
     }
 
     /**
@@ -157,7 +191,74 @@ public final class KnowledgeStage implements ExecutionStage {
             String normalizedQuery = QueryNormalizer.normalize(requestText);
 
             // Search for relevant knowledge
-            List<KnowledgeNode> allKnowledge = knowledgeSearchService.search(normalizedQuery);
+            List<KnowledgeNode> allKnowledge = new ArrayList<>(knowledgeSearchService.search(normalizedQuery));
+
+            // Wire K0.6: If allKnowledge is empty (missing knowledge), integrate acquired documents from orchestrator
+            if (allKnowledge.isEmpty()) {
+                AcquisitionResult acqResult = state.getCognitiveState() != null
+                        ? state.getCognitiveState().acquisitionResult()
+                        : null;
+                List<KnowledgeDocument> acquiredDocs = acqResult != null ? acqResult.documents() : List.of();
+                if (acquiredDocs.isEmpty() && state.getMetadata().get("acquiredKnowledgeDocuments") instanceof List<?> list) {
+                    acquiredDocs = list.stream()
+                            .filter(KnowledgeDocument.class::isInstance)
+                            .map(KnowledgeDocument.class::cast)
+                            .toList();
+                }
+
+                if (!acquiredDocs.isEmpty()) {
+                    for (KnowledgeDocument doc : acquiredDocs) {
+                        for (KnowledgeDocumentChunk chunk : doc.chunks()) {
+                            String chunkHeading = chunk.metadata() != null && !chunk.metadata().section().isBlank()
+                                    ? chunk.metadata().section()
+                                    : doc.title();
+                            String chunkContent = chunk.content();
+                            if (chunkContent == null || chunkContent.isBlank()) {
+                                continue;
+                            }
+
+                            // 1. Ingest permanently into knowledge service if available
+                            if (knowledgeIngestionService != null) {
+                                try {
+                                    Map<String, Object> meta = new HashMap<>();
+                                    meta.put("sourceId", doc.sourceId());
+                                    meta.put("documentId", doc.documentId());
+                                    if (chunk.metadata() != null) {
+                                        meta.put("section", chunk.metadata().section());
+                                        meta.put("chunkIndex", chunk.metadata().chunkIndex());
+                                    }
+                                    knowledgeIngestionService.ingest(chunkHeading, chunkContent, meta);
+                                } catch (Exception ignored) {
+                                    // Ingestion failure isolation
+                                }
+                            }
+
+                            // 2. Materialize as KnowledgeNode for immediate retrieval in this pipeline run
+                            Map<String, Object> nodeMeta = new HashMap<>();
+                            nodeMeta.put("sourceId", doc.sourceId());
+                            nodeMeta.put("documentId", doc.documentId());
+                            nodeMeta.put("confidence", 0.85);
+                            if (chunk.metadata() != null) {
+                                nodeMeta.put("section", chunk.metadata().section());
+                                nodeMeta.put("chunkIndex", chunk.metadata().chunkIndex());
+                            }
+
+                            KnowledgeNode node = KnowledgeNode.of(
+                                    new KnowledgeId(chunk.chunkId()),
+                                    KnowledgeType.CONCEPT,
+                                    KnowledgeState.ACTIVE,
+                                    KnowledgeScope.GLOBAL,
+                                    chunkHeading,
+                                    chunkContent,
+                                    nodeMeta,
+                                    doc.ingestedAt() != null ? doc.ingestedAt() : Instant.now(),
+                                    doc.ingestedAt() != null ? doc.ingestedAt() : Instant.now()
+                            );
+                            allKnowledge.add(node);
+                        }
+                    }
+                }
+            }
 
             // Rank knowledge by relevance
             List<KnowledgeNode> rankedKnowledge = knowledgeRankingService.rankByRelevance(

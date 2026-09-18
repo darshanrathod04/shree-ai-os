@@ -55,6 +55,86 @@ public final class DefaultKnowledgeSourceRegistry implements KnowledgeSourceRegi
     public DefaultKnowledgeSourceRegistry() {
     }
 
+    /**
+     * Creates a pre-populated registry configured with canonical, active knowledge
+     * sources for all supported providers and primary domains.
+     *
+     * @return a fully populated, ready-to-use registry
+     */
+    public static DefaultKnowledgeSourceRegistry withDefaults() {
+        DefaultKnowledgeSourceRegistry registry = new DefaultKnowledgeSourceRegistry();
+        registry.registerDefaultSources();
+        return registry;
+    }
+
+    /**
+     * Registers and activates the canonical baseline sources.
+     */
+    public void registerDefaultSources() {
+        registerAndActivate(KnowledgeSourceType.MARKDOWN, "Java Official Documentation",
+                "docs/java-reference.md",
+                "Authoritative specification and developer guide for the Java platform, OOP, Collections, and JVM architecture.",
+                Map.of("authority", "official", "provider", "OFFICIAL_DOCS",
+                        "topics", "Java, OOP, Collections, Streams",
+                        "updatedAt", "2024-01-01T00:00:00Z"));
+
+        registerAndActivate(KnowledgeSourceType.MARKDOWN, "Spring Framework Reference",
+                "docs/spring-reference.md",
+                "Comprehensive reference for Spring Boot, dependency injection, REST APIs, and microservices.",
+                Map.of("authority", "official", "provider", "OFFICIAL_DOCS",
+                        "topics", "Spring, Spring Boot, REST API",
+                        "updatedAt", "2024-01-01T00:00:00Z"));
+
+        registerAndActivate(KnowledgeSourceType.MARKDOWN, "Relational Database & SQL Standards",
+                "docs/database-standards.md",
+                "Relational database design, SQL querying, indexing, and JDBC persistence patterns.",
+                Map.of("authority", "official", "provider", "OFFICIAL_DOCS",
+                        "topics", "SQL, JDBC, Database",
+                        "updatedAt", "2024-01-01T00:00:00Z"));
+
+        registerAndActivate(KnowledgeSourceType.MARKDOWN, "System Architecture & Cloud Engineering",
+                "docs/system-architecture.md",
+                "Distributed systems, high-throughput pipelines, consistency models, Docker, and Kubernetes.",
+                Map.of("authority", "official", "provider", "OFFICIAL_DOCS",
+                        "topics", "Docker, Kubernetes, CI/CD, Architecture",
+                        "updatedAt", "2024-01-01T00:00:00Z"));
+
+        registerAndActivate(KnowledgeSourceType.MARKDOWN, "AI & Cognitive Architectures Guide",
+                "docs/ai-cognitive-systems.md",
+                "Foundations of Large Language Models, RAG pipelines, deterministic embeddings, and cognitive state.",
+                Map.of("authority", "official", "provider", "OFFICIAL_DOCS",
+                        "topics", "RAG, LLM, AI",
+                        "updatedAt", "2024-01-01T00:00:00Z"));
+
+        registerAndActivate(KnowledgeSourceType.WEB, "Universal Web & Technical Knowledge Base",
+                "https://docs.shreeai.io/kb",
+                "Universal knowledge repository covering software engineering best practices, roadmaps, fundamentals, and general research.",
+                Map.of("authority", "verified", "provider", "WEB",
+                        "topics", "General Research, Roadmap, Best Practices, Fundamentals, Interview Preparation, Free Resources",
+                        "updatedAt", "2024-01-01T00:00:00Z"));
+
+        registerAndActivate(KnowledgeSourceType.TEXT, "Platform Setup & Configuration Guide",
+                "config/platform-setup.txt",
+                "Local setup and configuration guides for Shree AI OS development environments.",
+                Map.of("authority", "verified", "provider", "LOCAL_FILES",
+                        "topics", "Platform Setup",
+                        "updatedAt", "2024-01-01T00:00:00Z"));
+
+        registerAndActivate(KnowledgeSourceType.MARKDOWN, "Enterprise Architecture & SOP Repository",
+                "docs/enterprise-sop.md",
+                "Enterprise standard operating procedures, CRM architecture, and governance standards.",
+                Map.of("authority", "enterprise", "provider", "ENTERPRISE_DOCS",
+                        "topics", "Company SOP, CRM Architecture",
+                        "updatedAt", "2024-01-01T00:00:00Z"));
+    }
+
+    private void registerAndActivate(KnowledgeSourceType type, String name,
+                                     String location, String description,
+                                     Map<String, String> metadata) {
+        KnowledgeSource source = register(type, name, location, description, metadata);
+        activate(source.sourceId());
+    }
+
     @Override
     public KnowledgeSource register(KnowledgeSourceType type,
                                     String name,
