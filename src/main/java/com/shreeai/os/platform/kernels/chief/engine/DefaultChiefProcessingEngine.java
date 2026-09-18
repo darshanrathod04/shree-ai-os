@@ -59,11 +59,17 @@ public final class DefaultChiefProcessingEngine
                         .getOrDefault("objective", "")
         );
 
-        List<AgentResponse> responses =
-                orchestrator.orchestrate(
-                        objective,
-                        request.metadata()
-                );
+        List<AgentResponse> responses;
+        try {
+            responses = orchestrator != null
+                    ? orchestrator.orchestrate(objective, request.metadata())
+                    : List.of();
+            if (responses == null) {
+                responses = List.of();
+            }
+        } catch (Exception e) {
+            responses = List.of();
+        }
 
         boolean success = responses.stream().allMatch(AgentResponse::success);
 
@@ -96,20 +102,33 @@ public final class DefaultChiefProcessingEngine
         List<AgentResponse> responses;
 
         // Primary attempt.
-        responses = orchestrator.orchestrate(
-                objective,
-                request.metadata()
-        );
+        try {
+            responses = orchestrator != null
+                    ? orchestrator.orchestrate(objective, request.metadata())
+                    : List.of();
+            if (responses == null) {
+                responses = List.of();
+            }
+        } catch (Exception e) {
+            responses = List.of();
+        }
         attempts = 1;
 
         boolean hasFailure = responses.stream().anyMatch(r -> !r.success());
 
         while (hasFailure && attempts <= policy.maxRetries()) {
             sleepBackoff(policy, attempts);
-            responses = orchestrator.orchestrate(
-                    objective,
-                    request.metadata()
-            );
+            try {
+                responses = orchestrator != null
+                        ? orchestrator.orchestrate(objective, request.metadata())
+                        : List.of();
+                if (responses == null) {
+                    responses = List.of();
+                }
+            } catch (Exception e) {
+                responses = List.of();
+                break;
+            }
             attempts++;
             hasFailure = responses.stream().anyMatch(r -> !r.success());
         }

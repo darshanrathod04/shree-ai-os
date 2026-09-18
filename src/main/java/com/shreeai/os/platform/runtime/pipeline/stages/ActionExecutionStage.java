@@ -13,7 +13,12 @@ import com.shreeai.os.platform.sdk.events.RuntimeEvent;
 import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import com.shreeai.os.platform.kernels.planning.model.ExecutablePlanningGraph;
+import com.shreeai.os.platform.kernels.planning.model.ExecutionNode;
 
 /**
  * ActionExecutionStage - Executes the planned actions.
@@ -69,59 +74,136 @@ public final class ActionExecutionStage implements ExecutionStage {
                     ? context.getExecutionRequest().getRequestId() 
                     : "unknown";
 
+            // Inspect planning graph from cognitive state
+            ExecutablePlanningGraph planningGraph = state.getCognitiveState() != null
+                    ? state.getCognitiveState().executablePlanningGraph()
+                    : null;
+            List<ExecutionNode> nodes = (planningGraph != null && planningGraph.nodes() != null)
+                    ? planningGraph.nodes()
+                    : List.of();
+
+            long startTime = System.currentTimeMillis();
+
             if (executionService == null) {
-                // Fallback to simulated behavior if service not injected
-                String executionId = "exec-" + requestId;
-                String executionStatus = "COMPLETED";
-                state.addMetadata("executionId", executionId);
-                state.addMetadata("executionStatus", executionStatus);
+                // Simulated execution resolving real graph nodes if present
+                List<String> simExecutionIds = new ArrayList<>();
+                List<String> simNodeTitles = new ArrayList<>();
+                if (!nodes.isEmpty()) {
+                    for (ExecutionNode node : nodes) {
+                        simExecutionIds.add("exec-" + requestId + "-" + node.taskId());
+                        simNodeTitles.add(node.title());
+                    }
+                } else {
+                    simExecutionIds.add("exec-" + requestId);
+                    simNodeTitles.add("PIPELINE_ACTION");
+                }
+
+                String primaryId = simExecutionIds.get(0);
+                state.addMetadata("executionId", primaryId);
+                state.addMetadata("executionIds", simExecutionIds);
+                state.addMetadata("executedTaskCount", simExecutionIds.size());
+                state.addMetadata("executedNodes", simNodeTitles);
+                state.addMetadata("executionStatus", "COMPLETED");
                 state.addMetadata("executionCompleted", true);
-                state.addMessage("Execution completed (simulated): " + executionId + " for plan " + planId);
+                state.addMessage("Execution completed (simulated): " + simExecutionIds.size() + " task(s) for plan " + planId);
                 return chain.next(context, state);
             }
 
             // Real execution via ExecutionService
-            // Build a valid ExecutionRequest that satisfies the Execution Kernel validation:
-            // - contextData must be non-empty
-            // - timeoutMs must be positive
-            // - options map must be non-empty
-            java.util.Map<String, Object> contextData = new java.util.HashMap<>();
-            contextData.put("requestId", requestId);
-            contextData.put("planId", planId);
-            contextData.put("taskId", "pipeline-action");
+            List<String> executionIds = new ArrayList<>();
+            List<String> executedNodeTitles = new ArrayList<>();
 
-            java.util.Map<String, Object> optionsMap = new java.util.HashMap<>();
-            optionsMap.put("executionMode", "PIPELINE");
-            optionsMap.put("source", "runtime-pipeline");
+            if (!nodes.isEmpty()) {
+                // Execute resolved task nodes from ExecutablePlanningGraph
+                for (ExecutionNode node : nodes) {
+                    Map<String, Object> contextData = new HashMap<>();
+                    contextData.put("requestId", requestId);
+                    contextData.put("planId", planId);
+                    contextData.put("taskId", node.taskId());
+                    contextData.put("nodeId", node.nodeId());
+                    contextData.put("title", node.title());
+                    contextData.put("day", node.day());
+                    contextData.put("state", node.state().name());
 
-            ExecutionRequest executionRequest = new ExecutionRequest(
-                    new com.shreeai.os.platform.kernels.execution.model.ExecutionId("exec-" + requestId),
-                    "PIPELINE_ACTION",
-                    new com.shreeai.os.platform.kernels.execution.model.ExecutionContext(
-                            new com.shreeai.os.platform.kernels.execution.model.ExecutionId("exec-" + requestId),
-                            planId,
-                            "Execute plan: " + planId,
-                            contextData,
-                            1
-                    ),
-                    new com.shreeai.os.platform.kernels.execution.model.ExecutionOptions(
-                            30000, 3, 1000, false, false, optionsMap
-                    ),
-                    new java.util.HashMap<>()
-            );
+                    Map<String, Object> optionsMap = new HashMap<>();
+                    optionsMap.put("executionMode", "PIPELINE");
+                    optionsMap.put("source", "executable-planning-graph");
+                    optionsMap.put("nodeId", node.nodeId());
+                    optionsMap.put("taskId", node.taskId());
 
-            String executionId = executionService.executeAction(executionRequest);
+                    String actionType = (node.title() != null && !node.title().isBlank())
+                            ? node.title()
+                            : "EXECUTE_TASK";
+
+                    ExecutionRequest executionRequest = new ExecutionRequest(
+                            new com.shreeai.os.platform.kernels.execution.model.ExecutionId("exec-" + requestId + "-" + node.taskId()),
+                            actionType,
+                            new com.shreeai.os.platform.kernels.execution.model.ExecutionContext(
+                                    new com.shreeai.os.platform.kernels.execution.model.ExecutionId("exec-" + requestId + "-" + node.taskId()),
+                                    planId,
+                                    "Execute plan task: " + node.title(),
+                                    contextData,
+                                    Math.max(1, node.day())
+                            ),
+                            new com.shreeai.os.platform.kernels.execution.model.ExecutionOptions(
+                                    30000, 3, 1000, false, false, optionsMap
+                            ),
+                            new HashMap<>()
+                    );
+
+                    String execId = executionService.executeAction(executionRequest);
+                    executionIds.add(execId);
+                    executedNodeTitles.add(node.title());
+                }
+            } else {
+                // Fallback baseline execution when planning graph carries no discrete task nodes
+                Map<String, Object> contextData = new HashMap<>();
+                contextData.put("requestId", requestId);
+                contextData.put("planId", planId);
+                contextData.put("taskId", "pipeline-action");
+
+                Map<String, Object> optionsMap = new HashMap<>();
+                optionsMap.put("executionMode", "PIPELINE");
+                optionsMap.put("source", "runtime-pipeline");
+
+                ExecutionRequest executionRequest = new ExecutionRequest(
+                        new com.shreeai.os.platform.kernels.execution.model.ExecutionId("exec-" + requestId),
+                        "PIPELINE_ACTION",
+                        new com.shreeai.os.platform.kernels.execution.model.ExecutionContext(
+                                new com.shreeai.os.platform.kernels.execution.model.ExecutionId("exec-" + requestId),
+                                planId,
+                                "Execute plan: " + planId,
+                                contextData,
+                                1
+                        ),
+                        new com.shreeai.os.platform.kernels.execution.model.ExecutionOptions(
+                                30000, 3, 1000, false, false, optionsMap
+                        ),
+                        new HashMap<>()
+                );
+
+                String execId = executionService.executeAction(executionRequest);
+                executionIds.add(execId);
+                executedNodeTitles.add("PIPELINE_ACTION");
+            }
+
+            long totalDuration = System.currentTimeMillis() - startTime;
+            String primaryExecutionId = executionIds.isEmpty() ? ("exec-" + requestId) : executionIds.get(0);
 
             // Store execution information in state
-            state.addMetadata("executionId", executionId);
+            state.addMetadata("executionId", primaryExecutionId);
+            state.addMetadata("executionIds", executionIds);
+            state.addMetadata("executedTaskCount", executionIds.size());
+            state.addMetadata("executedNodes", executedNodeTitles);
             state.addMetadata("executionStatus", "COMPLETED");
             state.addMetadata("executionCompleted", true);
-            state.addMessage("Execution completed: " + executionId + " for plan " + planId);
+            state.addMetadata("executionTimeMs", totalDuration);
+            state.addMessage("Execution completed: " + executionIds.size() + " task(s) for plan " + planId);
 
             publishExecutionEvent(
                     context,
                     requestId,
-                    executionId,
+                    primaryExecutionId,
                     "SUCCESS"
             );
 

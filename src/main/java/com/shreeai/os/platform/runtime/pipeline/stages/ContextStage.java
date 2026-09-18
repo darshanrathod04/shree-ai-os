@@ -286,6 +286,10 @@ public final class ContextStage implements ExecutionStage {
             if (intelligenceContext != null) {
                 state.addMetadata("intelligenceContext", intelligenceContext);
             }
+
+            // Sprint-Pre-Release: Extract project intelligence into execution metadata
+            // so EvidenceAgent can reliably ground [PROJECT] evidence.
+            extractProjectIntelligence(context, state);
             state.addMessage("Context built: " + contextId + " for identity " + identityId
                     + " | Intent: " + intentProfile.primaryIntent()
                     + " | Domain: " + domainProfile.primaryDomain()
@@ -313,6 +317,63 @@ public final class ContextStage implements ExecutionStage {
                     .status("CONTEXT_FAILED")
                     .addMessage("Context stage failed: " + e.getMessage())
                     .build();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void extractProjectIntelligence(PipelineContext context, PipelineExecutionState state) {
+        java.util.Map<String, Object> reqMeta = context != null && context.getAttribute("requestMetadata") instanceof java.util.Map<?, ?> m
+                ? (java.util.Map<String, Object>) m
+                : java.util.Map.of();
+        java.util.Map<String, Object> reqCtx = context != null && context.getAttribute("requestContext") instanceof java.util.Map<?, ?> m
+                ? (java.util.Map<String, Object>) m
+                : java.util.Map.of();
+
+        Object projectObj = reqMeta.get("projectSummary");
+        if (projectObj == null) projectObj = reqCtx.get("projectSummary");
+        if (projectObj == null) projectObj = reqMeta.get("project");
+        if (projectObj == null) projectObj = reqCtx.get("project");
+
+        if (projectObj instanceof com.shreeai.os.platform.kernels.project.model.ProjectSummary summary) {
+            java.util.Map<String, Object> map = new java.util.LinkedHashMap<>(summary.toMap());
+            map.put("summary", "Project " + summary.projectName() + " [" + summary.framework() + " / " + summary.buildSystem() + "] with " + summary.statistics().classCount() + " classes and " + summary.statistics().endpointCount() + " endpoints");
+            state.addMetadata("projectSummary", map);
+            state.addMetadata("projectName", summary.projectName());
+            return;
+        } else if (projectObj instanceof java.util.Map<?, ?> map) {
+            state.addMetadata("projectSummary", map);
+            if (map.containsKey("projectName")) {
+                state.addMetadata("projectName", String.valueOf(map.get("projectName")));
+            }
+            return;
+        } else if (projectObj != null) {
+            state.addMetadata("projectSummary", java.util.Map.of("summary", String.valueOf(projectObj)));
+            return;
+        }
+
+        // Check if projectPath or projectDir or workspacePath was provided
+        Object pathObj = reqMeta.get("projectPath");
+        if (pathObj == null) pathObj = reqCtx.get("projectPath");
+        if (pathObj == null) pathObj = reqMeta.get("projectDir");
+        if (pathObj == null) pathObj = reqCtx.get("projectDir");
+        if (pathObj == null) pathObj = reqMeta.get("workspacePath");
+        if (pathObj == null) pathObj = reqCtx.get("workspacePath");
+
+        if (pathObj instanceof String pathStr && !pathStr.isBlank()) {
+            try {
+                java.nio.file.Path p = java.nio.file.Path.of(pathStr);
+                if (java.nio.file.Files.exists(p)) {
+                    com.shreeai.os.platform.kernels.project.engine.DefaultProjectIntelligenceEngine engine =
+                            new com.shreeai.os.platform.kernels.project.engine.DefaultProjectIntelligenceEngine();
+                    com.shreeai.os.platform.kernels.project.model.ProjectSummary summary = engine.analyze(p);
+                    java.util.Map<String, Object> map = new java.util.LinkedHashMap<>(summary.toMap());
+                    map.put("summary", "Project " + summary.projectName() + " [" + summary.framework() + " / " + summary.buildSystem() + "] with " + summary.statistics().classCount() + " classes and " + summary.statistics().endpointCount() + " endpoints");
+                    state.addMetadata("projectSummary", map);
+                    state.addMetadata("projectName", summary.projectName());
+                }
+            } catch (Exception ignored) {
+                // Project intelligence extraction is resilient and best-effort
+            }
         }
     }
 
