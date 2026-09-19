@@ -99,10 +99,12 @@ public final class DefaultKnowledgeContentResolver implements KnowledgeContentRe
         boolean targetIsPython = isPython(topicLower, queryLower, combined);
         boolean targetIsHealthcare = isHealthcare(topicLower, queryLower, combined);
         boolean targetIsDomainModeling = isDomainModeling(topicLower, queryLower, combined);
+        boolean targetIsJavaScript = isPureJavaScript(combined);
 
-        // If query/topic is Python or Healthcare or Domain Modeling, a Java or Spring source is incompatible
-        if (targetIsPython || targetIsHealthcare || targetIsDomainModeling) {
-            if (sourceNameLower.contains("java") || sourceNameLower.contains("spring")) {
+        // If query/topic is Python, Healthcare, Domain Modeling, or pure JavaScript, a Java or Spring source is incompatible
+        if (targetIsPython || targetIsHealthcare || targetIsDomainModeling || targetIsJavaScript) {
+            if ((sourceNameLower.contains("java") && !sourceNameLower.contains("javascript"))
+                    || sourceNameLower.contains("spring")) {
                 return false;
             }
         }
@@ -125,6 +127,19 @@ public final class DefaultKnowledgeContentResolver implements KnowledgeContentRe
                     - Python Execution Model: Source code compiles to CPython bytecode (.pyc) executed by the Python Virtual Machine (PVM).
                     - Standard Library & Ecosystem: Comprehensive built-in libraries (collections, itertools, asyncio) and rich package ecosystem via PyPI.
                     - Memory Management: Reference counting combined with a generational cyclic garbage collector and Global Interpreter Lock (GIL).
+                    """;
+        }
+
+        // 1b. JavaScript domain check: strictly avoid Java/Spring specs
+        if (isPureJavaScript(combined)) {
+            return """
+                    # JavaScript Web and Runtime Architecture
+                    JavaScript is a high-level, dynamic, multi-paradigm programming language conforming to the ECMAScript specification.
+
+                    ## Core Architecture and Principles
+                    - Event-Driven Architecture: Single-threaded event loop managing asynchronous callbacks, Promises, and async/await microtasks.
+                    - Prototype Inheritance: Objects inherit directly from other prototype objects rather than classical classes.
+                    - Modern Ecosystem: Cross-platform execution across web browsers (V8) and server runtimes (Node.js) with npm packages.
                     """;
         }
 
@@ -293,12 +308,22 @@ public final class DefaultKnowledgeContentResolver implements KnowledgeContentRe
 
     private boolean isJava(String topicLower, String queryLower, String combined, String sourceNameLower) {
         if (isPython(topicLower, queryLower, combined) || isHealthcare(topicLower, queryLower, combined)
-                || isDomainModeling(topicLower, queryLower, combined)) {
+                || isDomainModeling(topicLower, queryLower, combined) || isPureJavaScript(combined)) {
             return false;
         }
         return combined.contains("java") || combined.contains("jvm") || combined.contains("jdk")
                 || combined.contains("oop") || combined.contains("collection") || combined.contains("stream")
                 || (sourceNameLower.contains("java") && !isOtherDomain(combined));
+    }
+
+    private boolean isPureJavaScript(String combined) {
+        boolean hasJs = combined.contains("javascript") || combined.contains("java script")
+                || combined.contains("ecmascript") || combined.contains("typescript")
+                || combined.contains("node.js");
+        boolean isComparison = combined.contains("vs") || combined.contains("versus")
+                || combined.contains("difference") || combined.contains("comparison")
+                || combined.contains("jvm");
+        return hasJs && !isComparison;
     }
 
     private boolean isDatabase(String topicLower, String queryLower, String combined, String sourceNameLower) {
@@ -332,6 +357,6 @@ public final class DefaultKnowledgeContentResolver implements KnowledgeContentRe
     private boolean isOtherDomain(String combined) {
         return isPython("", "", combined) || isHealthcare("", "", combined)
                 || isDomainModeling("", "", combined) || combined.contains("javascript")
-                || combined.contains("mobile") || combined.contains("android");
+                || combined.contains("java script") || combined.contains("mobile") || combined.contains("android");
     }
 }

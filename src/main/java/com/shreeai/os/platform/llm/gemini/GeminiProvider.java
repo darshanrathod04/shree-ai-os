@@ -65,7 +65,7 @@ public final class GeminiProvider implements LlmProvider {
         this.retryBackoffMs = Math.max(0, retryBackoffMs);
     }
 
-    static String cleanApiKey(String raw) {
+    public static String cleanApiKey(String raw) {
         if (raw == null) return "";
         String trimmed = raw.trim();
         if ((trimmed.startsWith("\"") && trimmed.endsWith("\""))
@@ -176,7 +176,7 @@ public final class GeminiProvider implements LlmProvider {
         }
     }
 
-    Request buildHttpRequest(LlmRequest request) {
+    public Request buildHttpRequest(LlmRequest request) {
         String safeModel = resolveModel(request.model());
         String effectiveBaseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
         String url = effectiveBaseUrl + safeModel + ":generateContent?key=" + this.apiKey.trim();
@@ -216,7 +216,7 @@ public final class GeminiProvider implements LlmProvider {
         return "gemini-3.6-flash";
     }
 
-    static String resolveModel(String model) {
+    public static String resolveModel(String model) {
         String defaultModel = configuredDefaultModel();
         if (model == null
                 || model.isBlank()
@@ -240,7 +240,7 @@ public final class GeminiProvider implements LlmProvider {
                 || !model.startsWith("gemini");
     }
 
-    static String buildBody(LlmRequest request) {
+    public static String buildBody(LlmRequest request) {
         try {
             Map<String, Object> part = new LinkedHashMap<>();
             part.put("text", request.prompt());
@@ -272,7 +272,7 @@ public final class GeminiProvider implements LlmProvider {
         }
     }
 
-    static String extractTextFromPayload(String json) {
+    public static String extractTextFromPayload(String json) {
         if (json == null || json.isBlank()) {
             return null;
         }

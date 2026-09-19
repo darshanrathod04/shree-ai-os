@@ -124,7 +124,11 @@ public final class KnowledgeRankingService {
         String cleanQuery = queryLower.replaceAll("[\\p{Punct}]+", " ").trim();
 
         // Enforce strict domain isolation: non-matching domain queries score zero
-        if ((cleanQuery.contains("python") || cleanQuery.contains("hospital"))
+        boolean pureJavaScript = (cleanQuery.contains("java script") || cleanQuery.contains("javascript"))
+                && !cleanQuery.contains("vs") && !cleanQuery.contains("versus")
+                && !cleanQuery.contains("comparison") && !cleanQuery.contains("difference")
+                && !cleanQuery.contains("jvm");
+        if ((cleanQuery.contains("python") || cleanQuery.contains("hospital") || pureJavaScript)
                 && (label.contains("java platform") || label.contains("spring framework")
                 || description.contains("jvm execution") || description.contains("java virtual machine"))) {
             return 0.0;
