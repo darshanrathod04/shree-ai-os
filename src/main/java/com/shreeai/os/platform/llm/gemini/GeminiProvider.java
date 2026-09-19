@@ -29,24 +29,35 @@ public final class GeminiProvider implements LlmProvider {
     static final String DEFAULT_BASE_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/";
 
+    public static final int DEFAULT_MAX_RETRIES = 2;
+    public static final long DEFAULT_RETRY_BACKOFF_MS = 1000L;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final MediaType JSON = MediaType.parse("application/json");
 
     private final OkHttpClient client;
     private final String baseUrl;
     private final String apiKey;
+    private final int maxRetries;
+    private final long retryBackoffMs;
 
     public GeminiProvider(String apiKey) {
-        this(DEFAULT_BASE_URL, apiKey, createDefaultClient());
+        this(DEFAULT_BASE_URL, apiKey, createDefaultClient(), DEFAULT_MAX_RETRIES, DEFAULT_RETRY_BACKOFF_MS);
     }
 
     public GeminiProvider(String baseUrl, String apiKey, OkHttpClient client) {
+        this(baseUrl, apiKey, client, DEFAULT_MAX_RETRIES, DEFAULT_RETRY_BACKOFF_MS);
+    }
+
+    public GeminiProvider(String baseUrl, String apiKey, OkHttpClient client, int maxRetries, long retryBackoffMs) {
         this.baseUrl = Objects.requireNonNull(baseUrl, "baseUrl must not be null");
         this.apiKey = cleanApiKey(Objects.requireNonNull(apiKey, "apiKey must not be null"));
         if (this.apiKey.isBlank()) {
             throw new IllegalArgumentException("apiKey must not be blank");
         }
         this.client = Objects.requireNonNull(client, "client must not be null");
+        this.maxRetries = Math.max(0, maxRetries);
+        this.retryBackoffMs = Math.max(0, retryBackoffMs);
     }
 
     static String cleanApiKey(String raw) {
@@ -85,36 +96,63 @@ public final class GeminiProvider implements LlmProvider {
 
         Request httpRequest = buildHttpRequest(request);
 
-        Response response;
-        try {
-            response = client.newCall(httpRequest).execute();
-        } catch (IOException e) {
-            System.err.println(">>> GEMINI NETWORK ERROR: " + e.getMessage());
-            throw new IllegalStateException("Gemini request failed: " + e.getMessage(), e);
-        }
+        int attempts = 0;
+        while (true) {
+            attempts++;
+            Response response;
+            try {
+                response = client.newCall(httpRequest).execute();
+            } catch (IOException e) {
+                System.err.println(">>> GEMINI NETWORK ERROR (attempt " + attempts + "): " + e.getMessage());
+                if (attempts <= maxRetries) {
+                    sleepBackoff(retryBackoffMs);
+                    continue;
+                }
+                throw new IllegalStateException("Gemini request failed: " + e.getMessage(), e);
+            }
 
-        if (!response.isSuccessful()) {
+            int statusCode = response.code();
+            if (response.isSuccessful()) {
+                try {
+                    String rawResponse = response.body() != null ? response.body().string() : "";
+                    response.close();
+                    String extracted = extractTextFromPayload(rawResponse);
+                    return extracted != null ? Stream.of(extracted) : Stream.empty();
+                } catch (IOException e) {
+                    response.close();
+                    throw new IllegalStateException("Failed reading Gemini response: " + e.getMessage(), e);
+                }
+            }
+
             String errorBody = "no body";
             try {
                 if (response.body() != null) {
                     errorBody = response.body().string();
                 }
             } catch (IOException ignored) {}
+            response.close();
 
-            System.err.println(">>> GEMINI HTTP ERROR CODE: " + response.code());
+            // Lightweight retry for HTTP 503 (Model High Demand / Unavailable) or HTTP 429 (Rate Limit)
+            if ((statusCode == 503 || statusCode == 429) && attempts <= maxRetries) {
+                System.out.println(">>> GEMINI RETRY: Received HTTP " + statusCode + " (High Demand/Rate Limit). Retrying attempt "
+                        + attempts + "/" + maxRetries + " after " + retryBackoffMs + "ms backoff...");
+                sleepBackoff(retryBackoffMs);
+                continue;
+            }
+
+            System.err.println(">>> GEMINI HTTP ERROR CODE: " + statusCode + (attempts > 1 ? " after " + attempts + " attempts" : ""));
             System.err.println(">>> GEMINI RAW ERROR TEXT: " + errorBody);
-            response.close();
-            throw new IllegalStateException("Gemini request failed with HTTP " + response.code() + ": " + errorBody);
+            throw new IllegalStateException("Gemini request failed with HTTP " + statusCode + ": " + errorBody);
         }
+    }
 
+    private static void sleepBackoff(long ms) {
+        if (ms <= 0) return;
         try {
-            String rawResponse = response.body() != null ? response.body().string() : "";
-            response.close();
-            String extracted = extractTextFromPayload(rawResponse);
-            return extracted != null ? Stream.of(extracted) : Stream.empty();
-        } catch (IOException e) {
-            response.close();
-            throw new IllegalStateException("Failed reading Gemini response: " + e.getMessage(), e);
+            Thread.sleep(ms);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Gemini request retry backoff interrupted", ie);
         }
     }
 
@@ -218,8 +256,12 @@ public final class GeminiProvider implements LlmProvider {
         if (json == null || json.isBlank()) {
             return null;
         }
+        String cleanJson = json.trim();
+        if (cleanJson.startsWith("data:")) {
+            cleanJson = cleanJson.substring("data:".length()).trim();
+        }
         try {
-            JsonNode node = MAPPER.readTree(json);
+            JsonNode node = MAPPER.readTree(cleanJson);
             JsonNode candidates = node.path("candidates");
             if (candidates.isArray() && !candidates.isEmpty()) {
                 JsonNode parts = candidates.get(0).path("content").path("parts");

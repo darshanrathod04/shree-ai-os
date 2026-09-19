@@ -3,10 +3,20 @@ package com.shreeai.os.platform.llm.gemini;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shreeai.os.platform.llm.LlmRequest;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Network-free parsing tests for {@link GeminiProvider}. */
@@ -119,5 +129,84 @@ class GeminiProviderParsingTest {
         String urlString = httpRequest.url().toString();
         assertTrue(urlString.contains("/models/gemini-1.5-pro:generateContent?key=key-xyz"),
                 "URL must format slash cleanly when baseUrl has no trailing slash: " + urlString);
+    }
+
+    @Test
+    void retriesTransientHttp503ThenSucceeds() {
+        AtomicInteger callCount = new AtomicInteger(0);
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    int count = callCount.incrementAndGet();
+                    if (count < 3) {
+                        return new Response.Builder()
+                                .request(chain.request())
+                                .protocol(Protocol.HTTP_1_1)
+                                .code(503)
+                                .message("Service Unavailable")
+                                .body(ResponseBody.create("{\"error\": \"high demand\"}", MediaType.parse("application/json")))
+                                .build();
+                    }
+                    return new Response.Builder()
+                            .request(chain.request())
+                            .protocol(Protocol.HTTP_1_1)
+                            .code(200)
+                            .message("OK")
+                            .body(ResponseBody.create("{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"success after retry\"}]}}]}", MediaType.parse("application/json")))
+                            .build();
+                })
+                .build();
+
+        GeminiProvider provider = new GeminiProvider(
+                "https://generativelanguage.googleapis.com/v1beta/models",
+                "key-test",
+                client,
+                2,
+                10L
+        );
+
+        LlmRequest request = LlmRequest.builder()
+                .model("gemini-3.6-flash")
+                .prompt("hello")
+                .build();
+
+        Stream<String> responseStream = provider.stream(request);
+        List<String> results = responseStream.toList();
+        assertEquals(1, results.size());
+        assertEquals("success after retry", results.get(0));
+        assertEquals(3, callCount.get());
+    }
+
+    @Test
+    void exhaustsRetriesOnHttp429AndThrowsForRouterFallback() {
+        AtomicInteger callCount = new AtomicInteger(0);
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    callCount.incrementAndGet();
+                    return new Response.Builder()
+                            .request(chain.request())
+                            .protocol(Protocol.HTTP_1_1)
+                            .code(429)
+                            .message("Too Many Requests")
+                            .body(ResponseBody.create("{\"error\": \"quota exceeded\"}", MediaType.parse("application/json")))
+                            .build();
+                })
+                .build();
+
+        GeminiProvider provider = new GeminiProvider(
+                "https://generativelanguage.googleapis.com/v1beta/models",
+                "key-test",
+                client,
+                2,
+                10L
+        );
+
+        LlmRequest request = LlmRequest.builder()
+                .model("gemini-3.6-flash")
+                .prompt("hello")
+                .build();
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> provider.stream(request));
+        assertTrue(ex.getMessage().contains("HTTP 429"));
+        assertEquals(3, callCount.get());
     }
 }
