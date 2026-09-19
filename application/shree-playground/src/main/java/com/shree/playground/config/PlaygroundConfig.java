@@ -14,6 +14,9 @@ public class PlaygroundConfig {
     @Value("${shree.llm.chain:${SHREE_LLM_CHAIN:${shree.ai.chain:gemini,in-memory}}}")
     private String llmChain;
 
+    @Value("${shree.llm.gemini.model:${gemini.model:gemini-3.6-flash}}")
+    private String geminiModel;
+
     @Bean
     public ShreeAI shreeAI() {
         if (geminiApiKey != null && !geminiApiKey.isBlank()) {
@@ -24,6 +27,12 @@ public class PlaygroundConfig {
             System.setProperty("GEMINI_API_KEY", geminiApiKey.trim());
             System.out.println(">>> [PLAYGROUND] Injected Gemini API Key into system properties (masked: "
                     + (geminiApiKey.length() > 6 ? geminiApiKey.substring(0, 4) + "..." : "SET") + ")");
+        }
+
+        if (geminiModel != null && !geminiModel.isBlank()) {
+            System.setProperty("shree.llm.gemini.model", geminiModel.trim());
+            System.setProperty("gemini.model", geminiModel.trim());
+            System.out.println(">>> [PLAYGROUND] Injected Gemini model into system properties: " + geminiModel.trim());
         }
 
         if (llmChain != null && !llmChain.isBlank()) {

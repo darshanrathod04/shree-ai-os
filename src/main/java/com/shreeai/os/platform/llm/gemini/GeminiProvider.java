@@ -1,30 +1,25 @@
 package com.shreeai.os.platform.llm.gemini;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.shreeai.os.platform.llm.LlmProvider;
-import com.shreeai.os.platform.llm.LlmRequest;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shreeai.os.platform.llm.LlmProvider;
+import com.shreeai.os.platform.llm.LlmRequest;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okio.BufferedSource;
 
 /**
  * OkHttp-backed LlmProvider for Google Gemini API.
@@ -147,14 +142,39 @@ public final class GeminiProvider implements LlmProvider {
         return effectiveBaseUrl + safeModel + ":streamGenerateContent?alt=sse&key=" + apiKey.trim();
     }
 
+    private static String configuredDefaultModel() {
+        String prop = System.getProperty("shree.llm.gemini.model");
+        if (prop != null && !prop.isBlank()) {
+            return prop.trim();
+        }
+        prop = System.getProperty("gemini.model");
+        if (prop != null && !prop.isBlank()) {
+            return prop.trim();
+        }
+        prop = System.getenv("SHREE_LLM_GEMINI_MODEL");
+        if (prop != null && !prop.isBlank()) {
+            return prop.trim();
+        }
+        return "gemini-3.6-flash";
+    }
+
     static String resolveModel(String model) {
+        String defaultModel = configuredDefaultModel();
         if (model == null
                 || model.isBlank()
-                || "default".equalsIgnoreCase(model)
-                || safeModelPrefix(model)) {
-            return "gemini-2.0-flash";
+                || "default".equalsIgnoreCase(model)) {
+            return defaultModel;
         }
-        return model;
+        String clean = model.trim();
+        if (clean.startsWith("models/")) {
+            clean = clean.substring("models/".length()).trim();
+        }
+        if (clean.equalsIgnoreCase("gemini-2.0-flash")
+                || clean.toLowerCase(Locale.ROOT).startsWith("gemini-2.0-flash")
+                || safeModelPrefix(clean)) {
+            return defaultModel;
+        }
+        return clean;
     }
 
     private static boolean safeModelPrefix(String model) {

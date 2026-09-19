@@ -22,9 +22,9 @@ class GeminiProviderParsingTest {
     @Test
     void streamUrlTargetsModelAndKey() {
         GeminiProvider provider = new GeminiProvider("key-123");
-        String url = provider.streamUrl("gemini-2.0-flash");
+        String url = provider.streamUrl("gemini-3.6-flash");
 
-        assertTrue(url.startsWith(GeminiProvider.DEFAULT_BASE_URL + "gemini-2.0-flash"));
+        assertTrue(url.startsWith(GeminiProvider.DEFAULT_BASE_URL + "gemini-3.6-flash"));
         assertTrue(url.contains(":streamGenerateContent?alt=sse"));
         assertTrue(url.endsWith("key=key-123"));
     }
@@ -32,7 +32,20 @@ class GeminiProviderParsingTest {
     @Test
     void streamUrlFallsBackToDefaultModel() {
         GeminiProvider provider = new GeminiProvider("key-123");
-        assertTrue(provider.streamUrl("default").contains("gemini-2.0-flash"));
+        assertTrue(provider.streamUrl("default").contains("gemini-3.6-flash"));
+    }
+
+    @Test
+    void resolveModelReplacesLegacyGemini20Flash() {
+        assertEquals("gemini-3.6-flash", GeminiProvider.resolveModel("gemini-2.0-flash"));
+        assertEquals("gemini-3.6-flash", GeminiProvider.resolveModel("models/gemini-2.0-flash"));
+        assertEquals("gemini-3.6-flash", GeminiProvider.resolveModel(null));
+        assertEquals("gemini-3.6-flash", GeminiProvider.resolveModel("default"));
+        assertEquals("gemini-3.6-flash", GeminiProvider.resolveModel("shree-default"));
+
+        GeminiProvider provider = new GeminiProvider("key-123");
+        assertTrue(provider.streamUrl("gemini-2.0-flash").contains("gemini-3.6-flash"));
+        assertTrue(provider.streamUrl("models/gemini-2.0-flash").contains("gemini-3.6-flash"));
     }
 
     @Test
@@ -86,7 +99,7 @@ class GeminiProviderParsingTest {
         // Verify URL contains the cleaned key
         String urlString = httpRequest.url().toString();
         assertTrue(urlString.contains("key=AIzaSyTest123"), "URL must contain ?key= parameter with cleaned key: " + urlString);
-        assertTrue(urlString.contains("/models/gemini-2.0-flash:generateContent"), "URL must contain correct model and action: " + urlString);
+        assertTrue(urlString.contains("/models/gemini-3.6-flash:generateContent"), "URL must contain correct model and action: " + urlString);
 
         // Verify headers
         assertEquals("AIzaSyTest123", httpRequest.header("x-goog-api-key"), "x-goog-api-key header must match cleaned key");
