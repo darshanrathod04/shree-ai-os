@@ -20,6 +20,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * OkHttp-backed LlmProvider for Google Gemini API.
@@ -31,6 +32,10 @@ public final class GeminiProvider implements LlmProvider {
 
     public static final int DEFAULT_MAX_RETRIES = 2;
     public static final long DEFAULT_RETRY_BACKOFF_MS = 1000L;
+
+    public static final int MIN_MAX_OUTPUT_TOKENS = 2048;
+    public static final int DEFAULT_MAX_OUTPUT_TOKENS = 2048;
+    public static final double DEFAULT_TEMPERATURE = 0.4;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final MediaType JSON = MediaType.parse("application/json");
@@ -114,7 +119,7 @@ public final class GeminiProvider implements LlmProvider {
             int statusCode = response.code();
             if (response.isSuccessful()) {
                 try {
-                    String rawResponse = response.body() != null ? response.body().string() : "";
+                    String rawResponse = readFullResponseBody(response);
                     response.close();
                     String extracted = extractTextFromPayload(rawResponse);
                     return extracted != null ? Stream.of(extracted) : Stream.empty();
@@ -126,9 +131,7 @@ public final class GeminiProvider implements LlmProvider {
 
             String errorBody = "no body";
             try {
-                if (response.body() != null) {
-                    errorBody = response.body().string();
-                }
+                errorBody = readFullResponseBody(response);
             } catch (IOException ignored) {}
             response.close();
 
@@ -153,6 +156,23 @@ public final class GeminiProvider implements LlmProvider {
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Gemini request retry backoff interrupted", ie);
+        }
+    }
+
+    private static String readFullResponseBody(Response response) throws IOException {
+        ResponseBody body = response.body();
+        if (body == null) {
+            return "";
+        }
+        try (java.io.Reader charReader = body.charStream();
+             java.io.BufferedReader reader = new java.io.BufferedReader(charReader)) {
+            StringBuilder sb = new StringBuilder();
+            char[] buffer = new char[8192];
+            int read;
+            while ((read = reader.read(buffer, 0, buffer.length)) != -1) {
+                sb.append(buffer, 0, read);
+            }
+            return sb.toString();
         }
     }
 
@@ -236,15 +256,15 @@ public final class GeminiProvider implements LlmProvider {
             root.put("contents", contents);
 
             Map<String, Object> generationConfig = new LinkedHashMap<>();
-            if (request.temperature() != null) {
-                generationConfig.put("temperature", request.temperature());
-            }
-            if (request.maxTokens() != null) {
-                generationConfig.put("maxOutputTokens", request.maxTokens());
-            }
-            if (!generationConfig.isEmpty()) {
-                root.put("generationConfig", generationConfig);
-            }
+            double temperature = request.temperature() != null ? request.temperature() : DEFAULT_TEMPERATURE;
+            generationConfig.put("temperature", temperature);
+
+            int maxOutputTokens = request.maxTokens() != null
+                    ? Math.max(MIN_MAX_OUTPUT_TOKENS, request.maxTokens())
+                    : DEFAULT_MAX_OUTPUT_TOKENS;
+            generationConfig.put("maxOutputTokens", maxOutputTokens);
+
+            root.put("generationConfig", generationConfig);
 
             return MAPPER.writeValueAsString(root);
         } catch (Exception e) {
@@ -257,28 +277,68 @@ public final class GeminiProvider implements LlmProvider {
             return null;
         }
         String cleanJson = json.trim();
-        if (cleanJson.startsWith("data:")) {
-            cleanJson = cleanJson.substring("data:".length()).trim();
+
+        // Handle SSE stream or multi-chunk data: payload
+        if (cleanJson.contains("data:")) {
+            StringBuilder sseCombined = new StringBuilder();
+            for (String line : cleanJson.split("\\r?\\n")) {
+                String stripped = stripDataPrefix(line);
+                if (stripped != null && !stripped.isBlank()) {
+                    try {
+                        JsonNode node = MAPPER.readTree(stripped);
+                        extractAllTextFromNode(node, sseCombined);
+                    } catch (Exception ignored) {}
+                }
+            }
+            if (sseCombined.length() > 0) {
+                return sseCombined.toString();
+            }
         }
-        try {
-            JsonNode node = MAPPER.readTree(cleanJson);
-            JsonNode candidates = node.path("candidates");
-            if (candidates.isArray() && !candidates.isEmpty()) {
-                JsonNode parts = candidates.get(0).path("content").path("parts");
-                if (parts.isArray() && !parts.isEmpty()) {
-                    StringBuilder text = new StringBuilder();
-                    for (JsonNode part : parts) {
-                        JsonNode value = part.path("text");
-                        if (!value.isMissingNode() && !value.isNull()) {
-                            text.append(value.asText());
-                        }
-                    }
-                    return text.length() > 0 ? text.toString() : null;
+
+        // Standard JSON payload (single object, JSON array, or concatenated JSON chunks)
+        StringBuilder combined = new StringBuilder();
+        try (com.fasterxml.jackson.core.JsonParser parser = MAPPER.createParser(cleanJson)) {
+            while (parser.nextToken() != null) {
+                JsonNode node = MAPPER.readTree(parser);
+                if (node != null) {
+                    extractAllTextFromNode(node, combined);
                 }
             }
         } catch (Exception ignored) {
         }
+
+        if (combined.length() > 0) {
+            return combined.toString();
+        }
+
         return null;
+    }
+
+    private static void extractAllTextFromNode(JsonNode node, StringBuilder sb) {
+        if (node == null) {
+            return;
+        }
+        if (node.isArray()) {
+            for (JsonNode child : node) {
+                extractAllTextFromNode(child, sb);
+            }
+            return;
+        }
+
+        JsonNode candidates = node.path("candidates");
+        if (candidates.isArray()) {
+            for (JsonNode candidate : candidates) {
+                JsonNode parts = candidate.path("content").path("parts");
+                if (parts.isArray()) {
+                    for (JsonNode part : parts) {
+                        JsonNode textNode = part.path("text");
+                        if (!textNode.isMissingNode() && !textNode.isNull()) {
+                            sb.append(textNode.asText());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**

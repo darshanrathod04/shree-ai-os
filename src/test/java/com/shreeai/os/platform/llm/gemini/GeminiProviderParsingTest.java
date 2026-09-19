@@ -64,20 +64,60 @@ class GeminiProviderParsingTest {
                 .model("gemini-2.0-flash")
                 .prompt("hello")
                 .temperature(0.5)
-                .maxTokens(64)
+                .maxTokens(4096)
                 .build();
 
         JsonNode root = MAPPER.readTree(GeminiProvider.buildBody(request));
 
         assertEquals("hello", root.get("contents").get(0).get("parts").get(0).get("text").asText());
         assertEquals(0.5, root.get("generationConfig").get("temperature").asDouble());
-        assertEquals(64, root.get("generationConfig").get("maxOutputTokens").asInt());
+        assertEquals(4096, root.get("generationConfig").get("maxOutputTokens").asInt());
+    }
+
+    @Test
+    void buildBodyClampsSmallMaxTokensToMinimum2048() throws Exception {
+        LlmRequest request = LlmRequest.builder()
+                .model("gemini-3.6-flash")
+                .prompt("hello")
+                .maxTokens(64)
+                .build();
+
+        JsonNode root = MAPPER.readTree(GeminiProvider.buildBody(request));
+
+        assertEquals(2048, root.get("generationConfig").get("maxOutputTokens").asInt());
+        assertEquals(0.4, root.get("generationConfig").get("temperature").asDouble());
+    }
+
+    @Test
+    void buildBodyDefaultsMaxOutputTokensWhenNull() throws Exception {
+        LlmRequest request = LlmRequest.builder()
+                .model("gemini-3.6-flash")
+                .prompt("hello")
+                .build();
+
+        JsonNode root = MAPPER.readTree(GeminiProvider.buildBody(request));
+
+        assertEquals(2048, root.get("generationConfig").get("maxOutputTokens").asInt());
+        assertEquals(0.4, root.get("generationConfig").get("temperature").asDouble());
     }
 
     @Test
     void extractTextReadsCandidateParts() {
         String line = "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Hi\"},{\"text\":\" there\"}]}}]}";
         assertEquals("Hi there", GeminiProvider.extractText(line));
+    }
+
+    @Test
+    void extractTextJoinsMultipleCandidatePartsAcrossChunks() {
+        // Multi-line SSE with multiple chunks
+        String multiChunkSse = "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Part 1 \"}]}}]}\n\n"
+                + "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Part 2 \"},{\"text\":\"Part 3\"}]}}]}";
+        assertEquals("Part 1 Part 2 Part 3", GeminiProvider.extractTextFromPayload(multiChunkSse));
+
+        // JSON array of chunks
+        String jsonArray = "[{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Hello \"}]}}]},"
+                + "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"world!\"}]}}]}]";
+        assertEquals("Hello world!", GeminiProvider.extractTextFromPayload(jsonArray));
     }
 
     @Test

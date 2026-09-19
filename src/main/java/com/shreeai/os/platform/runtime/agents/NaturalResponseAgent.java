@@ -72,10 +72,10 @@ public final class NaturalResponseAgent {
     private static final String DEFAULT_LLM_MODEL = "shree-default";
 
     /** Default temperature — moderate, deterministic-but-natural. */
-    private static final double DEFAULT_LLM_TEMPERATURE = 0.3;
+    private static final double DEFAULT_LLM_TEMPERATURE = 0.4;
 
     /** Default max tokens — keeps responses grounded and within budget. */
-    private static final int DEFAULT_LLM_MAX_TOKENS = 1024;
+    private static final int DEFAULT_LLM_MAX_TOKENS = 2048;
 
     public NaturalResponseAgent() {}
 
