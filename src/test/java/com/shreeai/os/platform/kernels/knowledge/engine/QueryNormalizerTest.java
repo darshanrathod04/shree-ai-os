@@ -74,7 +74,8 @@ class QueryNormalizerTest {
     void normalizesHowToBecomeAndTrailingDots() {
         assertEquals("java developer in 30 days", QueryNormalizer.normalize("how to become java developer in 30 days ."));
         assertEquals("java developer in 30 days", QueryNormalizer.normalize("How to become java developer in 30 days."));
-        assertEquals("hospital management system", QueryNormalizer.normalize("build hospital management system"));
+        assertEquals("build hospital management system", QueryNormalizer.normalize("build hospital management system ."));
+        assertEquals("build hospital management system", QueryNormalizer.normalize("build hospital management system."));
     }
 
     @Test
