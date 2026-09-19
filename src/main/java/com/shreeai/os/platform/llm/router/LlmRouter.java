@@ -157,8 +157,13 @@ public final class LlmRouter implements LlmProvider {
 
         for (LlmProvider provider : chain) {
             try {
-                return provider.stream(request);
+                System.out.println(">>> [LLM ROUTER] Invoking provider: " + provider.providerName());
+                Stream<String> stream = provider.stream(request);
+                System.out.println(">>> [LLM ROUTER] Provider '" + provider.providerName() + "' is ACTIVE and serving response.");
+                return stream;
             } catch (RuntimeException failure) {
+                System.err.println(">>> [LLM ROUTER] Provider '" + provider.providerName() + "' FAILED ("
+                        + failure.getMessage() + "). Falling back to next provider in chain...");
                 lastFailure.addSuppressed(failure);
             }
         }

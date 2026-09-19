@@ -106,11 +106,18 @@ public final class DefaultKnowledgeSourceRegistry implements KnowledgeSourceRegi
                         "topics", "RAG, LLM, AI",
                         "updatedAt", "2024-01-01T00:00:00Z"));
 
+        registerAndActivate(KnowledgeSourceType.MARKDOWN, "Healthcare & Hospital System Architecture",
+                "docs/healthcare-hospital-architecture.md",
+                "Authoritative architectural specifications and domain models for hospital and healthcare management systems.",
+                Map.of("authority", "official", "provider", "OFFICIAL_DOCS", "providers", "OFFICIAL_DOCS, WEB",
+                        "topics", "Healthcare, Hospital, Hospital Management, Medical Terminology, Diagnostics",
+                        "updatedAt", "2024-01-01T00:00:00Z"));
+
         registerAndActivate(KnowledgeSourceType.WEB, "Universal Web & Technical Knowledge Base",
                 "https://docs.shreeai.io/kb",
                 "Universal knowledge repository covering software engineering best practices, roadmaps, fundamentals, and general research.",
                 Map.of("authority", "verified", "provider", "WEB",
-                        "topics", "General Research, Roadmap, Best Practices, Fundamentals, Interview Preparation, Free Resources",
+                        "topics", "General Research, Roadmap, Best Practices, Fundamentals, Interview Preparation, Free Resources, Healthcare, Hospital, Hospital Management, Medical Terminology, Diagnostics",
                         "updatedAt", "2024-01-01T00:00:00Z"));
 
         registerAndActivate(KnowledgeSourceType.TEXT, "Platform Setup & Configuration Guide",

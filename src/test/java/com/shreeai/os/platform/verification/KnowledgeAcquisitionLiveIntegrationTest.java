@@ -204,4 +204,84 @@ public class KnowledgeAcquisitionLiveIntegrationTest {
         }
         System.out.println("[SUCCESS] Hospital management query is clean of Java Platform Architecture injection!");
     }
+
+    @Test
+    @DisplayName("Verify 'how to become java developer in 30 days .' acquires and attaches Java knowledge")
+    public void testJavaQueryWithStopWordsAndTrailingDot() {
+        System.out.println("===============================================================");
+        System.out.println("TEST: 'how to become java developer in 30 days .' Knowledge Retrieval");
+        System.out.println("===============================================================");
+
+        SDKResponse response = client.chat("how to become java developer in 30 days .");
+
+        assertNotNull(response, "Response must not be null");
+        assertNotNull(response.answer(), "Answer must not be null");
+        assertFalse(response.answer().isBlank(), "Answer must not be blank");
+
+        Map<String, Object> payload = response.structuredPayload();
+        assertNotNull(payload, "Structured payload must not be null");
+
+        Object evidenceRaw = payload.get("evidence");
+        assertNotNull(evidenceRaw, "Evidence must be present for natural language java query");
+        List<?> evidenceList = (List<?>) evidenceRaw;
+        assertFalse(evidenceList.isEmpty(), "Evidence list must not be empty");
+
+        boolean hasJavaKnowledge = false;
+        for (Object item : evidenceList) {
+            if (item instanceof Map<?, ?> itemMap) {
+                String sourceType = String.valueOf(itemMap.get("sourceType"));
+                String title = String.valueOf(itemMap.get("title"));
+                String content = String.valueOf(itemMap.get("content"));
+                if ("KNOWLEDGE".equalsIgnoreCase(sourceType) && (title.contains("Java") || content.contains("Java"))) {
+                    hasJavaKnowledge = true;
+                    System.out.println("[Found Java KNOWLEDGE Evidence] Title: " + title);
+                    break;
+                }
+            }
+        }
+
+        assertTrue(hasJavaKnowledge, "EvidenceBundle must contain Java knowledge for 'how to become java developer in 30 days .'");
+        System.out.println("[SUCCESS] Java knowledge successfully attached for natural query with stop-words and trailing dot!");
+    }
+
+    @Test
+    @DisplayName("Verify 'build hospital management system' acquires and attaches Healthcare Architecture knowledge")
+    public void testBuildHospitalManagementAcquiresHealthcareKnowledge() {
+        System.out.println("===============================================================");
+        System.out.println("TEST: 'build hospital management system' Healthcare Knowledge Retrieval");
+        System.out.println("===============================================================");
+
+        SDKResponse response = client.chat("build hospital management system");
+
+        assertNotNull(response, "Response must not be null");
+        assertNotNull(response.answer(), "Answer must not be null");
+        assertFalse(response.answer().isBlank(), "Answer must not be blank");
+
+        Map<String, Object> payload = response.structuredPayload();
+        assertNotNull(payload, "Structured payload must not be null");
+
+        Object evidenceRaw = payload.get("evidence");
+        assertNotNull(evidenceRaw, "Evidence must be present for hospital management query");
+        List<?> evidenceList = (List<?>) evidenceRaw;
+        assertFalse(evidenceList.isEmpty(), "Evidence list must not be empty");
+
+        boolean hasHealthcareKnowledge = false;
+        for (Object item : evidenceList) {
+            if (item instanceof Map<?, ?> itemMap) {
+                String sourceType = String.valueOf(itemMap.get("sourceType"));
+                String title = String.valueOf(itemMap.get("title"));
+                String content = String.valueOf(itemMap.get("content"));
+                System.out.println("  [DEBUG EVIDENCE] type=" + sourceType + ", title=" + title + ", contentSnippet=" + (content.length() > 60 ? content.substring(0, 60) : content));
+                if ("KNOWLEDGE".equalsIgnoreCase(sourceType)
+                        && (title.contains("Healthcare") || title.contains("Hospital") || content.contains("Hospital"))) {
+                    hasHealthcareKnowledge = true;
+                    System.out.println("[Found Healthcare KNOWLEDGE Evidence] Title: " + title);
+                    break;
+                }
+            }
+        }
+
+        assertTrue(hasHealthcareKnowledge, "EvidenceBundle must contain Healthcare/Hospital knowledge for 'build hospital management system'");
+        System.out.println("[SUCCESS] Healthcare Architecture successfully attached for 'build hospital management system'!");
+    }
 }

@@ -268,7 +268,7 @@ public final class KnowledgeStage implements ExecutionStage {
                 }
             }
 
-            // Rank knowledge by relevance (enforces MIN_RELEVANCE_THRESHOLD = 0.65)
+            // Rank knowledge by relevance (enforces MIN_RELEVANCE_THRESHOLD = 0.45)
             List<KnowledgeNode> rankedKnowledge = knowledgeRankingService.rankByRelevance(
                     normalizedQuery,
                     allKnowledge,

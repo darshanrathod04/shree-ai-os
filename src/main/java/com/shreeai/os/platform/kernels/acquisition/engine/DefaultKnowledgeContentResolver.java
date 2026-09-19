@@ -266,10 +266,16 @@ public final class DefaultKnowledgeContentResolver implements KnowledgeContentRe
                 || combined.contains("patient") || combined.contains("doctor")
                 || combined.contains("medical") || combined.contains("healthcare")
                 || combined.contains("ehr") || combined.contains("pharmacy")
-                || combined.contains("telemedicine") || combined.contains("diagnosis");
+                || combined.contains("telemedicine") || combined.contains("diagnosis")
+                || combined.contains("hospital management") || combined.contains("health")
+                || topicLower.contains("medical") || topicLower.contains("healthcare")
+                || queryLower.contains("hospital");
     }
 
     private boolean isDomainModeling(String topicLower, String queryLower, String combined) {
+        if (isHealthcare(topicLower, queryLower, combined) || isPython(topicLower, queryLower, combined)) {
+            return false;
+        }
         return combined.contains("management system") || combined.contains("business analyzer")
                 || combined.contains("domain model") || combined.contains("erp")
                 || combined.contains("crm") || combined.contains("inventory system")

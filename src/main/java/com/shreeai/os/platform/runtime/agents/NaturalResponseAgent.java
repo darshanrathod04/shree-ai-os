@@ -262,18 +262,20 @@ public final class NaturalResponseAgent {
                                    ExecutionRequest request,
                                    EvidenceBundle bundle) {
         if (llmProvider == null) {
+            System.out.println(">>> [NATURAL RESPONSE] LLM Provider is not configured. Using deterministic fallback.");
             return null;
         }
         try {
             LlmRequest llmRequest = buildLlmRequest(report, request, bundle);
             String content = llmProvider.complete(llmRequest).content();
             if (content != null && !content.isBlank()) {
+                System.out.println(">>> [NATURAL RESPONSE] Successfully received LLM response prose from: " + llmProvider.providerName());
                 return content.trim();
             }
+            System.out.println(">>> [NATURAL RESPONSE] LLM returned blank content. Using deterministic fallback.");
             return null;
         } catch (RuntimeException llmError) {
-            // LLM failure must not break the response path. Caller falls
-            // back to the deterministic StringBuilder rendering.
+            System.err.println(">>> [NATURAL RESPONSE] LLM call failed (" + llmError.getMessage() + "). Falling back to deterministic rendering.");
             return null;
         }
     }

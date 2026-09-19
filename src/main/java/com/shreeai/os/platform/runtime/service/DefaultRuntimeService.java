@@ -338,8 +338,27 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         }
 
         String geminiKey = firstNonBlank(
-                System.getProperty("shree.ai.api-key"),
-                firstNonBlank(System.getenv("GEMINI_API_KEY"), System.getenv("GOOGLE_API_KEY")));
+                System.getProperty("shree.llm.gemini.api-key"),
+                firstNonBlank(
+                        System.getProperty("gemini.api.key"),
+                        firstNonBlank(
+                                System.getProperty("gemini.api-key"),
+                                firstNonBlank(
+                                        System.getProperty("shree.ai.api-key"),
+                                        firstNonBlank(
+                                                System.getProperty("GEMINI_API_KEY"),
+                                                firstNonBlank(
+                                                        System.getenv("GEMINI_API_KEY"),
+                                                        firstNonBlank(
+                                                                System.getenv("GOOGLE_API_KEY"),
+                                                                System.getenv("SHREE_LLM_GEMINI_API_KEY")
+                                                        )
+                                                )
+                                        )
+                                )
+                        )
+                )
+        );
         if (geminiKey != null) {
             registry.put("gemini", new GeminiProvider(geminiKey));
         }
@@ -347,7 +366,14 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
         // Check both SHREE_LLM_CHAIN and LLM_CHAIN (and System properties)
         String chain = firstNonBlank(
                 System.getProperty("shree.llm.chain"),
-                firstNonBlank(System.getenv("SHREE_LLM_CHAIN"), System.getenv("LLM_CHAIN")));
+                firstNonBlank(
+                        System.getProperty("SHREE_LLM_CHAIN"),
+                        firstNonBlank(
+                                System.getProperty("shree.ai.chain"),
+                                firstNonBlank(System.getenv("SHREE_LLM_CHAIN"), System.getenv("LLM_CHAIN"))
+                        )
+                )
+        );
 
         // SPRINT FIX: If no chain is explicitly passed, auto-select the best available provider!
         if (chain == null || chain.isBlank()) {
