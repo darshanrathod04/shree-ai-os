@@ -21,10 +21,12 @@ import com.shreeai.os.platform.kernels.response.model.DeveloperResponse;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * DefaultResponseSynthesizer
@@ -621,10 +623,20 @@ public final class DefaultResponseSynthesizer implements ResponseSynthesizer {
         String summary = string(metadata.get("knowledgeSummary"));
 
         @SuppressWarnings("unchecked")
-        List<KnowledgeNode> results =
+        List<KnowledgeNode> rawResults =
                 metadata.get("knowledgeResults") instanceof List<?>
                         ? (List<KnowledgeNode>) metadata.get("knowledgeResults")
                         : List.of();
+
+        List<KnowledgeNode> results = new ArrayList<>();
+        Set<String> seenNodes = new HashSet<>();
+        for (KnowledgeNode node : rawResults) {
+            if (node == null) continue;
+            String key = (node.getId() != null ? node.getId().value() : "") + ":" + (node.getLabel() != null ? node.getLabel() : "");
+            if (seenNodes.add(key)) {
+                results.add(node);
+            }
+        }
 
         List<ResponseSection> sections = new ArrayList<>();
         Map<String, Object> structured = new LinkedHashMap<>();

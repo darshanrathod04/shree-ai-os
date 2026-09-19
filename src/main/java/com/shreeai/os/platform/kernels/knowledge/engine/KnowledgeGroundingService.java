@@ -7,9 +7,11 @@ import com.shreeai.os.platform.runtime.embedding.EmbeddingProvider;
 import com.shreeai.os.platform.runtime.vector.CosineSimilarity;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * <b>KnowledgeGroundingService</b>
@@ -110,7 +112,19 @@ public final class KnowledgeGroundingService {
                     0);
         }
 
-        List<KnowledgeNode> citedNodes = rankedNodes.stream()
+        Set<String> seenKeys = new HashSet<>();
+        List<KnowledgeNode> deduplicatedNodes = new ArrayList<>();
+        for (KnowledgeNode node : rankedNodes) {
+            if (node == null) continue;
+            String key = node.getId() != null && !node.getId().value().isBlank()
+                    ? node.getId().value()
+                    : (node.getLabel() != null ? node.getLabel() : "");
+            if (!key.isBlank() && seenKeys.add(key)) {
+                deduplicatedNodes.add(node);
+            }
+        }
+
+        List<KnowledgeNode> citedNodes = deduplicatedNodes.stream()
                 .limit(MAX_CITATIONS)
                 .toList();
 

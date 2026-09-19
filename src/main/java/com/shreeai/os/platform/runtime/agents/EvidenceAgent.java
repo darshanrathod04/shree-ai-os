@@ -3,6 +3,7 @@ package com.shreeai.os.platform.runtime.agents;
 import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionAnalysis;
 import com.shreeai.os.platform.kernels.cognitive.model.ReasoningResult;
 import com.shreeai.os.platform.kernels.inference.model.InferenceResult;
+import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeCitation;
 import com.shreeai.os.platform.kernels.knowledge.model.KnowledgeNode;
 import com.shreeai.os.platform.kernels.memory.model.Memory;
 import com.shreeai.os.platform.kernels.response.contracts.PlanningResponse;
@@ -174,7 +175,8 @@ public final class EvidenceAgent {
                 ? String.format(" (grounding=%.2f)", groundingScore)
                 : "";
 
-        for (Object item : list) {
+        for (int i = 0; i < list.size(); i++) {
+            Object item = list.get(i);
             // Sprint-19 hotfix: KnowledgeNode is a proper class with typed accessors,
             // not a plain Map. Handle it directly to extract getLabel() / getDescription().
             String label;
@@ -189,11 +191,20 @@ public final class EvidenceAgent {
 
             if (label.isBlank() && description.isBlank()) continue;
 
+            List<String> itemCitations;
+            if (i < citations.size()) {
+                itemCitations = List.of(citations.get(i));
+            } else if (!citations.isEmpty()) {
+                itemCitations = List.of(citations.get(0));
+            } else {
+                itemCitations = List.of();
+            }
+
             builder.addItem(EvidenceItem.builder()
                     .sourceType(SourceType.KNOWLEDGE)
                     .title(label.isBlank() ? "Knowledge Node" : label)
                     .content(description.isBlank() ? label : description)
-                    .citations(citations)
+                    .citations(itemCitations)
                     .confidenceHint(groundingScore > 0.0 ? groundingScore : 0.80)
                     .addAttribute("groundingScore", groundingScore)
                     .build());
@@ -393,7 +404,9 @@ public final class EvidenceAgent {
         if (value instanceof List<?> list) {
             List<String> result = new ArrayList<>();
             for (Object item : list) {
-                if (item != null && !String.valueOf(item).isBlank()) {
+                if (item instanceof KnowledgeCitation kc) {
+                    result.add(kc.toMarkdownLine());
+                } else if (item != null && !String.valueOf(item).isBlank()) {
                     result.add(String.valueOf(item).trim());
                 }
             }
