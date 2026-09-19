@@ -540,9 +540,30 @@ public final class DefaultMemoryService implements
                         return true;
                     }
                     String title = m.metadata().source() == null ? "" : m.metadata().source().toLowerCase();
-                    return title.contains(needle);
+                    if (title.contains(needle)) {
+                        return true;
+                    }
+                    // Multi-word keyword match (ignoring punctuation and stop words)
+                    String cleanedNeedle = needle.replaceAll("[^a-zA-Z0-9\\s_]", " ").trim();
+                    String[] queryWords = cleanedNeedle.split("\\s+");
+                    String combined = (title + " " + text).replace('_', ' ');
+                    for (String word : queryWords) {
+                        if (word.length() >= 3 && !isMemorySearchStopWord(word)) {
+                            if (combined.contains(word)) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
                 })
                 .collect(Collectors.toUnmodifiableList());
+    }
+
+    private static boolean isMemorySearchStopWord(String word) {
+        return switch (word.toLowerCase(java.util.Locale.ROOT)) {
+            case "the", "is", "at", "which", "on", "and", "or", "but", "in", "with", "a", "an", "to", "for", "of", "as", "my", "me", "what", "who", "where", "when", "why", "how", "tell", "about" -> true;
+            default -> false;
+        };
     }
 
     @Override

@@ -1,22 +1,19 @@
 package com.shreeai.os.platform.llm.gemini;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.shreeai.os.platform.llm.LlmProvider;
-import com.shreeai.os.platform.llm.LlmRequest;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shreeai.os.platform.llm.LlmProvider;
+import com.shreeai.os.platform.llm.LlmRequest;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -24,7 +21,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okio.BufferedSource;
 
 /**
  * OkHttp-backed LlmProvider for Google Gemini API.
@@ -34,24 +30,51 @@ public final class GeminiProvider implements LlmProvider {
     static final String DEFAULT_BASE_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/";
 
+    public static final int DEFAULT_MAX_RETRIES = 2;
+    public static final long DEFAULT_RETRY_BACKOFF_MS = 1000L;
+
+    public static final int MIN_MAX_OUTPUT_TOKENS = 2048;
+    public static final int DEFAULT_MAX_OUTPUT_TOKENS = 2048;
+    public static final double DEFAULT_TEMPERATURE = 0.4;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final MediaType JSON = MediaType.parse("application/json");
 
     private final OkHttpClient client;
     private final String baseUrl;
     private final String apiKey;
+    private final int maxRetries;
+    private final long retryBackoffMs;
 
     public GeminiProvider(String apiKey) {
-        this(DEFAULT_BASE_URL, apiKey, createDefaultClient());
+        this(DEFAULT_BASE_URL, apiKey, createDefaultClient(), DEFAULT_MAX_RETRIES, DEFAULT_RETRY_BACKOFF_MS);
     }
 
     public GeminiProvider(String baseUrl, String apiKey, OkHttpClient client) {
+        this(baseUrl, apiKey, client, DEFAULT_MAX_RETRIES, DEFAULT_RETRY_BACKOFF_MS);
+    }
+
+    public GeminiProvider(String baseUrl, String apiKey, OkHttpClient client, int maxRetries, long retryBackoffMs) {
         this.baseUrl = Objects.requireNonNull(baseUrl, "baseUrl must not be null");
-        this.apiKey = Objects.requireNonNull(apiKey, "apiKey must not be null");
-        if (apiKey.isBlank()) {
+        this.apiKey = cleanApiKey(Objects.requireNonNull(apiKey, "apiKey must not be null"));
+        if (this.apiKey.isBlank()) {
             throw new IllegalArgumentException("apiKey must not be blank");
         }
         this.client = Objects.requireNonNull(client, "client must not be null");
+        this.maxRetries = Math.max(0, maxRetries);
+        this.retryBackoffMs = Math.max(0, retryBackoffMs);
+    }
+
+    public static String cleanApiKey(String raw) {
+        if (raw == null) return "";
+        String trimmed = raw.trim();
+        if ((trimmed.startsWith("\"") && trimmed.endsWith("\""))
+                || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+            if (trimmed.length() >= 2) {
+                trimmed = trimmed.substring(1, trimmed.length() - 1).trim();
+            }
+        }
+        return trimmed;
     }
 
     private static OkHttpClient createDefaultClient() {
@@ -73,47 +96,99 @@ public final class GeminiProvider implements LlmProvider {
         Objects.requireNonNull(request, "request must not be null");
 
         String safeModel = resolveModel(request.model());
-        String url = baseUrl + safeModel + ":generateContent?key=" + apiKey;
-        String jsonBody = buildBody(request);
+        String effectiveBaseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
+        System.out.println(">>> GEMINI CALLING URL: " + effectiveBaseUrl + safeModel + ":generateContent?key=MASKED");
 
-        Request httpRequest = new Request.Builder()
-                .url(url)
-                .header("Content-Type", "application/json")
-                .header("x-goog-api-key", this.apiKey)
-                .post(RequestBody.create(jsonBody, JSON))
-                .build();
+        Request httpRequest = buildHttpRequest(request);
 
-        Response response;
-        try {
-            response = client.newCall(httpRequest).execute();
-        } catch (IOException e) {
-            System.err.println(">>> GEMINI NETWORK ERROR: " + e.getMessage());
-            throw new IllegalStateException("Gemini request failed: " + e.getMessage(), e);
-        }
+        int attempts = 0;
+        while (true) {
+            attempts++;
+            Response response;
+            try {
+                response = client.newCall(httpRequest).execute();
+            } catch (IOException e) {
+                System.err.println(">>> GEMINI NETWORK ERROR (attempt " + attempts + "): " + e.getMessage());
+                if (attempts <= maxRetries) {
+                    sleepBackoff(retryBackoffMs);
+                    continue;
+                }
+                throw new IllegalStateException("Gemini request failed: " + e.getMessage(), e);
+            }
 
-        if (!response.isSuccessful()) {
+            int statusCode = response.code();
+            if (response.isSuccessful()) {
+                try {
+                    String rawResponse = readFullResponseBody(response);
+                    response.close();
+                    String extracted = extractTextFromPayload(rawResponse);
+                    return extracted != null ? Stream.of(extracted) : Stream.empty();
+                } catch (IOException e) {
+                    response.close();
+                    throw new IllegalStateException("Failed reading Gemini response: " + e.getMessage(), e);
+                }
+            }
+
             String errorBody = "no body";
             try {
-                if (response.body() != null) {
-                    errorBody = response.body().string();
-                }
+                errorBody = readFullResponseBody(response);
             } catch (IOException ignored) {}
+            response.close();
 
-            System.err.println(">>> GEMINI HTTP ERROR CODE: " + response.code());
+            // Lightweight retry for HTTP 503 (Model High Demand / Unavailable) or HTTP 429 (Rate Limit)
+            if ((statusCode == 503 || statusCode == 429) && attempts <= maxRetries) {
+                System.out.println(">>> GEMINI RETRY: Received HTTP " + statusCode + " (High Demand/Rate Limit). Retrying attempt "
+                        + attempts + "/" + maxRetries + " after " + retryBackoffMs + "ms backoff...");
+                sleepBackoff(retryBackoffMs);
+                continue;
+            }
+
+            System.err.println(">>> GEMINI HTTP ERROR CODE: " + statusCode + (attempts > 1 ? " after " + attempts + " attempts" : ""));
             System.err.println(">>> GEMINI RAW ERROR TEXT: " + errorBody);
-            response.close();
-            throw new IllegalStateException("Gemini request failed with HTTP " + response.code() + ": " + errorBody);
+            throw new IllegalStateException("Gemini request failed with HTTP " + statusCode + ": " + errorBody);
         }
+    }
 
+    private static void sleepBackoff(long ms) {
+        if (ms <= 0) return;
         try {
-            String rawResponse = response.body() != null ? response.body().string() : "";
-            response.close();
-            String extracted = extractTextFromPayload(rawResponse);
-            return extracted != null ? Stream.of(extracted) : Stream.empty();
-        } catch (IOException e) {
-            response.close();
-            throw new IllegalStateException("Failed reading Gemini response: " + e.getMessage(), e);
+            Thread.sleep(ms);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Gemini request retry backoff interrupted", ie);
         }
+    }
+
+    private static String readFullResponseBody(Response response) throws IOException {
+        ResponseBody body = response.body();
+        if (body == null) {
+            return "";
+        }
+        try (java.io.Reader charReader = body.charStream();
+             java.io.BufferedReader reader = new java.io.BufferedReader(charReader)) {
+            StringBuilder sb = new StringBuilder();
+            char[] buffer = new char[8192];
+            int read;
+            while ((read = reader.read(buffer, 0, buffer.length)) != -1) {
+                sb.append(buffer, 0, read);
+            }
+            return sb.toString();
+        }
+    }
+
+    public Request buildHttpRequest(LlmRequest request) {
+        String safeModel = resolveModel(request.model());
+        String effectiveBaseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
+        String url = effectiveBaseUrl + safeModel + ":generateContent?key=" + this.apiKey.trim();
+        String jsonBody = buildBody(request);
+
+        return new Request.Builder()
+                .url(url)
+                .header("Content-Type", "application/json")
+                .header("x-goog-api-key", this.apiKey.trim())
+                .removeHeader("Authorization")
+                .post(RequestBody.create(jsonBody, JSON))
+                .build();
     }
 
     /**
@@ -121,17 +196,43 @@ public final class GeminiProvider implements LlmProvider {
      */
     String streamUrl(String model) {
         String safeModel = resolveModel(model);
-        return baseUrl + safeModel + ":streamGenerateContent?alt=sse&key=" + apiKey;
+        String effectiveBaseUrl = baseUrl + (baseUrl.endsWith("/") ? "" : "/");
+        return effectiveBaseUrl + safeModel + ":streamGenerateContent?alt=sse&key=" + apiKey.trim();
     }
 
-    static String resolveModel(String model) {
+    private static String configuredDefaultModel() {
+        String prop = System.getProperty("shree.llm.gemini.model");
+        if (prop != null && !prop.isBlank()) {
+            return prop.trim();
+        }
+        prop = System.getProperty("gemini.model");
+        if (prop != null && !prop.isBlank()) {
+            return prop.trim();
+        }
+        prop = System.getenv("SHREE_LLM_GEMINI_MODEL");
+        if (prop != null && !prop.isBlank()) {
+            return prop.trim();
+        }
+        return "gemini-3.6-flash";
+    }
+
+    public static String resolveModel(String model) {
+        String defaultModel = configuredDefaultModel();
         if (model == null
                 || model.isBlank()
-                || "default".equalsIgnoreCase(model)
-                || safeModelPrefix(model)) {
-            return "gemini-2.0-flash";
+                || "default".equalsIgnoreCase(model)) {
+            return defaultModel;
         }
-        return model;
+        String clean = model.trim();
+        if (clean.startsWith("models/")) {
+            clean = clean.substring("models/".length()).trim();
+        }
+        if (clean.equalsIgnoreCase("gemini-2.0-flash")
+                || clean.toLowerCase(Locale.ROOT).startsWith("gemini-2.0-flash")
+                || safeModelPrefix(clean)) {
+            return defaultModel;
+        }
+        return clean;
     }
 
     private static boolean safeModelPrefix(String model) {
@@ -139,7 +240,7 @@ public final class GeminiProvider implements LlmProvider {
                 || !model.startsWith("gemini");
     }
 
-    static String buildBody(LlmRequest request) {
+    public static String buildBody(LlmRequest request) {
         try {
             Map<String, Object> part = new LinkedHashMap<>();
             part.put("text", request.prompt());
@@ -155,15 +256,15 @@ public final class GeminiProvider implements LlmProvider {
             root.put("contents", contents);
 
             Map<String, Object> generationConfig = new LinkedHashMap<>();
-            if (request.temperature() != null) {
-                generationConfig.put("temperature", request.temperature());
-            }
-            if (request.maxTokens() != null) {
-                generationConfig.put("maxOutputTokens", request.maxTokens());
-            }
-            if (!generationConfig.isEmpty()) {
-                root.put("generationConfig", generationConfig);
-            }
+            double temperature = request.temperature() != null ? request.temperature() : DEFAULT_TEMPERATURE;
+            generationConfig.put("temperature", temperature);
+
+            int maxOutputTokens = request.maxTokens() != null
+                    ? Math.max(MIN_MAX_OUTPUT_TOKENS, request.maxTokens())
+                    : DEFAULT_MAX_OUTPUT_TOKENS;
+            generationConfig.put("maxOutputTokens", maxOutputTokens);
+
+            root.put("generationConfig", generationConfig);
 
             return MAPPER.writeValueAsString(root);
         } catch (Exception e) {
@@ -171,29 +272,73 @@ public final class GeminiProvider implements LlmProvider {
         }
     }
 
-    static String extractTextFromPayload(String json) {
+    public static String extractTextFromPayload(String json) {
         if (json == null || json.isBlank()) {
             return null;
         }
-        try {
-            JsonNode node = MAPPER.readTree(json);
-            JsonNode candidates = node.path("candidates");
-            if (candidates.isArray() && !candidates.isEmpty()) {
-                JsonNode parts = candidates.get(0).path("content").path("parts");
-                if (parts.isArray() && !parts.isEmpty()) {
-                    StringBuilder text = new StringBuilder();
-                    for (JsonNode part : parts) {
-                        JsonNode value = part.path("text");
-                        if (!value.isMissingNode() && !value.isNull()) {
-                            text.append(value.asText());
-                        }
-                    }
-                    return text.length() > 0 ? text.toString() : null;
+        String cleanJson = json.trim();
+
+        // Handle SSE stream or multi-chunk data: payload
+        if (cleanJson.contains("data:")) {
+            StringBuilder sseCombined = new StringBuilder();
+            for (String line : cleanJson.split("\\r?\\n")) {
+                String stripped = stripDataPrefix(line);
+                if (stripped != null && !stripped.isBlank()) {
+                    try {
+                        JsonNode node = MAPPER.readTree(stripped);
+                        extractAllTextFromNode(node, sseCombined);
+                    } catch (Exception ignored) {}
+                }
+            }
+            if (sseCombined.length() > 0) {
+                return sseCombined.toString();
+            }
+        }
+
+        // Standard JSON payload (single object, JSON array, or concatenated JSON chunks)
+        StringBuilder combined = new StringBuilder();
+        try (com.fasterxml.jackson.core.JsonParser parser = MAPPER.createParser(cleanJson)) {
+            while (parser.nextToken() != null) {
+                JsonNode node = MAPPER.readTree(parser);
+                if (node != null) {
+                    extractAllTextFromNode(node, combined);
                 }
             }
         } catch (Exception ignored) {
         }
+
+        if (combined.length() > 0) {
+            return combined.toString();
+        }
+
         return null;
+    }
+
+    private static void extractAllTextFromNode(JsonNode node, StringBuilder sb) {
+        if (node == null) {
+            return;
+        }
+        if (node.isArray()) {
+            for (JsonNode child : node) {
+                extractAllTextFromNode(child, sb);
+            }
+            return;
+        }
+
+        JsonNode candidates = node.path("candidates");
+        if (candidates.isArray()) {
+            for (JsonNode candidate : candidates) {
+                JsonNode parts = candidate.path("content").path("parts");
+                if (parts.isArray()) {
+                    for (JsonNode part : parts) {
+                        JsonNode textNode = part.path("text");
+                        if (!textNode.isMissingNode() && !textNode.isNull()) {
+                            sb.append(textNode.asText());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**

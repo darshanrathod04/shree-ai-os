@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.runtime.pipeline;
 
+import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.pipeline.model.ExecutionMetadata;
 
 import java.time.Instant;
@@ -10,6 +11,8 @@ import java.util.ArrayDeque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.UnaryOperator;
 
 /**
  * Internal runtime execution state.
@@ -59,6 +62,31 @@ public final class PipelineExecutionState {
     private boolean terminated;
 
     /**
+     * Maximum number of reflection evaluations allowed per execution.
+     *
+     * <p>Bounding the reflection loop here, together with the loop guard in
+     * {@code DefaultExecutionPipeline}, makes an infinite reflection loop
+     * impossible even if a custom reflection stage ignores the limit.</p>
+     */
+    private static final int DEFAULT_MAX_REFLECTION_ITERATIONS = 2;
+
+    /**
+     * Immutable cognitive artifacts produced by the pipeline's cognitive
+     * segment (Reasoning → Inference → Planning → Reflection) together with
+     * the reflection loop bookkeeping (iteration count and quality history).
+     *
+     * <p>P0.2 - replaces the previous mutable cognitive metadata entries
+     * ({@code reasoningResult}, reflection pass counters and quality score
+     * list) with a single immutable value object. Every update replaces this
+     * reference with a new {@link CognitiveState} - the artifacts are never
+     * stored in the {@link #metadata} map.</p>
+     */
+    private CognitiveState cognitiveState;
+
+    /** Whether reflection requested another reasoning pass. */
+    private boolean requiresReReason;
+
+    /**
      * Per-frame "next stage invoked" flags.
      *
      * <p>The ExecutionChain recursively invokes stages. Each frame (stage invocation)
@@ -93,6 +121,8 @@ public final class PipelineExecutionState {
         this.shortCircuited = false;
         this.terminated = false;
         this.nextStageInvokedStack = new ArrayDeque<>();
+        this.cognitiveState = CognitiveState.empty();
+        this.requiresReReason = false;
     }
 
     // =====================================================
@@ -407,6 +437,191 @@ public final class PipelineExecutionState {
     }
 
     // =====================================================
+    // P0.2 - COGNITIVE STATE
+    // =====================================================
+
+    /**
+     * Returns the immutable cognitive state of this execution.
+     *
+     * @return the cognitive state (never null; empty before the cognitive
+     *         segment ran)
+     */
+    public CognitiveState getCognitiveState() {
+        return cognitiveState;
+    }
+
+    /**
+     * Replaces the cognitive state with the given instance.
+     *
+     * @param cognitiveState the new cognitive state (must not be null)
+     */
+    public void setCognitiveState(CognitiveState cognitiveState) {
+        this.cognitiveState = Objects.requireNonNull(
+                cognitiveState, "cognitiveState must not be null");
+    }
+
+    /**
+     * Applies the given transformation and stores the resulting immutable
+     * cognitive state.
+     *
+     * <p>This is the canonical update path for the cognitive segment: stages
+     * never mutate shared state, they produce a new {@link CognitiveState}
+     * from the current one.</p>
+     *
+     * @param update the transformation (must not be null)
+     * @return the resulting cognitive state (never null)
+     */
+    public CognitiveState updateCognitiveState(
+            UnaryOperator<CognitiveState> update) {
+        Objects.requireNonNull(update, "update must not be null");
+        this.cognitiveState = update.apply(this.cognitiveState);
+        return this.cognitiveState;
+    }
+
+    // =====================================================
+    // P0.1 - REFLECTION LOOP TRACKING
+    // =====================================================
+
+    /**
+     * Returns the number of reflection passes completed so far.
+     *
+     * <p>Delegates to {@link CognitiveState#reflectionIteration()} - the
+     * iteration count is part of the immutable cognitive state, not a
+     * separate mutable field.</p>
+     *
+     * @return the completed reflection pass count (0 before the first pass)
+     */
+    public int getReflectionIteration() {
+        return cognitiveState.reflectionIteration();
+    }
+
+    /**
+     * Increments the reflection pass count by one.
+     *
+     * <p>Called by {@code ReflectionStage} once per completed reflection
+     * evaluation. Together with {@link #getMaxReflectionIterations()} this
+     * bounds the reflection loop. Produces a new immutable
+     * {@link CognitiveState} via {@link CognitiveState#incrementReflection()}.</p>
+     */
+    public void incrementReflectionIteration() {
+        cognitiveState = cognitiveState.incrementReflection();
+    }
+
+    /**
+     * Resets the reflection loop bookkeeping: pass count and quality scores
+     * are cleared while the produced cognitive artifacts (reasoning,
+     * inference, planning, reflection analysis) are preserved.
+     */
+    public void resetReflectionIteration() {
+        CognitiveState cs = cognitiveState;
+                 cognitiveState = new CognitiveState(
+                cs.reasoning(),
+                cs.inference(),
+                cs.planning(),
+                cs.reflection(),
+                0,
+                List.of(),
+                cs.evidencePackage(),
+                cs.intentProfile(),
+                cs.domainProfile(),
+                cs.userConstraints(),
+                cs.goalStructure(), cs.ambiguityProfile(),
+                cs.reasoningGraph(),
+                cs.synthesisGraph(),
+                cs.causalGraph(),
+                cs.verificationGraph());
+        requiresReReason = false;
+    }
+
+    /**
+     * Returns the maximum number of reflection evaluations allowed before
+     * the pipeline refuses another reasoning pass.
+     *
+     * @return the reflection iteration bound (always &ge; 1)
+     */
+    public int getMaxReflectionIterations() {
+        return DEFAULT_MAX_REFLECTION_ITERATIONS;
+    }
+
+    /**
+     * Returns whether reflection has requested another reasoning pass.
+     *
+     * @return true when the pipeline must re-execute the cognitive segment
+     */
+    public boolean requiresReReason() {
+        return requiresReReason;
+    }
+
+    /**
+     * Sets the reflection loop request flag.
+     *
+     * @param requiresReReason true to request another reasoning pass
+     */
+    public void setRequiresReReason(boolean requiresReReason) {
+        this.requiresReReason = requiresReReason;
+    }
+
+    /** Clears the reflection loop request flag. */
+    public void clearRequiresReReason() {
+        this.requiresReReason = false;
+    }
+
+    /**
+     * Records the quality score of a completed reflection pass.
+     *
+     * <p>The score is appended to the immutable quality history inside
+     * {@link CognitiveState} - a new state instance is produced; the
+     * previous state (and any reader holding it) is unaffected.</p>
+     *
+     * @param score the reflection quality score (0.0-1.0)
+     */
+    public void recordQualityScore(double score) {
+        CognitiveState cs = cognitiveState;
+        List<Double> history = new ArrayList<>(cs.qualityHistory());
+        history.add(score);
+                cognitiveState = new CognitiveState(
+                cs.reasoning(),
+                cs.inference(),
+                cs.planning(),
+                cs.reflection(),
+                cs.reflectionIteration(),
+                List.copyOf(history),
+                cs.evidencePackage(),
+                cs.intentProfile(),
+                cs.domainProfile(),
+                cs.userConstraints(),
+                cs.goalStructure(), cs.ambiguityProfile(),
+                cs.reasoningGraph(),
+                cs.synthesisGraph(),
+                cs.causalGraph(),
+                cs.verificationGraph());
+    }
+
+    /**
+     * Returns an unmodifiable list of the recorded reflection quality scores
+     * in pass order.
+     *
+     * <p>Delegates to {@link CognitiveState#qualityHistory()}.</p>
+     *
+     * @return the previous quality scores (never null, may be empty)
+     */
+    public List<Double> getPreviousQualityScores() {
+        return Collections.unmodifiableList(cognitiveState.qualityHistory());
+    }
+
+    /**
+     * Clears the terminated flag.
+     *
+     * <p>Used by {@code DefaultExecutionPipeline} to resume the downstream
+     * stages (e.g. MemoryStore, ChiefReview) after a reflection loop pass
+     * completed its segment chain. The terminated flag is a chain-navigation
+     * signal, not a terminal result status.</p>
+     */
+    void resetTerminated() {
+        this.terminated = false;
+    }
+
+    // =====================================================
     // FREEZE TO IMMUTABLE RESULT
     // =====================================================
 
@@ -477,6 +692,8 @@ public final class PipelineExecutionState {
                 .addCustomValue("shortCircuited", shortCircuited)
                 .addCustomValue("terminated", terminated)
                 .addCustomValue("duration", duration)
+                .addCustomValue("reflectionIteration", cognitiveState.reflectionIteration())
+                .addCustomValue("requiresReReason", requiresReReason)
                 .build();
     }
 

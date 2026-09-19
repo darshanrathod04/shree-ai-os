@@ -82,19 +82,53 @@ public final class MemoryStoreStage implements ExecutionStage {
                 return chain.next(context, state);
             }
 
-            // Build memory content from execution
-            String requestText = context.getExecutionRequest() != null 
-                    ? context.getExecutionRequest().toString() 
-                    : "Unknown request";
-            
-            String responseText = "Response for: " + requestText;
-            
-            String memoryText = String.format(
-                    "Request: %s\nResponse: %s\nExecution ID: %s",
-                    requestText,
-                    responseText,
-                    executionId
-            );
+            // Extract title and explicit content from metadata if present (e.g. STORE_MEMORY)
+            Object reqMetaVal = context.getAttribute("requestMetadata");
+            String title = null;
+            String explicitContent = null;
+            if (reqMetaVal instanceof java.util.Map<?, ?> reqMeta) {
+                Object t = reqMeta.get("title");
+                if (t != null && !t.toString().isBlank()) {
+                    title = t.toString().trim();
+                }
+                Object c = reqMeta.get("content");
+                if (c != null && !c.toString().isBlank()) {
+                    explicitContent = c.toString().trim();
+                }
+            }
+            if (title == null && context.getExecutionRequest() != null && context.getExecutionRequest().parameters() != null) {
+                Object t = context.getExecutionRequest().parameters().get("title");
+                if (t != null && !t.toString().isBlank()) {
+                    title = t.toString().trim();
+                }
+            }
+            if (explicitContent == null && context.getExecutionRequest() != null && context.getExecutionRequest().parameters() != null) {
+                Object c = context.getExecutionRequest().parameters().get("content");
+                if (c != null && !c.toString().isBlank()) {
+                    explicitContent = c.toString().trim();
+                }
+            }
+
+            // Build memory content from execution or explicit store request
+            String memoryText;
+            String source;
+            if (explicitContent != null) {
+                memoryText = (title != null && !title.isBlank()) ? (title + ": " + explicitContent) : explicitContent;
+                source = (title != null && !title.isBlank()) ? title : "stored-memory";
+            } else {
+                String requestText = context.getExecutionRequest() != null
+                        && context.getExecutionRequest().getUserInput() != null
+                        ? context.getExecutionRequest().getUserInput()
+                        : "Unknown request";
+                String responseText = "Response for: " + requestText;
+                memoryText = String.format(
+                        "Request: %s\nResponse: %s\nExecution ID: %s",
+                        requestText,
+                        responseText,
+                        executionId
+                );
+                source = "pipeline-execution";
+            }
 
             // Use a HashMap instead of Map.of() because executionId may be null
             // when the upstream ActionExecutionStage failed gracefully and
@@ -105,8 +139,14 @@ public final class MemoryStoreStage implements ExecutionStage {
             java.util.Map<String, Object> contentMetadata = new java.util.HashMap<>();
             contentMetadata.put("requestId", requestId);
             contentMetadata.put("executionId", safeExecutionId);
-            contentMetadata.put("topics", extractTopics(requestText));
-            contentMetadata.put("concepts", extractConcepts(requestText));
+            if (title != null) {
+                contentMetadata.put("title", title);
+            }
+            if (explicitContent != null) {
+                contentMetadata.put("content", explicitContent);
+            }
+            contentMetadata.put("topics", extractTopics(memoryText));
+            contentMetadata.put("concepts", extractConcepts(memoryText));
 
             MemoryContent memoryContent = new MemoryContent(
                     memoryText,
@@ -124,7 +164,7 @@ public final class MemoryStoreStage implements ExecutionStage {
                     java.util.Set.of(), // empty tags
                     0.7, // importance
                     0.8, // confidence
-                    "pipeline-execution",
+                    source,
                     Instant.now(),
                     Instant.now(),
                     Instant.now(),

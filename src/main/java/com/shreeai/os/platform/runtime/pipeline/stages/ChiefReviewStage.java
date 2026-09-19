@@ -3,6 +3,7 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 import com.shreeai.os.platform.kernels.chief.api.ChiefService;
 import com.shreeai.os.platform.kernels.chief.model.ChiefRequest;
 import com.shreeai.os.platform.kernels.chief.model.ChiefResponse;
+import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionAnalysis;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
@@ -94,13 +95,16 @@ public final class ChiefReviewStage implements ExecutionStage {
             String reviewDecision = "APPROVED";
             boolean allStagesCompleted = state.getVisitedStages().size() >= 10;
 
-            // EO-V1.6 Autonomous gate — reflection-driven retry / escalation
-            Object retryAdvised = state.getMetadata().get("reflectionRetryAdvised");
-            Object reflectionScore = state.getMetadata().get("reflectionScore");
-            Object reflectionVerdict = state.getMetadata().get("reflectionVerdict");
+            // EO-V1.6 Autonomous gate — reflection-driven retry / escalation.
+            // P0.2 — the reflection artifact is read from the immutable
+            // cognitive state; the metadata mirror no longer exists.
+            ReflectionAnalysis reflection = state.getCognitiveState().reflection();
 
-            boolean needsRetry = Boolean.TRUE.equals(retryAdvised);
-            double score = reflectionScore instanceof Number number ? number.doubleValue() : 1.0;
+            boolean needsRetry = reflection != null && reflection.retryAdvised();
+            double score = reflection != null ? reflection.score() : 1.0;
+            String reflectionVerdict = reflection != null
+                    ? reflection.verdict().name()
+                    : null;
             boolean escalate = needsRetry && score < ESCALATION_SCORE_THRESHOLD;
 
             if (chiefService != null) {
@@ -108,7 +112,7 @@ public final class ChiefReviewStage implements ExecutionStage {
                 Map<String, Object> reviewContext = new HashMap<>();
                 reviewContext.put("requestId", requestId);
                 reviewContext.put("reflectionVerdict",
-                        reflectionVerdict != null ? reflectionVerdict.toString() : "UNKNOWN");
+                        reflectionVerdict != null ? reflectionVerdict : "UNKNOWN");
                 reviewContext.put("reflectionScore", score);
                 reviewContext.put("retryAdvised", needsRetry);
 
@@ -164,7 +168,7 @@ public final class ChiefReviewStage implements ExecutionStage {
                                 "requestId", requestId,
                                 "reflectionScore", score,
                                 "reflectionVerdict",
-                                reflectionVerdict != null ? reflectionVerdict.toString() : "UNKNOWN"));
+                                reflectionVerdict != null ? reflectionVerdict : "UNKNOWN"));
 
                 approval = approvalService.create(approval);
                 approval = approvalService.approve(approval.requestId()); // autonomous approval

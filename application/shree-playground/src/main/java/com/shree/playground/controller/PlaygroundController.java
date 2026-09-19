@@ -24,7 +24,10 @@ public class PlaygroundController {
 
     @PostMapping("/chat")
     public SDKResponse chat(@RequestBody ChatRequest request) {
-        return ai.chat(request.message());
+        System.out.println(">>> [PLAYGROUND CHAT] Incoming request message: " + request.message());
+        SDKResponse response = ai.chat(request.message());
+        System.out.println(">>> [PLAYGROUND CHAT] Response completed with confidence: " + response.confidence());
+        return response;
     }
 
     // =====================================================

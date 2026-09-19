@@ -156,7 +156,7 @@ public class RuntimePipelineIntegrationTest {
                 knowledgeService,
                 knowledgeRankingService
         ));
-        stageList.add(new ReasoningStage(reasoningEngine));
+        stageList.add(new ReasoningStage());
         stageList.add(new InferenceStage(inferenceEngine));
         stageList.add(new PlanningStage(planningService));
         stageList.add(new ActionExecutionStage(executionService));

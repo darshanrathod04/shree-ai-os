@@ -2,6 +2,45 @@ package com.shreeai.os.platform.runtime.pipeline.stages;
 
 import com.shreeai.os.platform.intelligence.context.IntelligenceContext;
 import com.shreeai.os.platform.intelligence.context.IntelligenceContextBuilder;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultProviderRouter;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultFreshnessPolicyEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultKnowledgeAcquisitionOrchestrator;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultSourceDiscoveryEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultTrustSelectionEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.FreshnessPolicyEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.KnowledgeAcquisitionOrchestrator;
+import com.shreeai.os.platform.kernels.acquisition.engine.ProviderRouter;
+import com.shreeai.os.platform.kernels.acquisition.engine.SourceDiscoveryEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.TrustSelectionEngine;
+import com.shreeai.os.platform.kernels.acquisition.engine.KnowledgeContentResolver;
+import com.shreeai.os.platform.kernels.acquisition.engine.DefaultKnowledgeContentResolver;
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionDecisionPlan;
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionDecisionTarget;
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionPlan;
+import com.shreeai.os.platform.kernels.acquisition.model.AcquisitionResult;
+import com.shreeai.os.platform.kernels.acquisition.model.KnowledgeRequirementSet;
+import com.shreeai.os.platform.kernels.acquisition.model.SourceSelectionPlan;
+import com.shreeai.os.platform.kernels.context.engine.AmbiguityDetectionEngine;
+import com.shreeai.os.platform.kernels.context.engine.ConstraintExtractionEngine;
+import com.shreeai.os.platform.kernels.context.engine.DefaultAmbiguityDetectionEngine;
+import com.shreeai.os.platform.kernels.context.engine.DefaultConstraintExtractionEngine;
+import com.shreeai.os.platform.kernels.context.engine.DefaultDomainDetector;
+import com.shreeai.os.platform.kernels.context.engine.DefaultPrimaryIntentDetector;
+import com.shreeai.os.platform.kernels.context.engine.DomainDetector;
+import com.shreeai.os.platform.kernels.context.engine.PrimaryIntentDetector;
+import com.shreeai.os.platform.kernels.context.engine.GoalIdentificationEngine;
+import com.shreeai.os.platform.kernels.context.engine.DefaultGoalIdentificationEngine;
+import com.shreeai.os.platform.kernels.context.model.AmbiguityProfile;
+import com.shreeai.os.platform.kernels.context.model.ContextIntelligence;
+import com.shreeai.os.platform.kernels.context.model.DomainProfile;
+import com.shreeai.os.platform.kernels.context.model.GoalStructure;
+import com.shreeai.os.platform.kernels.context.model.IntentProfile;
+import com.shreeai.os.platform.kernels.context.model.UserConstraints;
+import com.shreeai.os.platform.kernels.knowledge.engine.DefaultDocumentIngestionEngine;
+import com.shreeai.os.platform.kernels.knowledge.engine.DefaultKnowledgeSourceRegistry;
+import com.shreeai.os.platform.kernels.knowledge.engine.DocumentIngestionEngine;
+import com.shreeai.os.platform.kernels.knowledge.engine.KnowledgeSourceRegistry;
+import com.shreeai.os.platform.runtime.cognitive.CognitiveState;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionChain;
 import com.shreeai.os.platform.runtime.pipeline.ExecutionStage;
 import com.shreeai.os.platform.runtime.pipeline.PipelineContext;
@@ -32,8 +71,69 @@ public final class ContextStage implements ExecutionStage {
             .priority(2)
             .enabled(true)
             .version("1.0")
-            .description("Builds and enriches execution context")
+            .description("Builds execution context with intent, domain, constraints, goals, and ambiguity diagnosis")
             .build();
+
+    private final PrimaryIntentDetector intentDetector;
+    private final DomainDetector domainDetector;
+    private final ConstraintExtractionEngine constraintEngine;
+    private final KnowledgeSourceRegistry sourceRegistry;
+    private final KnowledgeContentResolver contentResolver;
+
+    public ContextStage() {
+        this(new DefaultPrimaryIntentDetector(), new DefaultDomainDetector(),
+                new DefaultConstraintExtractionEngine(),
+                DefaultKnowledgeSourceRegistry.withDefaults(),
+                new DefaultKnowledgeContentResolver());
+    }
+
+    public ContextStage(PrimaryIntentDetector intentDetector, DomainDetector domainDetector,
+                        ConstraintExtractionEngine constraintEngine) {
+        this(intentDetector, domainDetector, constraintEngine,
+                DefaultKnowledgeSourceRegistry.withDefaults(),
+                new DefaultKnowledgeContentResolver());
+    }
+
+    /**
+     * Creates a context stage backed by an explicit K1 source registry catalog.
+     *
+     * <p>The registry is the read-only catalog consulted by the K0.6.3 trust and
+     * source selection engine. It is never mutated by this stage; when it holds
+     * no eligible source, acquisition targets are simply left unselected.</p>
+     *
+     * @param intentDetector  the primary intent detector (must not be null)
+     * @param domainDetector  the domain detector (must not be null)
+     * @param constraintEngine the user constraint extraction engine (must not be null)
+     * @param sourceRegistry  the K1 knowledge source registry catalog (must not be null)
+     */
+    public ContextStage(PrimaryIntentDetector intentDetector, DomainDetector domainDetector,
+                        ConstraintExtractionEngine constraintEngine,
+                        KnowledgeSourceRegistry sourceRegistry) {
+        this(intentDetector, domainDetector, constraintEngine, sourceRegistry,
+                new DefaultKnowledgeContentResolver());
+    }
+
+    /**
+     * Creates a context stage backed by explicit registry catalog and content resolver.
+     *
+     * @param intentDetector   the primary intent detector (must not be null)
+     * @param domainDetector   the domain detector (must not be null)
+     * @param constraintEngine the user constraint extraction engine (must not be null)
+     * @param sourceRegistry   the K1 knowledge source registry catalog (must not be null)
+     * @param contentResolver  the content resolver for acquisitions (must not be null)
+     */
+    public ContextStage(PrimaryIntentDetector intentDetector, DomainDetector domainDetector,
+                        ConstraintExtractionEngine constraintEngine,
+                        KnowledgeSourceRegistry sourceRegistry,
+                        KnowledgeContentResolver contentResolver) {
+        this.intentDetector = intentDetector;
+        this.domainDetector = domainDetector;
+        this.constraintEngine = constraintEngine;
+        this.sourceRegistry = java.util.Objects.requireNonNull(sourceRegistry,
+                "sourceRegistry must not be null");
+        this.contentResolver = java.util.Objects.requireNonNull(contentResolver,
+                "contentResolver must not be null");
+    }
 
     @Override
     public PipelineResult process(PipelineContext context, ExecutionChain chain, PipelineExecutionState state) {
@@ -46,10 +146,117 @@ public final class ContextStage implements ExecutionStage {
             String contextId = "ctx-" + System.currentTimeMillis();
             String contextType = "EXECUTION_CONTEXT";
 
+            // P1.1: Detect primary intent from user input
+            String userInput = context.getExecutionRequest() != null
+                    && context.getExecutionRequest().getUserInput() != null
+                    ? context.getExecutionRequest().getUserInput()
+                    : "";
+            IntentProfile intentProfile = intentDetector.detect(userInput);
+            CognitiveState updatedCognitiveState = state.getCognitiveState().withIntentProfile(intentProfile);
+            state.setCognitiveState(updatedCognitiveState);
+
+            // P1.2: Detect domain from user input
+            DomainProfile domainProfile = domainDetector.detect(userInput);
+            CognitiveState updatedCognitiveStateWithDomain = state.getCognitiveState().withDomainProfile(domainProfile);
+            state.setCognitiveState(updatedCognitiveStateWithDomain);
+
+            // P1.3: Extract user constraints from user input
+            UserConstraints userConstraints = constraintEngine.extract(userInput);
+            CognitiveState updatedCognitiveStateWithConstraints = state.getCognitiveState().withUserConstraints(userConstraints);
+            state.setCognitiveState(updatedCognitiveStateWithConstraints);
+
+            // P1.4: Identify goals from user input (Deterministic Goal Identification)
+            GoalIdentificationEngine goalIdentificationEngine = new DefaultGoalIdentificationEngine();
+            GoalStructure goalStructure = goalIdentificationEngine.identify(userInput);
+            CognitiveState updatedCognitiveStateWithGoal = updatedCognitiveStateWithConstraints.withGoalStructure(goalStructure);
+            state.setCognitiveState(updatedCognitiveStateWithGoal);
+
+            // P1.5: Diagnose ambiguity from the cognitive artifacts (never the raw prompt)
+            AmbiguityDetectionEngine ambiguityDetectionEngine = new DefaultAmbiguityDetectionEngine();
+            AmbiguityProfile ambiguityProfile = ambiguityDetectionEngine.diagnose(
+                    intentProfile, domainProfile, userConstraints, goalStructure);
+            CognitiveState updatedCognitiveStateWithAmbiguity = updatedCognitiveStateWithGoal.withAmbiguityProfile(ambiguityProfile);
+            state.setCognitiveState(updatedCognitiveStateWithAmbiguity);
+
+            // K0.6.1: Discover knowledge requirements from the canonical context
+            // intelligence aggregate. Deterministic, rule-based discovery only -
+            // no provider routing, no acquisition, no LLM (those are K0.6.2+).
+            SourceDiscoveryEngine sourceDiscoveryEngine = new DefaultSourceDiscoveryEngine();
+            KnowledgeRequirementSet knowledgeRequirements = sourceDiscoveryEngine.discover(
+                    ContextIntelligence.of(
+                            intentProfile, domainProfile, userConstraints,
+                            goalStructure, ambiguityProfile));
+            CognitiveState updatedCognitiveStateWithRequirements =
+                    state.getCognitiveState().withKnowledgeRequirements(knowledgeRequirements);
+            state.setCognitiveState(updatedCognitiveStateWithRequirements);
+
+            // K0.6.2: Route every required knowledge topic to a provider type.
+            // Deterministic, dictionary-driven routing only - no network calls,
+            // no trust ranking, no ingestion (those are K0.6.3+).
+            ProviderRouter providerRouter = new DefaultProviderRouter();
+            AcquisitionPlan acquisitionPlan = providerRouter.route(knowledgeRequirements);
+            CognitiveState updatedCognitiveStateWithPlan =
+                    state.getCognitiveState().withAcquisitionPlan(acquisitionPlan);
+            state.setCognitiveState(updatedCognitiveStateWithPlan);
+
+            // K0.6.3: Select the single most authoritative concrete source for
+            // every routed acquisition target from the K1 source registry.
+            // Deterministic, authority-ranked selection only - no downloads, no
+            // crawling, no ingestion (those are K0.6.4+).
+            TrustSelectionEngine trustSelectionEngine = new DefaultTrustSelectionEngine();
+            SourceSelectionPlan sourceSelectionPlan =
+                    trustSelectionEngine.select(acquisitionPlan, sourceRegistry);
+            CognitiveState updatedCognitiveStateWithSelection =
+                    state.getCognitiveState().withSourceSelectionPlan(sourceSelectionPlan);
+            state.setCognitiveState(updatedCognitiveStateWithSelection);
+
+            // K0.6.4: Decide, for every selected source, whether cached knowledge
+            // may be reused or fresh knowledge must be acquired. Deterministic
+            // cache policy only - no downloads, no crawling, no ingestion
+            // (K0.6.5 executes the ACQUIRE / REFRESH decisions).
+            FreshnessPolicyEngine freshnessPolicyEngine = new DefaultFreshnessPolicyEngine();
+            AcquisitionDecisionPlan acquisitionDecisionPlan = freshnessPolicyEngine.decide(
+                    sourceSelectionPlan, sourceRegistry,
+                    ContextIntelligence.of(intentProfile, domainProfile, userConstraints,
+                            goalStructure, ambiguityProfile));
+            CognitiveState updatedCognitiveStateWithDecision =
+                    state.getCognitiveState().withAcquisitionDecisionPlan(acquisitionDecisionPlan);
+            state.setCognitiveState(updatedCognitiveStateWithDecision);
+
+            // K0.6.5: Execute the locked acquisition workflow for every decision
+            // of the plan. Deterministic execution only - the orchestrator never
+            // re-decides what to acquire. Targets requiring acquisition (ACQUIRE / REFRESH)
+            // have content resolved via the configured KnowledgeContentResolver.
+            DocumentIngestionEngine ingestionEngine =
+                    new DefaultDocumentIngestionEngine(sourceRegistry);
+            KnowledgeAcquisitionOrchestrator acquisitionOrchestrator =
+                    new DefaultKnowledgeAcquisitionOrchestrator(sourceRegistry, ingestionEngine);
+
+            java.util.Map<String, String> rawContentBySourceId = new java.util.LinkedHashMap<>();
+            for (AcquisitionDecisionTarget target : acquisitionDecisionPlan.targets()) {
+                if (target.decision().requiresAcquisition()) {
+                    sourceRegistry.findById(target.sourceId()).ifPresent(src -> {
+                        String content = contentResolver.resolveContent(src, target, userInput);
+                        if (content != null && !content.isBlank()) {
+                            rawContentBySourceId.put(target.sourceId(), content);
+                        }
+                    });
+                }
+            }
+
+            AcquisitionResult acquisitionResult =
+                    acquisitionOrchestrator.execute(acquisitionDecisionPlan, java.util.List.of(), rawContentBySourceId);
+            CognitiveState updatedCognitiveStateWithResult =
+                    state.getCognitiveState().withAcquisitionResult(acquisitionResult);
+            state.setCognitiveState(updatedCognitiveStateWithResult);
+            state.addMetadata("acquisitionResult", acquisitionResult);
+            state.addMetadata("acquiredKnowledgeDocuments", acquisitionResult.documents());
+
+            // Build the canonical context intelligence aggregate.
+            ContextIntelligence contextIntelligence = ContextIntelligence.of(
+                    intentProfile, domainProfile, userConstraints, goalStructure, ambiguityProfile);
+
             // Build the structured IntelligenceContext from the request metadata.
-            // If the SDK provided an intelligence context, it is preserved intact.
-            // Otherwise a minimal context is constructed so downstream kernels
-            // always receive structured context instead of only a raw String.
             IntelligenceContext intelligenceContext = null;
             if (context.getExecutionRequest() != null
                     && context.getExecutionRequest().getMetadata() != null) {
@@ -61,13 +268,9 @@ public final class ContextStage implements ExecutionStage {
             }
 
             if (intelligenceContext == null && context.getExecutionRequest() != null) {
-                // No structured context supplied; build a minimal one from the
-                // request so the pipeline always has structured context available.
                 intelligenceContext = IntelligenceContextBuilder.fromExecution(
                         context.getExecutionRequest().getRequestId(),
-                        context.getExecutionRequest().getUserInput() != null
-                                ? context.getExecutionRequest().getUserInput()
-                                : "",
+                        userInput,
                         java.util.Map.of()
                 );
             }
@@ -76,10 +279,33 @@ public final class ContextStage implements ExecutionStage {
             state.addMetadata("contextId", contextId);
             state.addMetadata("contextType", contextType);
             state.addMetadata("contextBuilt", true);
+            state.addMetadata("primaryIntent", intentProfile.primaryIntent().name());
+            state.addMetadata("intentConfidence", intentProfile.confidence());
+            state.addMetadata("primaryDomain", domainProfile.primaryDomain().name());
+            state.addMetadata("domainConfidence", domainProfile.confidence());
             if (intelligenceContext != null) {
                 state.addMetadata("intelligenceContext", intelligenceContext);
             }
-            state.addMessage("Context built: " + contextId + " for identity " + identityId);
+
+            // Sprint-Pre-Release: Extract project intelligence into execution metadata
+            // so EvidenceAgent can reliably ground [PROJECT] evidence.
+            extractProjectIntelligence(context, state);
+            state.addMessage("Context built: " + contextId + " for identity " + identityId
+                    + " | Intent: " + intentProfile.primaryIntent()
+                    + " | Domain: " + domainProfile.primaryDomain()
+                    + " | Goal: " + goalStructure.primaryGoal().title()
+                    + " | Ambiguity: " + contextIntelligence.ambiguityProfile().ambiguityScore()
+                    + " | KnowledgeRequirements: " + knowledgeRequirements.topics().size()
+                    + " | AcquisitionTargets: " + acquisitionPlan.targets().size()
+                    + " | SelectedSources: " + sourceSelectionPlan.size()
+                    + " | AcquisitionDecisions: " + acquisitionDecisionPlan.size()
+                    + " | PendingAcquisition: "
+                    + acquisitionDecisionPlan.targetsRequiringAcquisition().size()
+                    + " | AcquisitionRecords: " + acquisitionResult.size()
+                    + " | Documents: " + acquisitionResult.documents().size()
+                    + " | Acquired: " + acquisitionResult.acquiredCount()
+                    + " | Skipped: " + acquisitionResult.skippedCount()
+                    + " | Failed: " + acquisitionResult.failedCount());
 
             // Continue to next stage
             return chain.next(context, state);
@@ -91,6 +317,63 @@ public final class ContextStage implements ExecutionStage {
                     .status("CONTEXT_FAILED")
                     .addMessage("Context stage failed: " + e.getMessage())
                     .build();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void extractProjectIntelligence(PipelineContext context, PipelineExecutionState state) {
+        java.util.Map<String, Object> reqMeta = context != null && context.getAttribute("requestMetadata") instanceof java.util.Map<?, ?> m
+                ? (java.util.Map<String, Object>) m
+                : java.util.Map.of();
+        java.util.Map<String, Object> reqCtx = context != null && context.getAttribute("requestContext") instanceof java.util.Map<?, ?> m
+                ? (java.util.Map<String, Object>) m
+                : java.util.Map.of();
+
+        Object projectObj = reqMeta.get("projectSummary");
+        if (projectObj == null) projectObj = reqCtx.get("projectSummary");
+        if (projectObj == null) projectObj = reqMeta.get("project");
+        if (projectObj == null) projectObj = reqCtx.get("project");
+
+        if (projectObj instanceof com.shreeai.os.platform.kernels.project.model.ProjectSummary summary) {
+            java.util.Map<String, Object> map = new java.util.LinkedHashMap<>(summary.toMap());
+            map.put("summary", "Project " + summary.projectName() + " [" + summary.framework() + " / " + summary.buildSystem() + "] with " + summary.statistics().classCount() + " classes and " + summary.statistics().endpointCount() + " endpoints");
+            state.addMetadata("projectSummary", map);
+            state.addMetadata("projectName", summary.projectName());
+            return;
+        } else if (projectObj instanceof java.util.Map<?, ?> map) {
+            state.addMetadata("projectSummary", map);
+            if (map.containsKey("projectName")) {
+                state.addMetadata("projectName", String.valueOf(map.get("projectName")));
+            }
+            return;
+        } else if (projectObj != null) {
+            state.addMetadata("projectSummary", java.util.Map.of("summary", String.valueOf(projectObj)));
+            return;
+        }
+
+        // Check if projectPath or projectDir or workspacePath was provided
+        Object pathObj = reqMeta.get("projectPath");
+        if (pathObj == null) pathObj = reqCtx.get("projectPath");
+        if (pathObj == null) pathObj = reqMeta.get("projectDir");
+        if (pathObj == null) pathObj = reqCtx.get("projectDir");
+        if (pathObj == null) pathObj = reqMeta.get("workspacePath");
+        if (pathObj == null) pathObj = reqCtx.get("workspacePath");
+
+        if (pathObj instanceof String pathStr && !pathStr.isBlank()) {
+            try {
+                java.nio.file.Path p = java.nio.file.Path.of(pathStr);
+                if (java.nio.file.Files.exists(p)) {
+                    com.shreeai.os.platform.kernels.project.engine.DefaultProjectIntelligenceEngine engine =
+                            new com.shreeai.os.platform.kernels.project.engine.DefaultProjectIntelligenceEngine();
+                    com.shreeai.os.platform.kernels.project.model.ProjectSummary summary = engine.analyze(p);
+                    java.util.Map<String, Object> map = new java.util.LinkedHashMap<>(summary.toMap());
+                    map.put("summary", "Project " + summary.projectName() + " [" + summary.framework() + " / " + summary.buildSystem() + "] with " + summary.statistics().classCount() + " classes and " + summary.statistics().endpointCount() + " endpoints");
+                    state.addMetadata("projectSummary", map);
+                    state.addMetadata("projectName", summary.projectName());
+                }
+            } catch (Exception ignored) {
+                // Project intelligence extraction is resilient and best-effort
+            }
         }
     }
 

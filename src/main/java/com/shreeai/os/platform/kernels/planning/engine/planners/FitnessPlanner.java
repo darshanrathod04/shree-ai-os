@@ -2,7 +2,7 @@ package com.shreeai.os.platform.kernels.planning.engine.planners;
 
 import com.shreeai.os.platform.kernels.planning.engine.MilestoneGenerator;
 import com.shreeai.os.platform.kernels.planning.engine.TaskGraphBuilder;
-import com.shreeai.os.platform.kernels.planning.model.Milestone;
+import com.shreeai.os.platform.kernels.planning.model.PlanMilestone;
 import com.shreeai.os.platform.kernels.planning.model.Phase;
 import com.shreeai.os.platform.kernels.planning.model.PlanBlueprint;
 import com.shreeai.os.platform.kernels.planning.model.PlanningAnalysisResult;
@@ -56,7 +56,7 @@ public final class FitnessPlanner implements DomainPlanner {
                 }
         );
 
-        List<Milestone> milestones = MilestoneGenerator.generateFromPhases(
+        List<PlanMilestone> milestones = MilestoneGenerator.generateFromPhases(
                 phases, "Week {week}: {title}");
 
         List<String> risks = List.of(

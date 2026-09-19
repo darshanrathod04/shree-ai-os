@@ -12,8 +12,10 @@ import com.shreeai.os.platform.runtime.model.VerificationReport.ConfidenceTier;
 import com.shreeai.os.platform.runtime.model.VerificationReport.ItemStatus;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * <b>VerificationAgent</b>
@@ -122,10 +124,19 @@ public final class VerificationAgent {
             }
         }
 
+        // Deduplicate citations preserving insertion order
+        List<String> uniqueCitations = new ArrayList<>();
+        Set<String> seenCitations = new LinkedHashSet<>();
+        for (String c : citations) {
+            if (c != null && !c.isBlank() && seenCitations.add(c.trim())) {
+                uniqueCitations.add(c.trim());
+            }
+        }
+
         return reportBuilder
                 .tier(tier)
                 .confidence(confidence)
-                .citations(citations)
+                .citations(uniqueCitations)
                 .gaps(gaps)
                 .addMetadata("evidenceBundle", bundle)
                 .addMetadata("bundleId", bundle.bundleId())

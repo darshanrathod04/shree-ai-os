@@ -69,4 +69,19 @@ class QueryNormalizerTest {
         assertEquals("", QueryNormalizer.normalize("what is"));
         assertEquals("", QueryNormalizer.normalize("explain"));
     }
+
+    @Test
+    void normalizesHowToBecomeAndTrailingDots() {
+        assertEquals("java developer in 30 days", QueryNormalizer.normalize("how to become java developer in 30 days ."));
+        assertEquals("java developer in 30 days", QueryNormalizer.normalize("How to become java developer in 30 days."));
+        assertEquals("build hospital management system", QueryNormalizer.normalize("build hospital management system ."));
+        assertEquals("build hospital management system", QueryNormalizer.normalize("build hospital management system."));
+    }
+
+    @Test
+    void stripsStopWordsCorrectly() {
+        assertEquals("java developer 30", QueryNormalizer.stripStopWords("java developer in 30 days"));
+        assertEquals("hospital management system", QueryNormalizer.stripStopWords("build a hospital management system"));
+    }
 }
+

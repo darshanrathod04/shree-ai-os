@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -178,12 +179,52 @@ public final class DefaultExecutionPipeline implements com.shreeai.os.platform.r
         PipelineResult result = null;
         while (chain.hasNext(context, state)) {
             result = chain.next(context, state);
-            // If the stage short-circuited or failed, stop execution
-            if (state.isShortCircuited() || state.isFailed()) {
+            // If the stage short-circuited, failed, or requested another
+            // reasoning pass, stop execution.
+            if (state.isShortCircuited() || state.isFailed() || state.requiresReReason()) {
                 break;
             }
         }
-        
+
+        // P0.1 — Reflection Loop Execution.
+        //
+        // When ReflectionStage set requiresReReason, only the cognitive
+        // segment (Reasoning → Inference → Planning → Reflection) is
+        // re-executed. Identity, Context, Memory and Knowledge results
+        // from the first pass are preserved and reused.
+        //
+        // The loop is bounded by the state's max reflection iterations, so
+        // an infinite loop is impossible even if a custom reflection stage
+        // ignores the limit.
+        boolean reflectionLoopOccurred = false;
+        int reflectionLoops = 0;
+        while (state.requiresReReason()
+                && !state.isFailed()
+                && !state.isShortCircuited()
+                && reflectionLoops < state.getMaxReflectionIterations()) {
+            reflectionLoops++;
+            reflectionLoopOccurred = true;
+            state.clearRequiresReReason();
+            result = executeStages(context, state, reflectionRewindStages());
+        }
+
+        // Resume the downstream stages after Reflection (e.g. MemoryStore,
+        // ChiefReview) so the final response is still produced after the
+        // reflection loops. This only runs when a loop interrupted the main
+        // chain before those stages were reached.
+        if (reflectionLoopOccurred
+                && !state.isFailed()
+                && !state.isShortCircuited()) {
+            // The last rewind pass may have completed its segment chain and
+            // marked the state as terminated; clear it so downstream stages
+            // can run. The loop-request flag is consumed here too — once the
+            // iteration bound is exhausted the loop must not continue, even
+            // if a stage ignored the bound.
+            state.resetTerminated();
+            state.clearRequiresReReason();
+            result = executeStages(context, state, downstreamStagesAfterReflection());
+        }
+
         // If no result was created (empty pipeline), create a default one
         if (result == null) {
             result = PipelineResult.builder()
@@ -214,5 +255,76 @@ public final class DefaultExecutionPipeline implements com.shreeai.os.platform.r
     @Override
     public List<ExecutionStage> getStages() {
         return stages;
+    }
+
+    // =====================================================
+    // P0.1 — REFLECTION LOOP HELPERS
+    // =====================================================
+
+    /**
+     * Stage names of the cognitive segment that is re-executed when
+     * reflection requests another reasoning pass. Identified by name so that
+     * the rewind survives priority reshuffling of the stage list.
+     */
+    private static final Set<String> REFLECTION_REWIND_STAGE_NAMES =
+            Set.of("Reasoning", "Inference", "Planning", "Reflection");
+
+    /**
+     * Executes the given stages in order through a fresh chain, reusing the
+     * existing execution state.
+     *
+     * <p>Stops when a stage short-circuits, fails, or requests another
+     * reflection pass.</p>
+     *
+     * @param context the pipeline context (never null)
+     * @param state   the shared execution state (never null)
+     * @param segment the segment stages to execute (never null, may be empty)
+     * @return the last pipeline result produced, or null when the segment is empty
+     */
+    private PipelineResult executeStages(
+            PipelineContext context,
+            PipelineExecutionState state,
+            List<ExecutionStage> segment) {
+        DefaultExecutionChain segmentChain = new DefaultExecutionChain(segment);
+        PipelineResult segmentResult = null;
+        while (segmentChain.hasNext(context, state)) {
+            segmentResult = segmentChain.next(context, state);
+            if (state.isShortCircuited() || state.isFailed() || state.requiresReReason()) {
+                break;
+            }
+        }
+        return segmentResult;
+    }
+
+    /**
+     * Returns the cognitive segment stages (Reasoning, Inference, Planning,
+     * Reflection) in their original pipeline order.
+     *
+     * @return the rewind stages (never null, may be empty)
+     */
+    private List<ExecutionStage> reflectionRewindStages() {
+        return stages.stream()
+                .filter(stage -> REFLECTION_REWIND_STAGE_NAMES.contains(
+                        stage.getDescriptor().getStageName()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns the stages that follow Reflection in the original pipeline
+     * order (e.g. MemoryStore, ChiefReview).
+     *
+     * <p>These stages were not reached when the main chain was interrupted
+     * by a reflection loop request. Executed once after the loops complete.</p>
+     *
+     * @return the downstream stages (never null, may be empty)
+     */
+    private List<ExecutionStage> downstreamStagesAfterReflection() {
+        for (int i = 0; i < stages.size(); i++) {
+            ExecutionStage stage = stages.get(i);
+            if ("Reflection".equals(stage.getDescriptor().getStageName())) {
+                return stages.subList(i + 1, stages.size());
+            }
+        }
+        return List.of();
     }
 }

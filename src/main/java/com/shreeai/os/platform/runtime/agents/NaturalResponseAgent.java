@@ -72,10 +72,10 @@ public final class NaturalResponseAgent {
     private static final String DEFAULT_LLM_MODEL = "shree-default";
 
     /** Default temperature — moderate, deterministic-but-natural. */
-    private static final double DEFAULT_LLM_TEMPERATURE = 0.3;
+    private static final double DEFAULT_LLM_TEMPERATURE = 0.4;
 
     /** Default max tokens — keeps responses grounded and within budget. */
-    private static final int DEFAULT_LLM_MAX_TOKENS = 1024;
+    private static final int DEFAULT_LLM_MAX_TOKENS = 2048;
 
     public NaturalResponseAgent() {}
 
@@ -169,9 +169,18 @@ public final class NaturalResponseAgent {
             return generateFallbackAnswer(report, request);
         }
 
-        // Sprint-19 hotfix: derive title from real knowledge evidence (if available),
-        // otherwise fall back to the tier label. Never default to "Knowledge Answer"
-        // when the knowledge graph provides a real title.
+        // Sprint-21: try the LLM to produce clean natural-language body prose.
+        // If the LLM call succeeds and returns non-blank prose, return it directly
+        // as the final answer without concatenating raw evidence dumps or citations.
+        // On any failure (null, blank, exception) fall back to the deterministic
+        // renderer so the agent is never blocked by an unavailable provider.
+        String llmProse = tryLlmSynthesis(report, request, bundle);
+        if (llmProse != null && !llmProse.isBlank()) {
+            return llmProse.trim();
+        }
+
+        // Deterministic fallback rendering (headings, summary, citations, evidence sections)
+        // ONLY used when llmProse is null / unavailable.
         String title = deriveTitleFromEvidence(bundle, report);
 
         String userQuestion = request != null && request.getUserInput() != null
@@ -180,28 +189,10 @@ public final class NaturalResponseAgent {
 
         StringBuilder sb = new StringBuilder();
 
-        // Sprint-21: always emit the standard markdown title heading so SDK
-        // consumers (KnowledgeGroundedChatAndQueryTest, etc.) receive the canonical
-        // # {title} heading regardless of which rendering path is taken.
         sb.append("# ").append(title).append("\n\n");
 
         if (!userQuestion.isBlank()) {
             sb.append("**Question:** ").append(userQuestion).append("\n\n");
-        }
-
-        // Sprint-21: try the LLM to produce natural-language body prose.
-        // If the LLM call succeeds and returns non-blank prose, use it to enhance
-        // the answer. On any failure (null, blank, exception) fall back to the
-        // deterministic renderer so the agent is never blocked by an unavailable
-        // provider.
-        //
-        // NOTE: the structured sections (## Summary / ## Key Knowledge / Evidence /
-        // Citations / Confidence) are ALWAYS rendered below, regardless of LLM
-        // success, to preserve the canonical response shape that SDK consumers
-        // and tests depend on.
-        String llmProse = tryLlmSynthesis(report, request, bundle);
-        if (llmProse != null && !llmProse.isBlank()) {
-            sb.append(llmProse).append("\n\n");
         }
 
         // Sprint-19 hotfix: when KNOWLEDGE evidence is present, render the canonical
@@ -218,9 +209,14 @@ public final class NaturalResponseAgent {
         if (!report.citations().isEmpty()) {
             sb.append("## Citations\n\n");
             for (int i = 0; i < report.citations().size(); i++) {
-                sb.append("[").append(i + 1).append("] ")
-                        .append(report.citations().get(i))
-                        .append("\n");
+                String citation = report.citations().get(i).trim();
+                if (citation.startsWith("[")) {
+                    sb.append(citation).append("\n");
+                } else {
+                    sb.append("[").append(i + 1).append("] ")
+                            .append(citation)
+                            .append("\n");
+                }
             }
             sb.append("\n");
         }
@@ -262,18 +258,24 @@ public final class NaturalResponseAgent {
                                    ExecutionRequest request,
                                    EvidenceBundle bundle) {
         if (llmProvider == null) {
+            System.out.println(">>> [NATURAL RESPONSE] LLM Provider is not configured. Using deterministic fallback.");
             return null;
         }
         try {
             LlmRequest llmRequest = buildLlmRequest(report, request, bundle);
             String content = llmProvider.complete(llmRequest).content();
             if (content != null && !content.isBlank()) {
+                if (content.contains(" echoes: ")) {
+                    System.out.println(">>> [NATURAL RESPONSE] In-memory echo detected. Using deterministic fallback.");
+                    return null;
+                }
+                System.out.println(">>> [NATURAL RESPONSE] Successfully received LLM response prose from: " + llmProvider.providerName());
                 return content.trim();
             }
+            System.out.println(">>> [NATURAL RESPONSE] LLM returned blank content. Using deterministic fallback.");
             return null;
         } catch (RuntimeException llmError) {
-            // LLM failure must not break the response path. Caller falls
-            // back to the deterministic StringBuilder rendering.
+            System.err.println(">>> [NATURAL RESPONSE] LLM call failed (" + llmError.getMessage() + "). Falling back to deterministic rendering.");
             return null;
         }
     }
@@ -331,9 +333,9 @@ public final class NaturalResponseAgent {
         String tier = report.tier() != null ? report.tier().name() : "INSUFFICIENT";
         double confidence = report.confidence();
         return "You are Shree, the assistant of Shree AI OS.\n"
-                + "Your answer MUST be grounded ONLY in the evidence provided below.\n"
-                + "Do NOT invent facts, citations, file paths, or APIs that are not in the context.\n"
-                + "When the evidence does not contain the answer, say so explicitly.\n"
+                + "Ground your answer in the provided evidence when relevant technical documents are present. "
+                + "If the evidence does not cover the specific topic, explicitly state that it is not in the internal knowledge base, "
+                + "and then provide a direct, helpful, and accurate answer using your general knowledge.\n"
                 + "Cite the [n] markers from the evidence when you reference them.\n"
                 + "Use a professional, concise tone. Use markdown headings and bullet lists.\n"
                 + "Current verification tier: " + tier + " (confidence " + confidence + ").\n"
@@ -395,8 +397,13 @@ public final class NaturalResponseAgent {
         if (!citations.isEmpty()) {
             ctx.append("External citations:\n");
             for (int i = 0; i < citations.size(); i++) {
-                ctx.append("[").append(i + 1).append("] ")
-                        .append(safe(citations.get(i))).append("\n");
+                String c = safe(citations.get(i)).trim();
+                if (c.startsWith("[")) {
+                    ctx.append(c).append("\n");
+                } else {
+                    ctx.append("[").append(i + 1).append("] ")
+                            .append(c).append("\n");
+                }
             }
         }
         if (!report.gaps().isEmpty()) {
@@ -556,11 +563,17 @@ public final class NaturalResponseAgent {
         }
 
         if (!report.citations().isEmpty()) {
+            List<String> dedupedCitations = report.citations().stream().distinct().toList();
             StringBuilder citationsText = new StringBuilder();
-            for (int i = 0; i < report.citations().size(); i++) {
-                citationsText.append("[").append(i + 1).append("] ")
-                        .append(report.citations().get(i))
-                        .append("\n");
+            for (int i = 0; i < dedupedCitations.size(); i++) {
+                String citation = dedupedCitations.get(i).trim();
+                if (citation.startsWith("[")) {
+                    citationsText.append(citation).append("\n");
+                } else {
+                    citationsText.append("[").append(i + 1).append("] ")
+                            .append(citation)
+                            .append("\n");
+                }
             }
             sections.add(new ResponseSection("Citations", citationsText.toString().trim()));
         }
@@ -594,8 +607,9 @@ public final class NaturalResponseAgent {
         }
 
         if (!report.citations().isEmpty()) {
-            data.put("citationCount", report.citations().size());
-            data.put("citations", report.citations());
+            List<String> deduped = report.citations().stream().distinct().toList();
+            data.put("citationCount", deduped.size());
+            data.put("citations", deduped);
         }
 
         if (!report.gaps().isEmpty()) {
