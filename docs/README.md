@@ -273,6 +273,20 @@ Shree AI OS combines deterministic software engineering with modern language mod
 
 ---
 
+## Looking for Feedback
+
+Shree AI OS is currently in Developer Preview (v1.0.6).
+
+I'm actively looking for feedback on:
+
+- SDK design
+- Runtime architecture
+- Memory system
+- Developer experience
+
+Open a Discussion or Issue on GitHub.
+
+
 **Founder:** Darshan Rathod
 
 **Language:** Java 21
