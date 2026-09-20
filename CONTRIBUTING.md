@@ -1,189 +1,120 @@
 # Contributing to Shree AI OS
 
-First of all, thank you for taking the time to contribute to **Shree AI OS**.
+Thank you for your interest in contributing to **Shree AI OS**!
 
-This project is currently in **Developer Preview v1.0**. Our priority is stability, clean architecture, and high-quality developer experience—not rapid feature growth.
+Shree AI OS is an enterprise-grade, JVM-native cognitive operating system runtime. Our engineering standards emphasize deterministic architecture, rigorous concurrency safety, fail-closed security, and zero regressions.
 
 ---
 
-## Before You Start
+## 1. Prerequisites
 
-Please make sure you have:
+Ensure your development environment meets the following specifications:
 
-* Java 21
-* Maven 3.9+
-* Git
-* Docker (optional, only for pgvector integration tests)
+- **Java Development Kit (JDK):** **Java 21 LTS** or later (Eclipse Temurin / Adoptium recommended).
+- **Build Tool:** Bundled Maven Wrapper (`./mvnw` on Linux/macOS, `mvnw.cmd` on Windows) or Maven 3.9+.
+- **Version Control:** Git 2.40+.
+- **Container Runtime (Optional):** Docker 24+ (required only if running full PostgreSQL + pgvector integration tests via `docker compose`).
 
-Clone the repository and verify the build:
-
+Verify your environment:
 ```bash
-git clone https://github.com/shree-ai/shree-ai-os.git
-cd shree-ai-os
+java -version
+# openjdk version "21.0.x" ...
 
-mvn clean test
+./mvnw -version
+# Apache Maven 3.9.x ...
 ```
 
-A successful build should complete without failures.
+---
+
+## 2. Mandatory Verification & Test Execution
+
+Before submitting any pull request or proposing changes, you **MUST** run the mandatory regression verification suite:
+
+### Mandatory Core Regression Command:
+
+```bash
+# Linux / macOS:
+./mvnw test -Dtest=Phase5StaticRemediationVerificationTest,ProductionBugSweepVerificationTest,PlatformAdversarialChaosIntegrationTest
+
+# Windows:
+mvnw.cmd test -Dtest=Phase5StaticRemediationVerificationTest,ProductionBugSweepVerificationTest,PlatformAdversarialChaosIntegrationTest
+```
+
+### Full Verification Suite:
+
+```bash
+# Run all 56+ verification test suites:
+./mvnw clean test
+```
+
+> [!IMPORTANT]
+> **Zero Tolerance for Regressions:** Pull requests that fail any verification tests, introduce compiler warnings, or exhibit flaky concurrency behavior under heavy load will not be merged.
 
 ---
 
-## Development Principles
+## 3. Engineering & Hygiene Standards
 
-Every contribution should respect these principles.
+All code contributions must strictly adhere to the following architectural and code hygiene rules:
 
-### 1. Runtime First
+### A. Concurrency & Thread Safety Standards
+- **Atomic State Mutations:** Never use non-atomic volatile compound operations (e.g., `volatile int count; count++;`) in multithreaded or shared service components. Use `AtomicInteger`, `AtomicLong`, `LongAdder`, or explicit synchronization blocks (`synchronized (lock)`).
+- **Thread-Safe Iteration:** When reading or iterating over mutable collections accessed by multiple threads, synchronize the access block or return an immutable snapshot (`synchronized (collection) { return List.copyOf(collection); }`) to prevent `ConcurrentModificationException`.
+- **Lock-Free Concurrency Under Load:** Design shared tracking and diagnostic metrics to scale under at least 1,000 concurrent threads without deadlock or throughput degradation.
 
-Business logic belongs inside the runtime and kernel layers—not inside the SDK.
+### B. Stream & Subprocess Hygiene
+- **Explicit UTF-8 Enforcement:** **Never rely on platform-default charset encoding.** Always specify `StandardCharsets.UTF_8` explicitly when instantiating `InputStreamReader`, calling `String.getBytes()`, or writing files.
+- **Subprocess Stream Deadlock Prevention:** When executing external processes via `ProcessBuilder`:
+  - Never read `stdout` and `stderr` sequentially on a single thread. If an external command floods `stderr`, the OS pipe buffer will fill and permanently deadlock the JVM thread waiting on `stdout`.
+  - Always consume `stdout` and `stderr` asynchronously using separate dedicated threads, worker pools, or `CompletableFuture.runAsync()`.
+  - Always read both streams to exhaustion before waiting for `process.waitFor()`.
 
-**Correct**
+### C. Fail-Closed Security & Authorization Gates
+- **Fail-Closed by Default:** All authorization gates, permission policies, and security checks must default to `DENY` (`PermissionDecision.DENY`).
+- If an authorization check encounters a `NullPointerException`, `IllegalArgumentException`, unmapped capability, or unexpected runtime condition, it must catch the exception and immediately deny access. Fail-open behavior is strictly prohibited.
 
-* Runtime orchestration
-* Kernel implementation
-* Engine improvements
+### D. Exception Serialization Safety
+- Any subsystem exception extending `java.lang.Exception` or `java.lang.RuntimeException` must declare an explicit `private static final long serialVersionUID = 1L;`.
+- Ensure all custom exception fields are either primitive, serializable, or marked `transient`.
 
-**Avoid**
-
-* Heavy logic inside SDK facades
-* Controller-specific implementations
-* Prompt-only solutions
-
----
-
-### 2. Preserve Public APIs
-
-The following SDKs are considered public:
-
-* MemorySDK
-* KnowledgeSDK
-* PlanningSDK
-* ReflectionSDK
-* IdentitySDK
-* InferenceSDK
-* ExecutionSDK
-* ProjectSDK
-* SettingsSDK
-
-Avoid breaking method signatures during the Developer Preview.
+### E. Memory & Object Lifecycle Hygiene
+- **No Inner Class Capture:** Avoid double-brace initialization (`new HashMap<>() {{ put(...); }}`) as it creates an anonymous inner class capturing the outer enclosing instance, leading to memory leaks and serialization failures. Use standard instantiation or `Map.of()` / `new HashMap<>()`.
+- **Constructor Null Guards:** Public SDK classes and kernel service constructors must strictly validate required parameters with `Objects.requireNonNull(param, "param must not be null")`.
 
 ---
 
-### 3. Write Deterministic Code
-
-Shree AI OS is designed around deterministic execution.
-
-Prefer:
-
-* Typed models
-* Immutable records
-* Clear runtime ownership
-* Structured results
-
-Avoid hidden global state and unpredictable side effects.
-
----
-
-## Repository Structure
+## 4. Repository Layout
 
 ```text
 src/main/java/com/shreeai/os/
-
 platform/
- ├── sdk/
- ├── runtime/
- ├── kernels/
- ├── llm/
- └── core/
-
+ ├── core/          # Kernel registry, lifecycle, discovery, event bus
+ ├── kernels/       # Identity, Memory, Knowledge, Planning, Reflection, Developer
+ ├── runtime/       # 11-stage cognitive pipeline, pgvector store, agents
+ ├── llm/           # Model providers (Gemini, OpenAI, Ollama) and LlmRouter
+ └── sdk/           # Public 10-SDK developer facade
 application/
- ├── shree-playground/
- └── shree-developer-intelligence/
+ └── shree-playground/ # Spring Boot 3/4 reference application (port 7070)
+docs/
+ └── developer/     # Canonical architecture, capabilities, and quickstart guides
 ```
 
 ---
 
-## Pull Request Checklist
+## 5. Pull Request Checklist
 
-Before opening a PR, ensure:
+Before submitting your pull request, verify that:
 
-* Code compiles
-* Existing tests pass
-* New behavior includes tests
-* No public API is broken
-* Documentation is updated when needed
-
-Checklist:
-
-* [ ] `mvn clean test`
-* [ ] No compilation warnings introduced
-* [ ] Public SDK unchanged (or documented)
-* [ ] Documentation updated
-* [ ] Clear PR description
+- [ ] All code compiles under Java 21 LTS: `./mvnw clean compile -DskipTests`.
+- [ ] Mandatory regression suite passes: `./mvnw test -Dtest=Phase5StaticRemediationVerificationTest,ProductionBugSweepVerificationTest,PlatformAdversarialChaosIntegrationTest`.
+- [ ] Full test suite passes: `./mvnw test`.
+- [ ] Explicit `StandardCharsets.UTF_8` is used for all stream and string byte conversions.
+- [ ] Subprocess streams are read asynchronously without deadlock risk.
+- [ ] Shared counters and state mutations are thread-safe (`AtomicInteger`, `LongAdder`).
+- [ ] Security gates maintain fail-closed semantics (`DENY` on fault).
+- [ ] Relevant documentation in `docs/developer/` and `CHANGELOG.md` is updated.
 
 ---
 
-## Reporting Bugs
-
-Please include:
-
-* Java version
-* Operating system
-* Maven version
-* Reproduction steps
-* Expected behavior
-* Actual behavior
-* Stack trace (if available)
-
-Use GitHub Issues instead of discussions for reproducible bugs.
-
----
-
-## Suggesting Features
-
-During Developer Preview, feature requests are welcome, but they should explain:
-
-1. Problem being solved
-2. Why existing SDK is insufficient
-3. Proposed developer API
-4. Example usage
-
-Focus on developer ergonomics rather than adding new AI capabilities.
-
----
-
-## Coding Style
-
-* Java 21
-* Constructor injection
-* Immutable models where possible
-* Clear method names
-* Small focused classes
-* JUnit 5 tests
-
-Follow the existing project conventions instead of introducing new patterns.
-
----
-
-## Documentation
-
-If your contribution changes behavior, update the appropriate document:
-
-| Document                        | Purpose                        |
-| ------------------------------- | ------------------------------ |
-| `README.md`                     | Public project overview        |
-| `PLATFORM_IDENTITY.md`          | Runtime architecture           |
-| `DEVELOPER_CAPABILITIES.md`     | SDK reference                  |
-| `WORKING_STATUS.md`             | Verified implementation status |
-| `QUICKSTART_DEVELOPER_GUIDE.md` | Developer tutorial             |
-
-Documentation should always reflect the real source code.
-
----
-
-## Community
-
-Be respectful and constructive.
-
-We're building Shree AI OS as a long-term developer platform, and thoughtful feedback is more valuable than large feature requests.
-
-Thank you for contributing ❤️
+**Project:** Shree AI OS  
+**Target Version:** `1.0.6-developer-preview`  
+**License:** Proprietary  

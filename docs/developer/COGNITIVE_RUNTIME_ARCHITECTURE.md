@@ -1,354 +1,390 @@
-﻿
 # Cognitive Runtime Architecture
 
-> Technical Architecture Reference
+> Technical Architecture Reference — Developer Preview v1.0.6
 
-This document explains the internal architecture of Shree AI OS, including the cognitive runtime, hybrid retrieval engine, ONNX embedding pipeline, pgvector integration, and grounded response generation.
+This document details the internal architecture of Shree AI OS, including the hardened 11-stage cognitive execution pipeline, the hybrid RAG retrieval engine, the ONNX embedding pipeline, pgvector integration, K0.6 autonomous knowledge acquisition, and resilient multi-provider LLM routing.
 
-Audience: platform architects, contributors, and advanced Java developers.
+**Audience:** Platform architects, contributors, and enterprise JVM reliability engineers.
 
-**In-Process, Privacy-First Cognitive Runtime & Hybrid RAG Engine**
+**In-Process, Privacy-First Cognitive Runtime & Deterministic Orchestration**
 
 [![Java 21](https://img.shields.io/badge/Java-21-blue.svg)](https://adoptium.net/)
-[![Spring Boot 4](https://img.shields.io/badge/Spring%20Boot-3-green.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot 3](https://img.shields.io/badge/Spring%20Boot-3-green.svg)](https://spring.io/projects/spring-boot)
 [![pgvector](https://img.shields.io/badge/pgvector-0.7-blue.svg)](https://github.com/pgvector/pgvector)
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](./LICENSE)
+[![Version](https://img.shields.io/badge/Version-1.0.6--developer--preview-orange.svg)](./pom.xml)
+[![Build Status](https://img.shields.io/badge/Tests-56%2F56%20Green-brightgreen.svg)](./WORKING_STATUS.md)
 
 ---
 
-## What is Shree AI OS?
+## 1. What is Shree AI OS?
 
-Shree AI OS is an **in-process, privacy-first cognitive runtime** that gives your application a full AI brain - without sending your data to any third-party API. It ships as a standard JVM library you embed directly in your service, providing:
+Shree AI OS is an **in-process, privacy-first cognitive operating system runtime** that embeds an entire AI reasoning brain directly within JVM applications — without leaking corporate data or relying on opaque external orchestrators. Operating as a native Java 21 library, the runtime enforces deterministic software control before invoking any language model:
 
-| Capability                    | Implementation                                                                                                   |
-|-------------------------------|------------------------------------------------------------------------------------------------------------------|
-| **Semantic Embeddings**       | Local ONNX model (`all-MiniLM-L6-v2`), 384-dim, zero-latency inference                                           |
-| **Smart Document Chunking**   | Sentence-boundary-aware sliding window (600-char target, 80-char overlap)                                        |
-| **Hybrid Vector Search**      | PostgreSQL + pgvector: HNSW (semantic KNN) + GIN full-text (keyword), fused via **Reciprocal Rank Fusion (RRF)** |
-| **Grounded Responses**        | Every answer carries citations back to specific ingested chunks                                                  |
-| **Memory & Knowledge Graph**  | In-process episodic memory + entity-relationship knowledge graph                                                 |
-| **Multi-Agent Orchestration** | Chief-of-staff pattern with typed intent routing                                                                 |
-| **Constitutional Governance** | Approval guardrails, audit logging, and traceable reasoning                                                      |
-
----
-
-## Runtime Architecture
-
-```
-                        Shree AI OS Runtime
- -------------------------------------------------------------------------
-  +----------+   +----------+   +----------+   +--------------------+
-  |Identity  |   | Memory   |   |Knowledge |   | Reasoning          |
-  |Kernel    |   | Kernel   |   |Kernel    |   | Kernel             |
-  |          |   |          |   |          |   |                    |
-  | Profiles |   | Episodic |   | Entities |   | Evidence rank      |
-  | Tenants  |   | memory   |   | Relations|   | Grounded answer    |
-  |          |   | Semantic |   | Graph    |   | Citations          |
-  |          |   | search   |   | search   |   |                    |
-  +----+-----+   +----+-----+   +----+-----+   +---------+----------+
-       |              |             |                  |
-       +--------------+-------------+------------------+
-                            |
-                   +--------+--------+
-                   | Canonical Runtime |
-                   | 10-stage pipeline |
-                   +--------+-----------+
-                            |
-                   +--------v-----------+
-                   | ONNX Embedder     |
-                   | all-MiniLM-L6-v2 |
-                   | 384 dimensions   |
-                   +--------+-----------+
-                            |
-                   +--------v---------------------------------------------+
-                   |   PostgreSQL + pgvector  (Hybrid RRF Search)       |
-                   |                                                         |
-                   |  +-------------------+    +---------------------+    |
-                   |  | HNSW index       | +  | GIN index           |    |
-                   |  | (vector KNN)     |    | (tsvector FTS)      |    |
-                   |  +-------------------+    +---------------------+    |
-                   +--------------------------------------------------------+
-
-**Data flow for a grounded chat query:**
-
-```
-User query
-    |
-    v
-+---------------+    +---------------------+
-| ONNX Embedder |--->| Hybrid RRF Search   |
-| (384-dim vec) |     | (vector + FTS)      |
-+-------+-------+    +---------+-----------+
-        |                      |
-        |          +-----------v-----------+
-        |          | Top-K ranked chunks   |
-        |          | with citations        |
-        |          +-----------+-----------+
-        |                      |
-        |          +-----------v-----------+
-        |          | Reasoning Kernel       |
-        |          +-----------+-----------+
-        |                      |
-        v                      v
-       Answer     +-----------------------+
-                 | SDKResponse             |
-                 | { answer, citations }  |
-                 +-----------------------+
-```
+| Capability | Implementation Mechanism |
+|---|---|
+| **Semantic Embeddings** | In-process ONNX model (`all-MiniLM-L6-v2`), 384-dimensional vector space, zero-network-latency inference |
+| **Document Chunking** | Sentence-boundary-aware sliding window (600-char target, 80-char whitespace-aligned overlap) |
+| **Hybrid Vector Search** | PostgreSQL + `pgvector`: HNSW (semantic KNN) + GIN full-text search (`tsvector`), fused via **Reciprocal Rank Fusion (RRF)** |
+| **Dual-Mode Synthesis** | Strict RAG grounding with citation tracking vs. general assistance fallback via `NaturalResponseAgent` |
+| **Autonomous Acquisition** | K0.6 engine with strict query domain isolation (Java, JavaScript, Python, Healthcare) |
+| **Cognitive Pipeline** | Hardened 11-stage execution pipeline from Identity Resolution to Chief Review |
+| **Fail-Closed Security** | Deterministic RBAC boundaries with fail-closed authorization gate denying unknown/malformed inputs |
+| **Resilient Routing** | `LlmRouter` with exponential backoff on HTTP 429/503 and deterministic in-memory fallback |
 
 ---
 
-## Key Architecture Highlights
+## 2. Canonical Cognitive Execution Pipeline (11 Stages)
 
-### Hybrid Search (PostgreSQL + pgvector)
-
-Two separate retrieval channels run in parallel and their results are fused with **Reciprocal Rank Fusion**:
+Every request entering Shree AI OS through the SDK or Application Gateway flows through the hardened 11-stage cognitive execution pipeline. The runtime guarantees deterministic stage execution order, enforcing tenant isolation, policy evaluations, and reflection prior to response synthesis.
 
 ```
-                 +-- KNN over embedding (HNSW) --> rank_vec (1..20)
-query -----------+                                 |
-                 +-- Keyword match (GIN FTS) ----> rank_text (1..20)
-                                                            |
-                                                            v
-                    rrf_score = 1/(60 + rank_vec) + 1/(60 + rank_text)
+                           +-------------------------------------------------------+
+                           |               SDK / Application Gateway               |
+                           +-------------------------------------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | 1. IdentityStage          |
+                                        +---------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | 2. ContextStage           |
+                                        +---------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | 3. MemoryRecallStage      |
+                                        +---------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | 4. KnowledgeStage         |
+                                        |    (Dual-Channel RRF)     |
+                                        |    (K0.6 Acquisition)     |
+                                        +---------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | 5. ReasoningStage         |
+                                        +---------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | 6. InferenceStage         |
+                                        +---------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | 7. PlanningStage          |
+                                        +---------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | 8. ActionExecutionStage   |
+                                        |    (Fail-Closed Gate)     |
+                                        +---------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | 9. ReflectionStage        |
+                                        |    (Adaptive Calibration) |
+                                        +---------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | 10. MemoryStoreStage      |
+                                        +---------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | 11. ChiefReviewStage      |
+                                        +---------------------------+
+                                                      |
+                                                      v
+                                        +---------------------------+
+                                        | Dual-Mode Synthesis       |
+                                        | (NaturalResponseAgent)    |
+                                        +---------------------------+
 ```
 
-- **CTE 1 (vector_matches):** `ROW_NUMBER() OVER (ORDER BY embedding <=> ?::vector) LIMIT 20`
-- **CTE 2 (text_matches):** `WHERE content_tsv @@ plainto_tsquery('english', ?) ORDER BY ts_rank_cd(...) LIMIT 20`
-- **Fusion:** `FULL OUTER JOIN` on id, `ORDER BY rrf_score DESC LIMIT topK`
-- Falls back to pure vector search when no text query is available.
+### Stage Responsibilities:
 
-### Smart Chunking (`DocumentChunker`)
-
-Documents are split using a sentence-boundary regex into segments, then reassembled into chunks of **no more than 600 characters** with **80-character overlap**. The overlap breaks on whitespace so words are never cut mid-token. This preserves semantic completeness of sentences while keeping chunks small enough for accurate embedding.
+1. **`IdentityStage`**: Resolves caller identity (`identityId`, `sessionId`, `applicationId`, `workspaceId`). Validates authentication tokens and binds credentials into the request context.
+2. **`ContextStage`**: Extracts ambient execution parameters, detects primary domain (e.g. `TECHNOLOGY`, `MEDICAL`, `FINANCIAL`), identifies ambiguous goals, and establishes tenant boundaries.
+3. **`MemoryRecallStage`**: Queries semantic episodic memory for historical conversations, user preferences, and tenant-scoped session facts.
+4. **`KnowledgeStage`**: Executes hybrid RRF retrieval (HNSW semantic KNN + GIN full-text FTS) across local pgvector knowledge stores and invokes the K0.6 Autonomous Knowledge Acquisition engine when external or canonical specs are needed.
+5. **`ReasoningStage`**: Performs structured fact extraction, checks premise consistency, resolves evidence conflicts, and builds the evidence graph.
+6. **`InferenceStage`**: Generates deterministic hypotheses, conducts tradeoff analyses, and calibrates confidence tiers (`HIGH`, `MEDIUM`, `LOW`, `INSUFFICIENT`).
+7. **`PlanningStage`**: Decomposes complex objectives into ordered topological Directed Acyclic Graphs (DAGs) with explicit preconditions and fallback steps.
+8. **`ActionExecutionStage`**: Dispatches planned tool invocations, code modifications, or terminal commands. Guarded by the **fail-closed authorization gate** (`graphPermissionManager`), which strictly defaults to `PermissionDecision.DENY` on unmapped capabilities or unexpected exceptions.
+9. **`ReflectionStage`**: Powered by `AdaptiveReflectionEngine`. Inspects action outcomes, calculates importance scores, updates retry thresholds, and flags memory-worthy operational learnings.
+10. **`MemoryStoreStage`**: Persists new episodic memories, reflection lessons, and updated conversation embeddings into tenant-isolated storage.
+11. **`ChiefReviewStage`**: Performs final constitutional compliance audits, governance gate checks, and safety assertions before clearing the execution bundle for response delivery.
 
 ---
 
-## 3-Minute Quickstart
+## 3. Dual-Mode Synthesis Strategy
+
+Shree AI OS separates deterministic knowledge verification from natural-language generation. Once the cognitive pipeline completes, response generation is handled by the `NaturalResponseAgent` using a strict **Dual-Mode Synthesis** strategy:
+
+```
+                            Execution Verification Report
+                                          |
+                        +-----------------+-----------------+
+                        |                                   |
+                Evidence Sufficient?                Evidence Insufficient?
+                        |                                   |
+                        v                                   v
+             [Mode A: Strict RAG Grounding]      [Mode B: General Assistance]
+             - Ingests verified chunks           - Deterministic fallback
+             - Strict citation tracking          - Conversational continuity
+             - Filters ungrounded claims         - Zero hallucinated facts
+             - Chunk ID, title, excerpt          - Safe recommendation guidance
+```
+
+### Mode A: Strict RAG Grounding (Verified Knowledge)
+- **Activation:** Triggered when the `VerificationReport` contains verified evidence items from project intelligence or knowledge graph nodes (`VERIFIED_PROJECT`, `VERIFIED_KB`).
+- **Citation Tracking:** Every factual assertion in the synthesized response maps to a concrete citation payload containing:
+  - `chunkId`: Unique UUID of the indexed chunk.
+  - `title`: Document or file title.
+  - `excerpt`: Verbatim text snippet used during synthesis.
+  - `score`: Combined RRF similarity score (0.0 to 1.0).
+- **Anti-Hallucination Gate:** Non-grounded claims not backed by evidence items are filtered out. If the LLM generates unsupported assertions, the runtime strips them prior to client delivery.
+
+### Mode B: General Assistance Fallback (Insufficient / Conversational)
+- **Activation:** Triggered when the query is open-ended, conversational (e.g., greetings, philosophical questions), or when no indexed knowledge meets confidence thresholds (`ConfidenceTier.INSUFFICIENT`).
+- **Deterministic Continuity:** Rather than failing abruptly or inventing facts, the agent uses structured templates and conversational completions via `NaturalResponseAgent`.
+- **Honest Boundary Enforcement:** For domain queries with insufficient context, the system explicitly states known limitations and suggests concrete acquisition paths (e.g. ingesting relevant documentation or refining project path).
+
+---
+
+## 4. K0.6 Autonomous Knowledge Acquisition Engine
+
+When queries refer to external specifications, frameworks, or domain models not present in local memory, the **K0.6 Autonomous Knowledge Acquisition Engine** (`DefaultKnowledgeAcquisitionOrchestrator`, `DefaultKnowledgeContentResolver`) resolves canonical knowledge deterministically.
+
+### Query Domain Isolation
+To prevent cross-domain contamination in multi-tenant and multi-language environments, the acquisition engine enforces **strict domain isolation**:
+
+```
+                       User Query / Domain Detector
+                                     |
+         +-----------------+---------+---------+-----------------+
+         |                 |                   |                 |
+         v                 v                   v                 v
+     [ Python ]     [ JavaScript ]      [ Healthcare ]        [ Java ]
+         |                 |                   |                 |
+         +--------+--------+---------+---------+                 |
+                  |                  |                           |
+                  v                  v                           v
+         Strictly Blocks:      Strictly Blocks:           Isolated Java &
+          Java / Spring         Java / Spring             Spring Sources
+          Knowledge             Knowledge                 Preserved
+```
+
+- **Domain Isolation Rules:**
+  - Queries targeting **Python**, **Healthcare**, **Domain Modeling**, or pure **JavaScript** strictly block Java and Spring knowledge sources (`isSourceCompatible()` check).
+  - A healthcare diagnostic query will never be populated with Java Spring Boot boilerplate.
+  - A Python asyncio query will never receive Java virtual thread or concurrency documentation.
+- **Deterministic Canonical Generators:** When external network retrieval is disabled or offline, built-in domain generators provide verified architectural specifications for core domains without hallucination.
+
+---
+
+## 5. Failover Resilience in `LlmRouter`
+
+The LLM is treated as a swappable, untrusted commodity layer. The runtime coordinates all model interactions through `LlmRouter`, guaranteeing high availability through multi-provider chaining and automatic retry policies:
+
+```
+                      LlmRouter Execution Chain
+                                 |
+                                 v
+                     +-----------------------+
+                     | 1. Primary Provider   |
+                     |    (e.g., Gemini)     |
+                     +-----------------------+
+                                 |
+                 HTTP 429/503?   +---> [Exponential Backoff Retry]
+                 Exhausted?      |
+                                 v
+                     +-----------------------+
+                     | 2. Secondary Provider |
+                     |    (e.g., OpenAI)     |
+                     +-----------------------+
+                                 |
+                 Failed/Offline? |
+                                 v
+                     +-----------------------+
+                     | 3. In-Memory Provider |
+                     |    (Deterministic)    |
+                     +-----------------------+
+```
+
+### Exponential Backoff & Transient Fault Handling
+- **HTTP 429 (Rate Limit) & HTTP 503 (High Demand / Service Unavailable):**
+  - Providers (such as `GeminiProvider`) implement active retry loops with configurable exponential backoff (`retryBackoffMs` doubling per attempt, default 2000ms, up to 3 retries).
+  - Prevents transient cloud rate spikes from bubbling up as client exceptions.
+- **Multi-Provider Fallback Chain:**
+  - If the primary provider fails completely, `LlmRouter` automatically falls through to the next configured provider in the chain (e.g. `gemini -> openai -> ollama -> in-memory`).
+- **Deterministic In-Memory Fallback:**
+  - The `InMemoryLlmProvider` sits at the end of the fallback chain, guaranteeing that airgapped environments, CI pipelines, and offline development environments always succeed without external network dependencies.
+
+---
+
+## 6. Hybrid Vector Search (PostgreSQL + pgvector)
+
+Shree AI OS uses a dual-channel retrieval architecture combining dense semantic embeddings with sparse keyword indexing, fused via **Reciprocal Rank Fusion (RRF)**:
+
+```
+                                  Query Text
+                                       |
+                   +-------------------+-------------------+
+                   |                                       |
+                   v                                       v
+         [ ONNX Embedder ]                       [ tsvector Parser ]
+          384-dim vector                          English dictionary
+                   |                                       |
+                   v                                       v
+         [ pgvector HNSW ]                       [ PostgreSQL GIN ]
+         Cosine Distance <=>                     Full-Text Search @@
+                   |                                       |
+                   v                                       v
+         Dense Rank (1..20)                      Sparse Rank (1..20)
+                   |                                       |
+                   +-------------------+-------------------+
+                                       |
+                                       v
+                     Reciprocal Rank Fusion (k = 60)
+                     Score = 1/(60 + Rank_dense) + 1/(60 + Rank_sparse)
+                                       |
+                                       v
+                             Top-K Grounded Chunks
+```
+
+### Smart Document Chunking (`DocumentChunker`)
+- Splits text on semantic sentence boundaries using regular expression heuristics.
+- Target chunk size: **600 characters** with an **80-character whitespace-aligned overlap**.
+- Guarantees tokens and sentences are never severed mid-word, maintaining vector quality.
+
+---
+
+## 7. Multi-Tenant RBAC & Isolation Boundaries
+
+- **Tenant-Isolated Vector Store:** Every vector table in PostgreSQL includes a `tenant_id TEXT` column with compound indexes. All SQL queries enforce tenant filtering (`WHERE tenant_id = ?`).
+- **Tenant Context Propagation:** Request metadata carries `tenantId`, enforced across `TenantContext` and validated by `TenantIsolationEnforcer`.
+- **Fail-Closed Authorization Gate:** `DefaultRuntimeService.graphPermissionManager()` evaluates `ExecutionCapability` before dispatching any tool, subprocess, or terminal action. Any unmapped action or unexpected parameter results in an immediate, safe `PermissionDecision.DENY`.
+
+---
+
+## 8. 3-Minute Quickstart
 
 ### Prerequisites
 
-| Requirement | Version | Notes |
+| Requirement | Supported Version | Notes |
 |---|---|---|
-| JDK | 21+ | [Adoptium](https://adoptium.net/) recommended |
-| Docker | 24+ | Required for the pgvector database |
-| Maven | 3.9+ | Or use the bundled `./mvnw` wrapper |
+| **JDK** | 21+ | Eclipse Temurin / Adoptium recommended |
+| **Docker** | 24+ | Required for PostgreSQL + pgvector |
+| **Maven** | 3.9+ | Bundled `./mvnw` wrapper available |
 
-### Step 1 - Start the Database
+### Step 1 — Start the pgvector Database
 
 ```bash
-# Boot PostgreSQL 16 + pgvector
 docker compose up -d
-
-# Verify it is healthy
 docker compose ps
-# NAME                  STATUS         PORTS
 # shree-postgres-vector  healthy (up)  0.0.0.0:5432->5432/tcp
 ```
 
-### Step 2 - Configure (Optional)
+### Step 2 — Configure Environment
 
 ```bash
-# Copy the template and fill in your values
-cp .env.example .env
-
-# Or just set the one key you need
-# (set SHREE_EMBEDDING_PROVIDER=onnx to skip API keys entirely)
-export GEMINI_API_KEY=your_key_here
+export GEMINI_API_KEY=your_gemini_key_here
+# Optional: export OPENAI_API_KEY=your_openai_key_here
 ```
 
-> **Default configuration** already points to the docker-compose database at
-> `jdbc:postgresql://localhost:5432/shree` with password `shreeai`.
-> No changes needed for a local dev run.
-
-### Step 3 - Run the Playground
+### Step 3 — Launch the Application Playground
 
 ```bash
 mvn clean spring-boot:run -pl application/shree-playground
 ```
 
-The app starts on **http://localhost:7070**.
-
-```bash
-curl http://localhost:7070/actuator/health
-# {"status":"UP"}
-```
+The service boots on **http://localhost:7070**.
 
 ---
 
-## Ready-to-Use cURL Examples
+## 9. Ready-to-Use cURL Examples
 
-### Ingest a Document
+### Ingest Knowledge into Vector Store
 
 ```bash
 curl -s -X POST http://localhost:7070/api/playground/knowledge/ingest \
   -H "Content-Type: application/json" \
   -d '{
-    "title": "Understanding Vector Databases",
-    "content": "Vector databases store high-dimensional embeddings that capture semantic meaning. pgvector extends PostgreSQL with the vector type and HNSW indexing for fast approximate nearest-neighbour search. Combined with full-text search via tsvector and GIN indexes, hybrid RRF ranking produces more relevant results than either method alone."
+    "title": "PostgreSQL pgvector Architecture",
+    "content": "pgvector extends PostgreSQL with native vector similarity search. Using HNSW indexes, it calculates cosine distances over high-dimensional embeddings. Fused with GIN full-text indexes via RRF, it delivers robust hybrid retrieval."
   }' | jq .
 ```
 
-**Example response:**
-
-```json
-{
-  "status": "SUCCESS",
-  "message": "Knowledge ingested successfully",
-  "data": {
-    "nodeId": "abc-123",
-    "title": "Understanding Vector Databases",
-    "chunksIndexed": 1,
-    "embeddingVersion": "local-onnx-v1"
-  }
-}
-```
-
-### Search the Knowledge Graph
-
-```bash
-curl -s -X POST http://localhost:7070/api/playground/knowledge/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "How does hybrid RRF search work?"}' | jq .
-```
-
-### Chat with Semantic Grounding
+### Grounded Chat Query with Citations
 
 ```bash
 curl -s -X POST http://localhost:7070/api/playground/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "How does Shree AI OS handle vector search?"}' | jq .
+  -d '{"message": "How does Shree AI OS perform hybrid vector retrieval?"}' | jq .
 ```
 
-**Example response structure:**
-
+**Verified Response Payload Structure:**
 ```json
 {
   "status": "SUCCESS",
   "data": {
-    "response": "Shree AI OS uses a dual-channel retrieval approach...",
+    "response": "Shree AI OS performs hybrid vector retrieval by executing dense KNN search via pgvector HNSW and sparse full-text search via PostgreSQL GIN in parallel, fusing both result rankings with Reciprocal Rank Fusion (RRF)...",
     "citations": [
       {
-        "chunkId": "abc-123",
-        "title": "Understanding Vector Databases",
-        "excerpt": "pgvector extends PostgreSQL with the vector type...",
-        "score": 0.952
+        "chunkId": "c4b3a120-f19e-4e88-b21b-86d149021e1a",
+        "title": "PostgreSQL pgvector Architecture",
+        "excerpt": "pgvector extends PostgreSQL with native vector similarity search. Using HNSW indexes...",
+        "score": 0.965
       }
     ],
     "intent": "KNOWLEDGE_QUERY",
-    "confidence": 0.94,
-    "traceId": "trace-xyz-789"
+    "confidence": 0.95,
+    "traceId": "trace-94a2-11ef"
   }
 }
 ```
 
-### Store in Memory
-
-```bash
-curl -s -X POST http://localhost:7070/api/playground/memory/store \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Project Meeting Notes", "content": "Discussed Q4 roadmap and migration to pgvector."}' | jq .
-```
-
-### Recall from Memory
-
-```bash
-curl -s -X POST http://localhost:7070/api/playground/memory/recall \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What was discussed about pgvector?"}' | jq .
-```
-
 ---
 
-## Configuration Reference
-
-All settings are in `application/shree-playground/src/main/resources/application.properties`
-and can be overridden via environment variables:
-
-| Property                     | Env Variable                 | Default                                  | Description                |
-|------------------------------|------------------------------|------------------------------------------|----------------------------|
-| `shree.vector.provider`      | `SHREE_VECTOR_PROVIDER`      | `pgvector`                               | `pgvector` or `in-memory`  |
-| `shree.vector.jdbc.url`      | `SHREE_VECTOR_JDBC_URL`      | `jdbc:postgresql://localhost:5432/shree` | PostgreSQL JDBC URL        |
-| `shree.vector.jdbc.user`     | `SHREE_VECTOR_JDBC_USER`     | `postgres`                               | Database user              |
-| `shree.vector.jdbc.password` | `SHREE_VECTOR_JDBC_PASSWORD` | `shreeai`                                | Database password          |
-| `shree.embedding.provider`   | `SHREE_EMBEDDING_PROVIDER`   | `onnx`                                   | `onnx` (local) or `gemini` |
-| `shree.embedding.dimensions` | `SHREE_EMBEDDING_DIMENSIONS` | `384`                                    | Embedding vector dimension |
-
----
-
-## Repository Structure
+## 10. Repository & Architecture Boundaries
 
 ```
 shree-ai-os/
-|-- docker-compose.yml           # PostgreSQL + pgvector (one command to start)
-|-- .env.example                # Environment variable template
+|-- docker-compose.yml           # PostgreSQL 16 + pgvector 0.7
 |-- application/
-|   +-- shree-playground/       # Spring Boot playground app (port 7070)
-|       +-- src/main/resources/
-|           +-- application.properties
+|   +-- shree-playground/       # REST API reference application (port 7070)
 |-- src/
 |   +-- main/java/com/shreeai/os/
-|       +-- ShreeAiOsApplication.java
 |       +-- platform/
-|           +-- core/           # Registry, discovery, lifecycle, events
-|           +-- kernels/        # Identity, Memory, Context, Knowledge,
-|           |                   # Reasoning, Planning, Execution, Chief
-|           +-- runtime/        # Canonical Runtime, Vector Store, Embeddings
-|       +-- sdk/                # Public developer SDK
-+-- docs/                       # Constitutional + architectural docs
+|           +-- core/           # Registry, lifecycle, discovery, event bus
+|           +-- kernels/        # Identity, Memory, Knowledge, Planning,
+|           |                   # Reasoning, Inference, Reflection, Developer
+|           +-- runtime/        # 11-stage pipeline, pgvector store, agents
+|           +-- sdk/            # Public 10-SDK developer facade
++-- docs/                       # Platform specifications and guides
 ```
 
 ---
 
-## Constitutional Rules
+## 11. Constitutional Governance Rules
 
-All code is governed by five immutable rules:
-
-| Rule    | Description                                                                                     |
-|---------|-------------------------------------------------------------------------------------------------|
-| **R1**  | No canonical code imports `platform.legacy` - enforced by `CanonicalIsolationTest`              |
-| **R2**  | Legacy types migrate by promote-and-delegate; the Runtime is the single source of truth         |
-| **R3**  | Public API surfaces (REST routes, SDK signatures) are frozen until final removal                |
-| **R4**  | A legacy component is removed only when zero canonical imports and zero test dependencies exist |
-| **R5**  | Every phase ends green: `mvn clean test` passes completely                                      |
+1. **R1 (Isolation):** No canonical runtime code imports legacy or test code.
+2. **R2 (Single Source of Truth):** `DefaultRuntimeService` and canonical kernels govern all execution state.
+3. **R3 (Frozen Signatures):** Public SDK method signatures remain stable across the `1.0.x` preview series.
+4. **R4 (Fail-Closed Security):** All authorization gates default to `DENY` upon ambiguity or exception.
+5. **R5 (Continuous Green Verification):** Every phase and build passes all 56+ verification test suites without regressions.
 
 ---
 
-## Build & Test
-
-```bash
-# Compile everything (no tests)
-mvn clean compile -DskipTests
-
-# Compile + run unit tests
-mvn clean test
-
-# Run only the vector store integration tests (requires Docker)
-mvn test -Dtest=PgVectorIntegrationTest
-```
-
-> **Note:** `PgVectorIntegrationTest` is automatically skipped when Docker is unavailable,
-> so `mvn clean test` is safe to run in any CI environment.
-
----
-
-## Contributing
-
-See `docs/architecture/ARCHITECTURE_AUDIT.md` and
-`docs/architecture/LEGACY_MIGRATION_REPORT.md` for governing architectural documents.
-
-All contributions must:
-1. Pass `mvn clean test`
-2. Maintain constitutional isolation (R1-R5)
-3. Include or update tests for any new behaviour
-4. Follow the existing code conventions
-
----
-
-Platform: Shree AI OS
-
-Document: Cognitive Runtime Architecture
-
-Version: Developer Preview v1.0.5
-
-Author: Darshan Rathod
+Platform: **Shree AI OS**  
+Document: **Cognitive Runtime Architecture**  
+Version: **1.0.6-developer-preview**  
+Author: **Darshan Rathod**

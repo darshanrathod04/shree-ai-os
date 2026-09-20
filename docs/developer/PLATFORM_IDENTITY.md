@@ -1,260 +1,167 @@
 # Platform Identity
 
-### What Shree AI OS Is
+> **What Shree AI OS Is — Developer Preview v1.0.6**
 
-**Developer Preview v1.0.5**
+**Shree AI OS is a JVM-native cognitive operating system runtime with Bring-Your-Own-Key (BYOK) model routing.** It enables enterprise Java applications to embed a complete cognitive brain — orchestrating memory, hybrid vector retrieval, deterministic planning, structural reasoning, adaptive reflection, multi-tenant isolation, and safe code execution before any language model generates a response.
 
-Shree AI OS is a **deterministic AI orchestration runtime for Java**. It enables Java applications to build intelligent systems where memory, knowledge retrieval, planning, reasoning, reflection, identity, and execution are coordinated by a runtime before any language model generates a response.
+The platform is anchored in one immutable architectural principle:
 
-The platform follows one core principle:
-
-> **The LLM is the final response generator, not the decision maker.**
+> **The LLM is the final natural-language response generator, not the decision maker.**
 
 ---
 
-# Platform Overview
+## 1. Core Platform Identity
 
-Shree AI OS is distributed as a single Maven library for **Java 21+** and integrates naturally into Spring Boot or any JVM application.
+Modern AI integration in enterprise environments often fails due to hallucination, unpredictable agent loops, security boundary violations, and vendor lock-in. Shree AI OS resolves these challenges by embedding an in-process, deterministic cognitive architecture:
 
-A typical request flows through the runtime like this:
-
-1. Application submits a request through the SDK.
-2. Runtime resolves intent and loads context.
-3. Memory and Knowledge provide grounded information.
-4. Planning and Reasoning determine the execution path.
-5. Reflection validates the outcome.
-6. The LLM generates the final natural-language response.
-
-This architecture separates **deterministic software logic** from **probabilistic language generation**, making intelligent applications more explainable and testable.
+1. **Native Java 21+ Runtime:** Zero Python sidecars, zero external agent frameworks, zero out-of-process RPC overhead. Runs natively inside your Spring Boot or JVM process.
+2. **Deterministic Infrastructure First:** Goal decomposition, context loading, memory recall, knowledge synthesis, policy evaluation, and outcome verification are deterministic Java code.
+3. **Bring-Your-Own-Key (BYOK) Multi-Provider Routing:** The runtime is model-agnostic. Route seamlessly between Google Gemini, OpenAI, Ollama (local), and OpenAI-compatible endpoints with dynamic hot-reload and deterministic in-memory fallbacks.
+4. **Privacy-First & Multi-Tenant Isolated:** Strict boundary enforcement ensures cross-tenant data leaks are physically impossible at both the caching and database vector tiers.
 
 ---
 
-# Five-Layer Architecture
+## 2. Five-Layer Architecture
 
-| Layer           | Responsibility                                                                             |
-| --------------- | ------------------------------------------------------------------------------------------ |
-| **Application** | Your Java application, REST API, or desktop/server system                                  |
-| **SDK**         | Memory, Knowledge, Planning, Reasoning, Reflection, Identity, Execution, Project, Settings |
-| **Runtime**     | Intent routing, orchestration, event bus, multi-agent coordination, LLM routing            |
-| **Kernel**      | Core services for memory, knowledge, planning, execution, cognitive intelligence           |
-| **Providers**   | OpenAI, Gemini, Ollama, OpenAI-compatible providers, In-Memory fallback                    |
-
-Architecture summary:
+Shree AI OS organizes cognitive capabilities across five distinct, decoupled layers:
 
 ```text
-Application
-      │
-      ▼
-SDK Layer
-(Memory • Knowledge • Planning • Reflection • Identity)
-      │
-      ▼
-Runtime Orchestration
-(Intent Router • Multi-Agent • Event Bus • LLM Router)
-      │
-      ▼
-Kernel Services
-(Memory • Knowledge • Planning • Execution • Cognitive)
-      │
-      ▼
-LLM Providers
-(OpenAI • Gemini • Ollama • In-Memory)
++-------------------------------------------------------------------------+
+|                           Application Layer                             |
+|          Spring Boot Services, Microservices, Enterprise Systems        |
++-------------------------------------------------------------------------+
+                                    |
+                                    v
++-------------------------------------------------------------------------+
+|                                SDK Layer                                |
+|  Chat • Memory • Knowledge • Planning • Execution • Reflection •        |
+|  Identity • Project • Developer • Multi-Agent • Settings • Diagnostics  |
++-------------------------------------------------------------------------+
+                                    |
+                                    v
++-------------------------------------------------------------------------+
+|                          Runtime Orchestration                          |
+|  11-Stage Cognitive Pipeline • Intent Router • Fail-Closed Auth Gate    |
+|  Event Bus • Multi-Agent Chief Orchestrator • Tenant Isolation Enforcer |
++-------------------------------------------------------------------------+
+                                    |
+                                    v
++-------------------------------------------------------------------------+
+|                             Kernel Services                             |
+|  Episodic Memory • pgvector Hybrid Retrieval • Topological Planning •   |
+|  In-Memory AST Patch Engine • Adaptive Reflection • Context Detector    |
++-------------------------------------------------------------------------+
+                                    |
+                                    v
++-------------------------------------------------------------------------+
+|                        LLM Provider Layer (BYOK)                        |
+|        Google Gemini • OpenAI • Ollama • Deterministic In-Memory        |
++-------------------------------------------------------------------------+
 ```
 
 ---
 
-# Runtime Orchestration
+## 3. The 11-Stage Cognitive Execution Pipeline
 
-The runtime is the operating layer of Shree AI OS. Rather than sending prompts directly to a model, every request passes through coordinated services responsible for routing, planning, execution, and validation.
-
-Core runtime components include:
-
-* **ShreeClient** — Public entry point for chat, streaming, and execution requests.
-* **DefaultRuntimeService** — Central orchestration engine.
-* **RuntimeIntentRouter** — Deterministic capability routing.
-* **ChiefIntelligenceAgent** — 11-stage execution pipeline.
-* **MultiKernelOrchestrator** — Parallel execution of multiple intents.
-* **RuntimeEventBus** — Publish/subscribe event system.
-* **LlmRouter** — Provider selection with automatic fallback.
-
----
-
-# The 11-Stage Intelligence Pipeline
-
-When deterministic routing is insufficient, the runtime executes a complete orchestration pipeline.
-
-| Stage | Purpose             |
-| ----- | ------------------- |
-| 1     | Identity Resolution |
-| 2     | Context Loading     |
-| 3     | Memory Recall       |
-| 4     | Knowledge Retrieval |
-| 5     | Reasoning           |
-| 6     | Inference           |
-| 7     | Planning            |
-| 8     | Action Execution    |
-| 9     | Reflection          |
-| 10    | Memory Storage      |
-| 11    | Chief Review        |
-
-Reflection can trigger selective retries before the final response is generated, allowing the runtime to improve execution quality without exposing that complexity to the application.
-
----
-
-# LLM Provider Layer
-
-Shree AI OS supports multiple providers behind a unified routing interface.
-
-| Provider          | Purpose                                |
-| ----------------- | -------------------------------------- |
-| OpenAI            | Cloud inference                        |
-| Gemini            | Cloud inference                        |
-| Ollama            | Local models                           |
-| OpenAI-Compatible | Custom endpoints                       |
-| In-Memory         | Deterministic fallback for development |
-
-If multiple providers are configured, the runtime automatically falls back according to the configured provider chain.
-
-Example:
+Every execution submitted to the platform passes through the hardened 11-stage cognitive execution pipeline:
 
 ```text
-openai → gemini → in-memory
+User Request
+     ↓
+1. IdentityStage          (Actor resolution, tenant context validation)
+     ↓
+2. ContextStage           (Domain detection, constraint & goal extraction)
+     ↓
+3. MemoryRecallStage      (Episodic memory & preferences retrieval)
+     ↓
+4. KnowledgeStage         (Hybrid RRF vector search + K0.6 Acquisition)
+     ↓
+5. ReasoningStage         (Fact extraction, conflict resolution, evidence graph)
+     ↓
+6. InferenceStage         (Deterministic candidate scoring & tradeoff analysis)
+     ↓
+7. PlanningStage          (Topological DAG task decomposition)
+     ↓
+8. ActionExecutionStage   (Fail-closed tool & patch execution gate)
+     ↓
+9. ReflectionStage        (Adaptive calibration, outcome scoring, bias audit)
+     ↓
+10. MemoryStoreStage      (Episodic memory commit & vector indexing)
+     ↓
+11. ChiefReviewStage      (Constitutional verification & governance sign-off)
+     ↓
+Dual-Mode Synthesis       (NaturalResponseAgent: Strict RAG or Fallback)
 ```
 
-Applications continue working even if the primary provider becomes unavailable.
+By enforcing this pipeline, the runtime can identify flaws, trigger reflection-driven retries, or block unauthorized tool invocations **before** model synthesis occurs.
 
 ---
 
-# Event-Driven Runtime
+## 4. BYOK Multi-Model Routing
 
-Every major runtime capability can publish events through the built-in event bus.
+Shree AI OS treats large language models as swappable commodities. With the built-in `LlmRouter` and `SettingsSDK`, platform operators can configure and hot-swap models at runtime:
 
-Examples include:
+- **Google Gemini:** Direct streaming and generation via Google GenAI REST API (e.g. `gemini-2.5-flash`).
+- **OpenAI:** GPT-4o / GPT-3.5 with full SSE delta-token streaming.
+- **Ollama:** Private on-premise inference with Llama 3 / Mistral / DeepSeek via local NDJSON streams.
+- **In-Memory Fallback:** Deterministic zero-latency fallback ensuring test suites and offline airgapped environments never fail.
 
-* Knowledge ingestion
-* Memory updates
-* Planning completion
-* Execution lifecycle
-* Reflection results
-
-Applications can subscribe without coupling directly to kernel implementations.
-
-```java
-shree.eventBus().subscribe(
-    EventType.KNOWLEDGE_INGESTED,
-    event -> System.out.println(event.getEntryId())
-);
+### Failover Resilience
+```text
+Primary (Gemini / OpenAI) ──[HTTP 429/503 Exponential Backoff]──> Fallback (Ollama / In-Memory)
 ```
+Providers catch transient rate limits and service outages, retrying with exponential backoff before cleanly delegating to secondary providers.
 
 ---
 
-# Tenant & Identity Model
+## 5. Enterprise Multi-Tenancy & Security
 
-Shree AI OS uses **request-scoped identity and tenant isolation**.
+Security and tenancy in Shree AI OS are not afterthoughts — they are hard structural boundaries:
 
-Each execution carries:
-
-* Identity ID
-* Session ID
-* Application ID
-* Workspace ID
-* Tenant context
-
-Tenant boundaries are enforced inside the runtime before protected operations execute, preventing cross-tenant access within the same runtime instance.
+- **Fail-Closed Authorization Gate:** `graphPermissionManager` strictly rejects unknown, unmapped, or null parameters with `PermissionDecision.DENY`.
+- **Tenant-Scoped Vector Stores:** All vector tables in PostgreSQL enforce `tenant_id TEXT` partitioning, preventing cross-tenant information leakage.
+- **Thread-Safe Runtime:** Memory and diagnostic counters utilize `AtomicInteger` and `LongAdder` structures, verified under 1,000 concurrent threads.
 
 ---
 
-# Public Entry Point
+## 6. Official Maven Coordinates
 
-Add the library:
+Add Shree AI OS to your Maven project:
 
 ```xml
 <dependency>
     <groupId>io.github.darshanrathod04</groupId>
     <artifactId>shree-ai-os</artifactId>
-    <version>1.0.5-developer-preview</version>
+    <version>1.0.6-developer-preview</version>
 </dependency>
 ```
 
-Create the runtime:
+Initialize the runtime:
 
 ```java
 ShreeAI shree = ShreeAI.builder()
-    .apiKey(System.getenv("OPENAI_API_KEY"))
+    .apiKey(System.getenv("GEMINI_API_KEY"))
     .build();
 
-ChatResponse reply = shree.chat("Plan a 30 minute workout");
+SDKResponse response = shree.chat("Explain the cognitive pipeline");
+System.out.println(response.answer());
 
 shree.close();
 ```
 
-The runtime initializes automatically and manages its complete lifecycle internally.
+---
+
+## 7. What Shree AI OS Is NOT
+
+To maintain architectural clarity:
+- **NOT a LangChain or LlamaIndex clone:** It is written entirely in native Java with strict compile-time types, deterministic lifecycle, and zero external script dependencies.
+- **NOT an opaque prompt wrapper:** Every step is inspected, logged, and audited through structured Java records and events.
+- **NOT a vector database:** It integrates cleanly with standard enterprise PostgreSQL (`pgvector`) instances.
+- **NOT restricted to Spring Boot:** Runs in any modern JVM application (Java 21+).
 
 ---
 
-# Design Philosophy
-
-Traditional AI applications typically follow:
-
-```text
-User → Prompt → LLM → Response
-```
-
-Shree AI OS introduces deterministic orchestration:
-
-```text
-User
- ↓
-Identity
- ↓
-Memory
- ↓
-Knowledge
- ↓
-Reasoning
- ↓
-Planning
- ↓
-Execution
- ↓
-Reflection
- ↓
-LLM
- ↓
-Grounded Response
-```
-
-The language model becomes one component of the system rather than the system itself.
-
----
-
-# What Shree AI OS Is Not
-
-To clarify the platform scope:
-
-* **Not** a vector database
-* **Not** a model training or fine-tuning platform
-* **Not** a chat wrapper around OpenAI
-* **Not** limited to Spring Boot
-* **Not** a SaaS platform
-
-It is a **Java runtime for deterministic AI orchestration**.
-
----
-
-# Summary
-
-Shree AI OS provides a stable runtime that combines deterministic software engineering with modern language models.
-
-Its public platform includes:
-
-* Memory & Knowledge
-* Planning & Execution
-* Reasoning & Reflection
-* Identity & Tenant Context
-* Multi-Agent Runtime
-* Event Bus
-* Real Token Streaming
-* BYOK Provider Routing
-
-**Everything before the LLM is deterministic Java infrastructure.** That is the defining identity of Shree AI OS.
+Platform: **Shree AI OS**  
+Document: **Platform Identity**  
+Version: **1.0.6-developer-preview**  
+Author: **Darshan Rathod**

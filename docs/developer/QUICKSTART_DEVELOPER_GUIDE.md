@@ -1,476 +1,248 @@
 # Quickstart Developer Guide — 5-Minute Tutorial
 
-> **Goal:** Get a working Shree AI OS application in under 5 minutes. Every code sample below compiles against the verified public API.
+> **Goal:** Get a production-grade Shree AI OS application running in under 5 minutes. Every code snippet below is verified against the `1.0.6-developer-preview` release.
 
 ---
 
-## Prerequisites
+## 1. Prerequisites
 
-- **Java 21** (the project targets Java 21)
-- **Maven 3.8+** (or use the included `mvnw` wrapper)
-- An LLM API key (optional) — the runtime works without one using `InMemoryLlmProvider`
+- **Java 21+** (Eclipse Temurin / Adoptium recommended)
+- **Maven 3.8+** (or the included `./mvnw` wrapper)
+- **Docker** (optional, required if running PostgreSQL + pgvector locally)
+- An API Key (Google Gemini, OpenAI) or run offline using the built-in deterministic `InMemoryLlmProvider`
 
 ---
 
-## Step 1: Add the Dependency
+## 2. Step 1: Add Maven Dependency
 
-Add this to your `pom.xml`:
+Add the following dependency to your `pom.xml`:
 
 ```xml
 <dependency>
     <groupId>io.github.darshanrathod04</groupId>
     <artifactId>shree-ai-os</artifactId>
-    <version>1.0.5-developer-preview</version>
+    <version>1.0.6-developer-preview</version>
 </dependency>
 ```
 
-**Note:** Shree AI OS is a Spring Boot 4.0.2 application, so Spring Boot dependencies are pulled in transitively. You don't need to add Spring Boot explicitly unless you're building a standalone Spring app.
-
 ---
 
-## Step 2: Your First Chat (30 seconds)
+## 3. Step 2: Initialize Shree AI OS
 
-Create a file `HelloShree.java`:
+Create a standard Java class `QuickstartApp.java`:
 
 ```java
-import com.shreeai.os.platform.ShreeAI;
-import com.shreeai.os.platform.sdk.chat.ChatResponse;
+import com.shreeai.os.platform.sdk.ShreeAI;
+import com.shreeai.os.platform.sdk.SDKResponse;
 
-public class HelloShree {
+public class QuickstartApp {
     public static void main(String[] args) {
+        // Initialize the runtime with your Gemini API key (or use "local" for in-memory)
         ShreeAI shree = ShreeAI.builder()
-            .configuration(RuntimeConfiguration.defaults())
+            .apiKey(System.getenv().getOrDefault("GEMINI_API_KEY", "local"))
             .build();
 
-        ChatResponse reply = shree.chat("What is Java?");
-        System.out.println(reply.getMessage());
+        // 1. Grounded Chat
+        SDKResponse response = shree.chat("What is the core architectural principle of Shree AI OS?");
+        System.out.println("Answer: " + response.answer());
 
+        // Always gracefully close the runtime on shutdown
         shree.close();
     }
 }
 ```
 
-**What happens:**
-1. `ShreeAI.builder()` creates a `ShreeBuilder`.
-2. `.build()` instantiates a `DefaultRuntimeService`, calls `initialize()` then `start()`.
-3. `.chat()` builds an `IntelligenceContextBuilder` payload, submits it to the runtime, and returns the response.
-4. `.close()` stops the runtime and releases resources.
-
-**Run it:**
+Compile and run:
 ```bash
-mvn compile exec:java -Dexec.mainClass="HelloShree"
-```
-
-**Expected output** (without an API key, uses `InMemoryLlmProvider`):
-```
-Java is a high-level, object-oriented programming language...
+mvn compile exec:java -Dexec.mainClass="QuickstartApp"
 ```
 
 ---
 
-## Step 3: Configure an LLM Provider (1 minute)
+## 4. Step 3: Grounded Chat with Citations
 
-### Option A: OpenAI
+When knowledge or documents are ingested, Shree AI OS performs hybrid RRF vector retrieval and grounds its answers with verifiable citations:
 
-Set the environment variable:
-```bash
-export OPENAI_API_KEY=sk-...
-```
-
-Then:
 ```java
 ShreeAI shree = ShreeAI.builder()
-    .apiKey(System.getenv("OPENAI_API_KEY"))
+    .apiKey(System.getenv("GEMINI_API_KEY"))
     .build();
-```
 
-### Option B: Google Gemini
-
-```bash
-export GEMINI_API_KEY=your-gemini-key
-```
-
-### Option C: Ollama (local)
-
-```bash
-export SHREE_LLM_OLLAMA=true
-```
-
-**What happens:** `buildDefaultLlmRouter()` (called during `DefaultRuntimeService` initialization) detects the environment variable and registers the corresponding provider. The router chains providers with auto-fallback (e.g., `openai,in-memory` if OpenAI is available, otherwise `in-memory`).
-
----
-
-## Step 4: Store and Recall Memories (30 seconds)
-
-```java
-ShreeAI shree = ShreeAI.builder().build();
-
-// Store a memory
-shree.memory().store("user-name", "Alice");
-
-// Recall memories
-List<MemoryEntry> memories = shree.memory().recall("name");
-for (MemoryEntry entry : memories) {
-    System.out.println(entry.getKey() + " = " + entry.getValue());
-}
-// Output: user-name = Alice
-
-shree.close();
-```
-
-**Runtime path:** `MemorySDK.store()` → `DefaultMemoryService.store()` (direct delegation). The memory is stored in an in-memory repository.
-
----
-
-## Step 5: Ingest and Search Knowledge (30 seconds)
-
-```java
-ShreeAI shree = ShreeAI.builder().build();
-
-// Ingest knowledge
-KnowledgeEntry entry = shree.knowledge().ingest(
-    "Java is a programming language created by James Gosling in 1995."
+// Ingest documentation into pgvector
+shree.knowledge().ingest(
+    "Shree AI OS uses Reciprocal Rank Fusion (RRF) to combine HNSW semantic vector rankings " +
+    "with PostgreSQL full-text search rankings into a single authoritative evidence set."
 );
 
-// Search the knowledge graph
-List<KnowledgeEntry> results = shree.knowledge().search("programming language");
-for (KnowledgeEntry e : results) {
-    System.out.println(e.getContent());
+// Execute grounded query
+SDKResponse groundedResponse = shree.chat("How does hybrid retrieval work in Shree AI OS?");
+System.out.println("Response:\n" + groundedResponse.answer());
+
+// Print citations
+if (groundedResponse.citations() != null) {
+    groundedResponse.citations().forEach(c -> {
+        System.out.println("Citation -> [" + c.title() + "] " + c.excerpt() + " (Score: " + c.score() + ")");
+    });
 }
 
 shree.close();
 ```
 
-**Runtime path:** `KnowledgeSDK.ingest()` → `DefaultKnowledgeService.ingest(content, tenantId="default")`. The entry is stored in the in-memory knowledge graph.
-
 ---
 
-## Step 6: Create and Execute a Plan (1 minute)
+## 5. Step 4: Episodic Memory Recall
+
+Store and semantically recall conversation state, user preferences, and session facts:
 
 ```java
 ShreeAI shree = ShreeAI.builder().build();
 
-// Create a plan
-Plan plan = shree.planning().createPlan("Build a REST API for user management");
-System.out.println("Plan created with " + plan.getSteps().size() + " steps");
+// Store episodic facts
+shree.memory().store("user-tech-stack", "Enterprise Java 21, Spring Boot 3.4, and PostgreSQL pgvector");
+shree.memory().store("user-region", "us-east-1");
 
-// Execute the plan
-ExecutionResult result = shree.planning().executePlan(plan);
-System.out.println("Execution status: " + result.getStatus());
-
-shree.close();
-```
-
-**Runtime path:** `PlanningSDK.createPlan()` → `DefaultPlanningService.createPlan(goal)`. The plan is stored in memory. `PlanningSDK.executePlan()` → `DefaultExecutionService.execute(plan)`.
-
----
-
-## Step 7: Analyze a Project (1 minute)
-
-```java
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-ShreeAI shree = ShreeAI.builder().build();
-
-// Analyze a Java project
-Path projectRoot = Paths.get("./my-java-project");
-ProjectAnalysis analysis = shree.project().analyze(projectRoot);
-System.out.println("Project has " + analysis.getClassCount() + " classes");
-
-// Find a specific controller
-JavaClassInfo controller = shree.project().findController("UserController");
-if (controller != null) {
-    System.out.println("Found controller: " + controller.getFullyQualifiedName());
+// Semantically recall memories
+List<MemoryEntry> memories = shree.memory().recall("What database and runtime does the user use?");
+for (MemoryEntry entry : memories) {
+    System.out.println("Recalled: " + entry.getKey() + " -> " + entry.getValue());
 }
 
-// Get a summary
-ProjectSummary summary = shree.project().summarize();
-System.out.println(summary.getDescription());
-
 shree.close();
 ```
 
-**Important:** `ProjectSDK.analyze()` takes `java.nio.file.Path`, **not `String`**. Use `Paths.get(...)` to convert.
-
-**Runtime path:** `ProjectSDK.analyze()` → `ProjectIntelligenceService.analyze(projectRoot)`. The service scans the project directory and extracts Java class metadata.
-
 ---
 
-## Step 8: Multi-Intent Orchestration (30 seconds)
+## 6. Step 5: Planning Graph Dispatch (Topological DAG)
+
+Decompose high-level engineering objectives into structured, topologically ordered execution graphs:
 
 ```java
 ShreeAI shree = ShreeAI.builder().build();
 
-// Submit a multi-intent request
-ExecutionRequest request = ExecutionRequest.builder()
-    .addIntent("MEMORY_RECALL", Map.of("query", "user preferences"))
-    .addIntent("SEARCH_KNOWLEDGE", Map.of("query", "Java"))
-    .build();
+// Generate a structured execution plan
+SDKResponse planResponse = shree.planning().createPlan(
+    "plan-001",
+    "Deploy microservice to Kubernetes cluster with zero downtime",
+    "infrastructure"
+);
 
-ExecutionResult result = shree.submit(request);
-System.out.println("Orchestrated " + result.getIntentResults().size() + " intents");
-
-shree.close();
-```
-
-**Runtime path:** `ShreeClient.submit()` → `DefaultRuntimeService.submit()` → `IntentAnalyzer` (detects multi-intent) → `MultiKernelOrchestrator.orchestrate()` (fans out to memory + knowledge kernels in parallel) → aggregates results.
-
----
-
-## Step 9: Subscribe to Events (30 seconds)
-
-```java
-ShreeAI shree = ShreeAI.builder().build();
-
-// Subscribe to knowledge ingestion events
-shree.eventBus().subscribe(EventType.KNOWLEDGE_INGESTED, event -> {
-    System.out.println("Knowledge ingested: " + event.getEntryId());
-});
-
-// Trigger an event
-shree.knowledge().ingest("Python is a programming language.");
-// Output: Knowledge ingested: <some-uuid>
+System.out.println("Planning Status: " + planResponse.answer());
+Map<String, Object> payload = planResponse.structuredPayload();
+System.out.println("Generated Plan Details: " + payload);
 
 shree.close();
 ```
 
-**Runtime path:** `ShreeAI` creates a `RuntimeEventBus` instance → `ShreeClient` calls `runtime.bindEventBus(eventBus)` → `DefaultRuntimeService` registers internal consumers → your subscription receives events.
-
 ---
 
-## Step 10: Real Provider Token Streaming (30 seconds)
+## 7. Step 6: Real Provider Token Streaming
+
+Stream tokens fragment-by-fragment directly from the underlying LLM provider:
 
 ```java
 ShreeAI shree = ShreeAI.builder()
-    .apiKey(System.getenv("OPENAI_API_KEY"))
+    .apiKey(System.getenv("GEMINI_API_KEY"))
     .build();
 
-shree.chatStream("Tell me a story about Java", new StreamingListener() {
-    @Override public void onStart() { System.out.print(">>> "); }
-    @Override public void onToken(String token) { System.out.print(token); }
-    @Override public void onComplete(String complete) {
-        System.out.println("\n[stream complete, " + complete.length() + " chars]");
+shree.chatStream("Explain how pgvector HNSW indexing accelerates vector similarity search", new StreamingListener() {
+    @Override
+    public void onStart() {
+        System.out.print("Stream started >>> ");
     }
-    @Override public void onError(Throwable t) { t.printStackTrace(); }
+
+    @Override
+    public void onToken(String token) {
+        System.out.print(token);
+    }
+
+    @Override
+    public void onComplete(String fullContent) {
+        System.out.println("\n<<< Stream completed (" + fullContent.length() + " chars)");
+    }
+
+    @Override
+    public void onError(Throwable t) {
+        System.err.println("Streaming error: " + t.getMessage());
+    }
 });
 
 shree.close();
 ```
 
-**What happens:** `ShreeClient.chatStream()` calls `Runtime.streamText()`, which invokes `llmRouter.stream(LlmRequest)`. The LLM provider (e.g., `OpenAiProvider`) consumes the SSE stream and yields each token via `StreamingListener.onToken()` in real time. Without a configured API key, `InMemoryLlmProvider` yields a deterministic token list.
-
 ---
 
-## Step 11: Configure BYOK with Hot Reload (30 seconds)
+## 8. Step 7: Hot-Reload BYOK Keys
+
+Configure or swap API keys at runtime without restarting the application:
 
 ```java
 ShreeAI shree = ShreeAI.builder().build();
 
-// Configure a custom API key — takes effect immediately (hot reload)
-ProviderSettings openai = shree.settings().configureApiKey(ProviderType.OPENAI, "sk-custom-key");
-System.out.println("Key configured: " + openai.maskedKey());  // sk-****
+// Dynamically configure an OpenAI key at runtime
+ProviderSettings openaiSettings = shree.settings().configureApiKey(
+    ProviderType.OPENAI, 
+    "sk-proj-abc123xyz"
+);
+System.out.println("OpenAI Key Active: " + openaiSettings.maskedKey());
 
-// List all configured providers
-List<ProviderSettings> providers = shree.settings().providers();
-for (ProviderSettings p : providers) {
-    System.out.println(p.providerType() + " = " + p.maskedKey());
-}
+// Dynamically configure a Gemini key
+ProviderSettings geminiSettings = shree.settings().configureApiKey(
+    ProviderType.GEMINI,
+    "AIzaSyD-custom-key"
+);
+System.out.println("Gemini Key Active: " + geminiSettings.maskedKey());
+
+// Subsequent calls automatically use the newly configured provider
+SDKResponse reply = shree.chat("Hello from dynamically configured provider!");
+System.out.println(reply.answer());
 
 shree.close();
 ```
 
-**What happens:** `SettingsSDK.configureApiKey()` calls `ByokSettingsService.save()`, which fires a `CHANGE_EVENT`. `DefaultRuntimeService.rebuildLlmRouter()` is registered as a listener — it receives the event and prepends the new provider to the LLM chain. The next request uses the new key.
+---
 
-**Note:** `ProviderType` is an enum in `com.shreeai.os.platform.sdk.settings`. Use `ProviderType.OPENAI`, `ProviderType.GEMINI`, `ProviderType.OLLAMA`, etc. See [DEVELOPER_CAPABILITIES.md](DEVELOPER_CAPABILITIES.md) §10 for full details.
+## 9. Configuration Properties
+
+Configure the runtime via `application.properties` or standard environment variables:
+
+| Property | Environment Variable | Default | Description |
+|---|---|---|---|
+| `shree.llm.provider` | `SHREE_LLM_PROVIDER` | `gemini` | Primary provider (`gemini`, `openai`, `ollama`, `in-memory`) |
+| `shree.llm.gemini.model` | `SHREE_LLM_GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model (`gemini-2.5-flash`, `gemini-1.5-flash`, etc.) |
+| `shree.llm.openai.model` | `SHREE_LLM_OPENAI_MODEL` | `gpt-4o` | OpenAI model identifier |
+| `shree.llm.retry.max` | `SHREE_LLM_RETRY_MAX` | `3` | Maximum retry attempts on HTTP 429/503 |
+| `shree.llm.retry.backoff-ms` | `SHREE_LLM_RETRY_BACKOFF_MS` | `2000` | Base exponential backoff duration in milliseconds |
+| `shree.vector.provider` | `SHREE_VECTOR_PROVIDER` | `pgvector` | Vector store (`pgvector` or `in-memory`) |
+| `shree.vector.jdbc.url` | `SHREE_VECTOR_JDBC_URL` | `jdbc:postgresql://localhost:5432/shree` | PostgreSQL JDBC connection URL |
+| `shree.vector.jdbc.user` | `SHREE_VECTOR_JDBC_USER` | `postgres` | Database username |
+| `shree.vector.jdbc.password` | `SHREE_VECTOR_JDBC_PASSWORD` | `shreeai` | Database password |
+| `shree.embedding.provider` | `SHREE_EMBEDDING_PROVIDER` | `onnx` | Embeddings (`onnx` local or `gemini`) |
+| `shree.embedding.dimensions`| `SHREE_EMBEDDING_DIMENSIONS`| `384` | Embedding vector dimensionality |
 
 ---
 
-## Complete Example: Putting It All Together
+## 10. Common Developer Questions
 
+### Q: Does Shree AI OS work offline without internet?
+**Yes.** Set `shree.llm.provider=in-memory` (or `apiKey("local")`) and `shree.embedding.provider=onnx`. The entire cognitive pipeline, hybrid vector search, memory recall, and deterministic responses run 100% locally on your JVM with zero network traffic.
+
+### Q: How do I integrate with Spring Boot?
+Declare `ShreeAI` as a `@Bean`:
 ```java
-import com.shreeai.os.platform.ShreeAI;
-import com.shreeai.os.platform.sdk.chat.ChatResponse;
-import com.shreeai.os.platform.sdk.memory.MemoryEntry;
-import com.shreeai.os.platform.sdk.knowledge.KnowledgeEntry;
-import com.shreeai.os.platform.sdk.planning.Plan;
-import com.shreeai.os.platform.sdk.planning.ExecutionResult;
-import com.shreeai.os.platform.runtime.event.EventType;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-
-public class ShreeCompleteExample {
-    public static void main(String[] args) {
-        // 1. Build and start the runtime
-        ShreeAI shree = ShreeAI.builder()
-            .apiKey(System.getenv("OPENAI_API_KEY"))  // optional
+@Configuration
+public class ShreeConfiguration {
+    @Bean
+    public ShreeAI shreeAI(@Value("${gemini.api.key:local}") String apiKey) {
+        return ShreeAI.builder()
+            .apiKey(apiKey)
             .build();
-
-        // 2. Subscribe to events
-        shree.eventBus().subscribe(EventType.KNOWLEDGE_INGESTED, event -> {
-            System.out.println("[EVENT] Knowledge ingested: " + event.getEntryId());
-        });
-
-        // 3. Store memories
-        shree.memory().store("user-name", "Bob");
-        shree.memory().store("user-role", "developer");
-
-        // 4. Ingest knowledge
-        shree.knowledge().ingest("Maven is a build automation tool for Java projects.");
-        shree.knowledge().ingest("Spring Boot is a framework for building Java applications.");
-
-        // 5. Recall memories
-        List<MemoryEntry> memories = shree.memory().recall("user");
-        System.out.println("Recalled " + memories.size() + " memories");
-
-        // 6. Search knowledge
-        List<KnowledgeEntry> results = shree.knowledge().search("Java");
-        System.out.println("Found " + results.size() + " knowledge entries");
-
-        // 7. Create and execute a plan
-        Plan plan = shree.planning().createPlan("Deploy a Java app to production");
-        ExecutionResult result = shree.planning().executePlan(plan);
-        System.out.println("Plan execution: " + result.getStatus());
-
-        // 8. Chat with the runtime
-        ChatResponse reply = shree.chat("What did I store about the user?");
-        System.out.println("Chat response: " + reply.getMessage());
-
-        // 8b. Stream real tokens from the LLM
-        shree.chatStream("Summarize the project in one sentence", new StreamingListener() {
-            @Override public void onStart() { }
-            @Override public void onToken(String token) { System.out.print(token); }
-            @Override public void onComplete(String complete) { System.out.println(); }
-            @Override public void onError(Throwable t) { t.printStackTrace(); }
-        });
-
-        // 9. Multi-intent orchestration
-        ExecutionRequest request = ExecutionRequest.builder()
-            .addIntent("MEMORY_RECALL", Map.of("query", "user"))
-            .addIntent("SEARCH_KNOWLEDGE", Map.of("query", "deployment"))
-            .build();
-        ExecutionResult orchestrated = shree.submit(request);
-        System.out.println("Orchestrated " + orchestrated.getIntentResults().size() + " intents");
-
-        // 10. Lifecycle management
-        RuntimeStatus status = shree.status();
-        System.out.println("Runtime state: " + status.getState());
-
-        // 11. Shutdown
-        shree.close();
     }
 }
 ```
 
-**Run it:**
-```bash
-mvn compile exec:java -Dexec.mainClass="ShreeCompleteExample"
-```
-
 ---
 
-## Reference Applications
-
-Two reference applications are included in the repository:
-
-1. **`shree-playground`** — A Spring Boot application that exposes Shree AI OS via REST endpoints. Use it to test the runtime via HTTP.
-2. **`shree-developer-intelligence`** — A developer-focused application that uses `ProjectSDK` to analyze Java projects.
-
-To run the playground:
-```bash
-cd application/shree-playground
-mvn spring-boot:run
-```
-
-Then test it:
-```bash
-curl -X POST http://localhost:8080/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What is Java?"}'
-```
-
----
-
-## Common Pitfalls
-
-### 1. `ProjectSDK.analyze()` takes `Path`, not `String`
-
-❌ **Wrong:**
-```java
-shree.project().analyze("./my-project");
-```
-
-✅ **Correct:**
-```java
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-Path projectRoot = Paths.get("./my-project");
-shree.project().analyze(projectRoot);
-```
-
-### 2. Don't forget to close the runtime
-
-❌ **Wrong:**
-```java
-ShreeAI shree = ShreeAI.builder().build();
-shree.chat("Hello");
-// Runtime never stops
-```
-
-✅ **Correct:**
-```java
-ShreeAI shree = ShreeAI.builder().build();
-try {
-    shree.chat("Hello");
-} finally {
-    shree.close();
-}
-```
-
-### 3. BYOK now uses hot reload (no rebuild needed)
-
-If you call `shree.settings().configureApiKey(ProviderType.OPENAI, "sk-...")`, the new key is registered with the LLM router immediately via `rebuildLlmRouter()`. There is no need to set `OPENAI_API_KEY` before building the runtime:
-
-```java
-ShreeAI shree = ShreeAI.builder().build();
-shree.start();
-
-// Set the key at any time — it takes effect on the next LLM call
-shree.settings().configureApiKey(ProviderType.OPENAI, "sk-...");
-
-// Subsequent calls use the new key
-ChatResponse reply = shree.chat("Hello");
-```
-
----
-
-## Next Steps
-
-- **[PLATFORM_IDENTITY.md](PLATFORM_IDENTITY.md)** — Understand the 5-layer architecture and 11-stage pipeline
-- **[DEVELOPER_CAPABILITIES.md](DEVELOPER_CAPABILITIES.md)** — Browse the complete SDK catalog
-- **[WORKING_STATUS.md](WORKING_STATUS.md)** — See what's verified, partial, or decorative
-
----
-
-## Summary
-
-In 5 minutes, you've learned how to:
-
-✅ Add the Maven dependency
-✅ Build and start the runtime
-✅ Chat with the LLM (or use the in-memory fallback)
-✅ Store and recall memories
-✅ Ingest and search knowledge
-✅ Create and execute plans
-✅ Analyze Java projects
-✅ Orchestrate multi-intent requests
-✅ Subscribe to events
-✅ Stream real LLM tokens (not simulated)
-✅ Configure BYOK with hot reload
-✅ Manage the runtime lifecycle
-
-**The LLM is the last step, not the first.** Everything before it is deterministic Java code. That's the core design principle of Shree AI OS.
+Platform: **Shree AI OS**  
+Document: **Quickstart Developer Guide**  
+Version: **1.0.6-developer-preview**  
+Author: **Darshan Rathod**
