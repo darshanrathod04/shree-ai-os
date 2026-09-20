@@ -25,7 +25,9 @@ import java.time.Instant;
  */
 public class LifecycleException extends RuntimeException {
 
-    private final LifecycleError error;
+    private static final long serialVersionUID = 1L;
+
+    private final transient LifecycleError error;
 
     /**
      * Constructs a new {@code LifecycleException} with the given error.
@@ -75,7 +77,7 @@ public class LifecycleException extends RuntimeException {
      */
     @Override
     public String getMessage() {
-        return error.message();
+        return error != null ? error.message() : super.getMessage();
     }
 
     /**

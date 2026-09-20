@@ -1,5 +1,7 @@
 package com.shreeai.os.platform.sdk;
 
+import com.shreeai.os.platform.sdk.exceptions.ValidationException;
+
 import java.util.Map;
 import java.util.Objects;
 
@@ -24,6 +26,12 @@ public final class ExecutionSDK {
             String capability,
             String input
     ) {
+        if (capability == null || capability.isBlank()) {
+            throw new ValidationException("capability must not be null or blank");
+        }
+        if (input == null) {
+            throw new ValidationException("input must not be null");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("EXECUTION_RUN")
@@ -44,6 +52,12 @@ public final class ExecutionSDK {
             String capability,
             Map<String, Object> parameters
     ) {
+        if (capability == null || capability.isBlank()) {
+            throw new ValidationException("capability must not be null or blank");
+        }
+        if (parameters == null) {
+            throw new ValidationException("parameters must not be null");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("EXECUTION_RUN")
@@ -61,6 +75,9 @@ public final class ExecutionSDK {
      * Verify an execution result.
      */
     public SDKResponse verify(String executionId) {
+        if (executionId == null || executionId.isBlank()) {
+            throw new ValidationException("executionId must not be null or blank");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("EXECUTION_VERIFY")

@@ -7,6 +7,7 @@ import com.shreeai.os.platform.llm.LlmRequest;
 import com.shreeai.os.platform.llm.LlmResponse;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -25,18 +26,9 @@ import okhttp3.ResponseBody;
 import okio.BufferedSource;
 
 /**
- * OkHttp-backed, streaming-first {@link LlmProvider} for Ollama's
- * {@code /api/generate} endpoint.
+ * Streaming-first {@link LlmProvider} for local Ollama instances.
  *
- * <p>This is the canonical replacement for the legacy {@code OllamaClient}. Per
- * the constitutional migration rules (R2: promote-and-delegate, no logic
- * duplication), this class does <strong>not</strong> extend or call the legacy
- * client; instead it re-implements the HTTP contract on the shared OkHttp +
- * Jackson stack already present in the project. The legacy client is wired to
- * delegate to a provider behind this interface in a later step, never the other
- * way around.</p>
- *
- * <p>Streaming: Ollama emits newline-delimited JSON objects when
+ * <p>Ollama streams line-delimited JSON objects over {@code /api/generate} with
  * {@code stream=true}. Each object carries a {@code "response"} delta fragment;
  * the final object carries {@code "done":true}. This provider exposes those
  * fragments as a {@link Stream} whose {@link Stream#onClose()} releases the
@@ -55,9 +47,18 @@ public final class OllamaProvider implements LlmProvider {
     private final OkHttpClient client;
     private final String url;
 
-    /** Default constructor: localhost Ollama + a fresh OkHttp client. */
+    private static OkHttpClient createDefaultClient() {
+        return new OkHttpClient.Builder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .readTimeout(Duration.ofSeconds(60))
+                .writeTimeout(Duration.ofSeconds(30))
+                .callTimeout(Duration.ofSeconds(60))
+                .build();
+    }
+
+    /** Default constructor: localhost Ollama + configured OkHttp client with timeouts. */
     public OllamaProvider() {
-        this(DEFAULT_URL, new OkHttpClient());
+        this(DEFAULT_URL, createDefaultClient());
     }
 
     /**
@@ -88,6 +89,9 @@ public final class OllamaProvider implements LlmProvider {
         try {
             response = client.newCall(httpRequest).execute();
         } catch (IOException e) {
+            if (e instanceof java.io.InterruptedIOException) {
+                Thread.currentThread().interrupt();
+            }
             throw new IllegalStateException("Ollama request failed: " + e.getMessage(), e);
         }
         if (!response.isSuccessful()) {
@@ -101,7 +105,7 @@ public final class OllamaProvider implements LlmProvider {
             throw new IllegalStateException("Ollama returned an empty response body");
         }
 
-        return StreamSupport.stream(new ChunkSpliterator(body), false)
+        return StreamSupport.stream(new ChunkSpliterator(response, body), false)
                 .onClose(() -> {
                     try {
                         body.close();
@@ -197,44 +201,71 @@ public final class OllamaProvider implements LlmProvider {
      */
     private static final class ChunkSpliterator extends Spliterators.AbstractSpliterator<String> {
 
+        private final Response response;
+        private final ResponseBody body;
         private final BufferedSource source;
         private boolean finished = false;
 
-        ChunkSpliterator(ResponseBody body) {
+        ChunkSpliterator(Response response, ResponseBody body) {
             super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.NONNULL);
+            this.response = response;
+            this.body = body;
             this.source = body.source();
+        }
+
+        private void closeQuietly() {
+            try {
+                if (body != null) {
+                    body.close();
+                }
+            } catch (Exception ignored) {
+            }
+            try {
+                if (response != null) {
+                    response.close();
+                }
+            } catch (Exception ignored) {
+            }
         }
 
         @Override
         public boolean tryAdvance(Consumer<? super String> action) {
+            Objects.requireNonNull(action, "action must not be null");
             if (finished) {
                 return false;
             }
             try {
-                String line = source.readUtf8Line();
-                if (line == null) {
-                    finished = true;
-                    return false;
-                }
-                String trimmed = line.trim();
-                if (trimmed.isEmpty()) {
-                    return tryAdvance(action);
-                }
-                if (isDone(trimmed)) {
+                String line;
+                while ((line = source.readUtf8Line()) != null) {
+                    String trimmed = line.trim();
+                    if (trimmed.isEmpty()) {
+                        continue;
+                    }
+                    if (isDone(trimmed)) {
+                        finished = true;
+                        closeQuietly();
+                        String token = extractResponseToken(trimmed);
+                        if (token != null) {
+                            action.accept(token);
+                            return true;
+                        }
+                        return false;
+                    }
                     String token = extractResponseToken(trimmed);
-                    finished = true;
                     if (token != null) {
                         action.accept(token);
+                        return true;
                     }
-                    return false;
                 }
-                String token = extractResponseToken(trimmed);
-                if (token != null) {
-                    action.accept(token);
-                }
-                return !finished;
+                finished = true;
+                closeQuietly();
+                return false;
             } catch (IOException e) {
                 finished = true;
+                closeQuietly();
+                if (e instanceof java.io.InterruptedIOException) {
+                    Thread.currentThread().interrupt();
+                }
                 throw new IllegalStateException("Failed reading Ollama stream", e);
             }
         }

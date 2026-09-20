@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -241,8 +242,8 @@ public final class DefaultKnowledgeService implements
 
         List<KnowledgeChunk> chunks = ingestionEngine.chunk(content);
         List<String> nodeIds = new ArrayList<>();
+        List<KnowledgeNode> createdNodes = new ArrayList<>();
 
-        KnowledgeGraph graph = graphRef.get();
         for (KnowledgeChunk chunk : chunks) {
             KnowledgeId nodeId = new KnowledgeId(UUID.randomUUID().toString());
             KnowledgeNode node = ingestionEngine.toNode(
@@ -262,16 +263,21 @@ public final class DefaultKnowledgeService implements
                 vectorStore.store(VectorRecord.of(nodeId.value(), chunk.text(), embedding, vectorMetadata));
             }
 
-            graph = processingEngine.processCreate(graph, node).getGraph();
-
             if (graphStore != null) {
                 graphStore.saveNode(node);
             }
 
             nodeIds.add(nodeId.value());
+            createdNodes.add(node);
         }
 
-        graphRef.set(graph);
+        graphRef.updateAndGet(current -> {
+            KnowledgeGraph g = current;
+            for (KnowledgeNode node : createdNodes) {
+                g = processingEngine.processCreate(g, node).getGraph();
+            }
+            return g;
+        });
 
         return KnowledgeIngestionResult.of(
                 documentId,
@@ -325,12 +331,7 @@ public final class DefaultKnowledgeService implements
 
         KnowledgeNode node = buildNode(request);
 
-        var result = processingEngine.processCreate(
-                graphRef.get(),
-                node
-        );
-
-        graphRef.set(result.getGraph());
+        graphRef.updateAndGet(current -> processingEngine.processCreate(current, node).getGraph());
 
         if (graphStore != null) {
             graphStore.saveNode(node);
@@ -369,18 +370,18 @@ public final class DefaultKnowledgeService implements
 
         // Build updated node and delegate to engine
         KnowledgeNode updatedNode = buildUpdatedNode(id, request);
-        var result = processingEngine.processUpdate(
-                graphRef.get(),
-                updatedNode
-        );
-
-        graphRef.set(result.getGraph());
+        AtomicBoolean updated = new AtomicBoolean(false);
+        graphRef.updateAndGet(current -> {
+            var result = processingEngine.processUpdate(current, updatedNode);
+            updated.set(result.isSuccessful());
+            return result.getGraph();
+        });
 
         if (graphStore != null) {
             graphStore.saveNode(updatedNode);
         }
 
-        return result.isSuccessful();
+        return updated.get();
     }
 
     /**
@@ -402,18 +403,22 @@ public final class DefaultKnowledgeService implements
         KnowledgeId id = parseKnowledgeId(knowledgeId);
 
         // Delegate to engine
-        var result = processingEngine.processDelete(
-                graphRef.get(),
-                id
-        );
-
-        graphRef.set(result.getGraph());
+        AtomicBoolean removed = new AtomicBoolean(false);
+        graphRef.updateAndGet(current -> {
+            var result = processingEngine.processDelete(current, id);
+            removed.set(result.isSuccessful());
+            return result.getGraph();
+        });
 
         if (graphStore != null) {
             graphStore.removeNode(id.value());
         }
 
-        return result.isSuccessful();
+        if (vectorStore != null) {
+            vectorStore.delete(id.value());
+        }
+
+        return removed.get();
     }
 
     /**
@@ -529,6 +534,13 @@ public final class DefaultKnowledgeService implements
     // ========================================================================
 
     /**
+     * Returns the active in-memory knowledge graph snapshot.
+     */
+    public KnowledgeGraph getGraph() {
+        return graphRef.get();
+    }
+
+    /**
      * {@inheritDoc}
      *
      * <p><b>Exception Translation:</b> Throws KnowledgeValidationException if validation fails.</p>
@@ -546,7 +558,7 @@ public final class DefaultKnowledgeService implements
 
         // Build relationship and delegate to engine
         KnowledgeRelationship relationship = buildRelationship(sourceId, targetId, relationshipType);
-        var result = processingEngine.processLink(KnowledgeGraph.empty(), relationship);
+        graphRef.updateAndGet(current -> processingEngine.processLink(current, relationship).getGraph());
 
         if (graphStore != null) {
             graphStore.saveRelationship(relationship);
@@ -565,13 +577,18 @@ public final class DefaultKnowledgeService implements
     @Override
     public boolean removeRelationship(String relationshipId) {
         KnowledgeId id = parseKnowledgeId(relationshipId);
-        var result = processingEngine.processUnlink(KnowledgeGraph.empty(), id);
+        AtomicBoolean removed = new AtomicBoolean(false);
+        graphRef.updateAndGet(current -> {
+            var result = processingEngine.processUnlink(current, id);
+            removed.set(result.isSuccessful());
+            return result.getGraph();
+        });
 
         if (graphStore != null) {
             graphStore.removeRelationship(id.value());
         }
 
-        return result.isSuccessful();
+        return removed.get();
     }
 
     /**
@@ -583,9 +600,10 @@ public final class DefaultKnowledgeService implements
      */
     @Override
     public Object[] queryConnections(String entityId) {
-        parseKnowledgeId(entityId);
-        // TODO: Implement connection querying
-        return new Object[0];
+        KnowledgeId id = parseKnowledgeId(entityId);
+        return graphRef.get().getRelationships().stream()
+                .filter(rel -> rel.getSourceNodeId().equals(id) || rel.getTargetNodeId().equals(id))
+                .toArray();
     }
 
     /**

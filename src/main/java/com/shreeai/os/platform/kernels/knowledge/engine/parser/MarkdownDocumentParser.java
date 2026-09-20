@@ -29,6 +29,9 @@ public final class MarkdownDocumentParser implements DocumentParser {
 
     @Override
     public List<ParsedSection> parse(String content) {
+        if (content == null || content.isBlank()) {
+            return List.of();
+        }
         List<ParsedSection> sections = new ArrayList<>();
         int headingStart = findFirstHeading(content);
         if (headingStart < 0) {

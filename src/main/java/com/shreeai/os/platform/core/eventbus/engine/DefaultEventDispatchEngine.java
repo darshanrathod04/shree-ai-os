@@ -101,10 +101,7 @@ public final class DefaultEventDispatchEngine implements EventDispatchEngine {
         }
 
         // Create snapshot of subscribers to avoid ConcurrentModificationException
-        List<EventSubscriber> subscribersSnapshot;
-        synchronized (subscribers) {
-            subscribersSnapshot = new ArrayList<>(subscribers);
-        }
+        List<EventSubscriber> subscribersSnapshot = new ArrayList<>(subscribers);
 
         int subscribersAttempted = subscribersSnapshot.size();
         int subscribersSucceeded = 0;

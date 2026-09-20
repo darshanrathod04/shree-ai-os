@@ -195,9 +195,12 @@ public final class DefaultProjectIntelligenceEngine {
      * simple name.
      */
     public ProjectImpact impact(String simpleName) {
+        if (simpleName == null || simpleName.isBlank()) {
+            return ProjectImpact.builder().target("").build();
+        }
         if (lastGraph == null || lastClasses == null) {
             return ProjectImpact.builder()
-                    .target(simpleName == null ? "" : simpleName)
+                    .target(simpleName)
                     .build();
         }
         // Find FQN

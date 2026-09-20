@@ -84,7 +84,9 @@ public final class DefaultAgentOrchestrator
 
         try {
             List<CompletableFuture<AgentResponse>> futures =
-                    new ArrayList<>();
+                    new java.util.concurrent.CopyOnWriteArrayList<>();
+            java.util.concurrent.atomic.AtomicBoolean anyFailed =
+                    new java.util.concurrent.atomic.AtomicBoolean(false);
 
             for (AgentDescriptor agent : agents) {
                 CompletableFuture<AgentResponse> future =
@@ -95,25 +97,19 @@ public final class DefaultAgentOrchestrator
                                 .orTimeout(policy.timeoutMs(), TimeUnit.MILLISECONDS)
                                 .exceptionally(ex -> failedResponse(agent, ex));
 
-                futures.add(future);
-            }
-
-            // If fail-fast and any agent has already failed, cancel the rest.
-            if (policy.failFast()) {
-                for (CompletableFuture<AgentResponse> future : futures) {
-                    if (future.isDone()) {
-                        AgentResponse r;
-                        try {
-                            r = future.join();
-                        } catch (Exception ex) {
-                            r = null;
+                if (policy.failFast()) {
+                    future.whenComplete((res, ex) -> {
+                        if (ex != null || (res != null && !res.success())) {
+                            if (anyFailed.compareAndSet(false, true)) {
+                                for (CompletableFuture<AgentResponse> f : futures) {
+                                    f.cancel(true);
+                                }
+                            }
                         }
-                        if (r != null && !r.success()) {
-                            futures.forEach(f -> f.cancel(true));
-                            break;
-                        }
-                    }
+                    });
                 }
+
+                futures.add(future);
             }
 
             List<AgentResponse> responses = new ArrayList<>();
@@ -146,6 +142,11 @@ public final class DefaultAgentOrchestrator
             );
         } finally {
             executor.shutdownNow();
+            try {
+                executor.awaitTermination(2, TimeUnit.SECONDS);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -177,12 +178,12 @@ public final class DefaultAgentOrchestrator
      * threw or timed out.
      */
     private AgentResponse failedResponse(AgentDescriptor agent, Throwable ex) {
+        String errorMsg = ex == null ? "timeout" : (ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage());
         return new AgentResponse(
                 false,
-                "Agent execution failed or timed out: "
-                        + (ex == null ? "unknown" : ex.getMessage()),
+                "Agent execution failed or timed out: " + errorMsg,
                 agent == null ? "unknown" : agent.agentId(),
-                Map.of("error", ex == null ? "timeout" : ex.getMessage())
+                Map.of("error", errorMsg)
         );
     }
 

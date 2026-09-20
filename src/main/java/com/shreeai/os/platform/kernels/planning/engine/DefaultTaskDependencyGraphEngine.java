@@ -189,7 +189,8 @@ public final class DefaultTaskDependencyGraphEngine implements TaskDependencyGra
      */
     public TaskGraph buildTaskGraph(List<PlanMilestone> milestones) {
         List<PlanMilestone> ordered = milestones == null
-                ? List.of() : List.copyOf(milestones);
+                ? List.of()
+                : milestones.stream().filter(Objects::nonNull).toList();
         if (ordered.isEmpty()) {
             return TaskGraph.empty();
         }

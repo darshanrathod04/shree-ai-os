@@ -82,8 +82,13 @@ public final class TerminalTool implements Tool {
                 ).start();
             }
 
-            String stdout = read(process.getInputStream());
-            String stderr = read(process.getErrorStream());
+            java.util.concurrent.CompletableFuture<String> stdoutFuture =
+                    java.util.concurrent.CompletableFuture.supplyAsync(() -> read(process.getInputStream()));
+            java.util.concurrent.CompletableFuture<String> stderrFuture =
+                    java.util.concurrent.CompletableFuture.supplyAsync(() -> read(process.getErrorStream()));
+
+            String stdout = stdoutFuture.join();
+            String stderr = stderrFuture.join();
 
             int exit = process.waitFor();
 
@@ -102,22 +107,17 @@ public final class TerminalTool implements Tool {
         }
     }
 
-    private String read(java.io.InputStream stream)
-            throws Exception {
-
-        StringBuilder builder = new StringBuilder();
-
-        BufferedReader reader =
-                new BufferedReader(
-                        new InputStreamReader(stream)
-                );
-
-        String line;
-
-        while ((line = reader.readLine()) != null) {
-            builder.append(line).append("\n");
+    private String read(java.io.InputStream stream) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(stream, java.nio.charset.StandardCharsets.UTF_8))) {
+            StringBuilder builder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line).append("\n");
+            }
+            return builder.toString().trim();
+        } catch (Exception e) {
+            return "";
         }
-
-        return builder.toString().trim();
     }
 }

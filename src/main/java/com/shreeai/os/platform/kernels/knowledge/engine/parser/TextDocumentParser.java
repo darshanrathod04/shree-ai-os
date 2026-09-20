@@ -33,6 +33,9 @@ public final class TextDocumentParser implements DocumentParser {
 
     @Override
     public List<ParsedSection> parse(String content) {
+        if (content == null || content.isBlank()) {
+            return List.of();
+        }
         List<ParsedSection> sections = new ArrayList<>();
         int length = content.length();
         int start = 0;

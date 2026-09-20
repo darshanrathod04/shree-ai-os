@@ -6,6 +6,7 @@ import com.shreeai.os.platform.llm.LlmProvider;
 import com.shreeai.os.platform.llm.LlmRequest;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,7 +27,9 @@ import okhttp3.ResponseBody;
 import okio.BufferedSource;
 
 /**
- * OkHttp-backed, streaming-first {@link LlmProvider} for OpenAI-compatible
+ * <b>OpenAiProvider</b>
+ *
+ * <p>Production implementation of {@link LlmProvider} targeting OpenAI's v1
  * chat-completion endpoints (GPT family and any OpenAI-compatible gateway).
  *
  * <p>Streaming: OpenAI emits server-sent events ({@code data: {...}} lines).
@@ -49,9 +52,18 @@ public final class OpenAiProvider implements LlmProvider {
     private final String url;
     private final String apiKey;
 
-    /** Creates a provider against the public OpenAI endpoint with a fresh OkHttp client. */
+    private static OkHttpClient createDefaultClient() {
+        return new OkHttpClient.Builder()
+                .connectTimeout(Duration.ofSeconds(30))
+                .readTimeout(Duration.ofSeconds(60))
+                .writeTimeout(Duration.ofSeconds(30))
+                .callTimeout(Duration.ofSeconds(60))
+                .build();
+    }
+
+    /** Creates a provider against the public OpenAI endpoint with configured timeouts. */
     public OpenAiProvider(String apiKey) {
-        this(DEFAULT_URL, apiKey, new OkHttpClient());
+        this(DEFAULT_URL, apiKey, createDefaultClient());
     }
 
     /**
@@ -88,6 +100,9 @@ public final class OpenAiProvider implements LlmProvider {
         try {
             response = client.newCall(httpRequest).execute();
         } catch (IOException e) {
+            if (e instanceof java.io.InterruptedIOException) {
+                Thread.currentThread().interrupt();
+            }
             throw new IllegalStateException("OpenAI request failed: " + e.getMessage(), e);
         }
         if (!response.isSuccessful()) {
@@ -101,7 +116,7 @@ public final class OpenAiProvider implements LlmProvider {
             throw new IllegalStateException("OpenAI request returned an empty body");
         }
 
-        ChunkSpliterator spliterator = new ChunkSpliterator(body);
+        ChunkSpliterator spliterator = new ChunkSpliterator(response, body);
         Stream<String> stream = StreamSupport.stream(spliterator, false);
         return stream.onClose(() -> {
             try {
@@ -208,40 +223,66 @@ public final class OpenAiProvider implements LlmProvider {
      */
     private static final class ChunkSpliterator extends Spliterators.AbstractSpliterator<String> {
 
+        private final Response response;
+        private final ResponseBody body;
         private final BufferedSource source;
         private boolean finished = false;
 
-        ChunkSpliterator(ResponseBody body) {
+        ChunkSpliterator(Response response, ResponseBody body) {
             super(Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.NONNULL);
+            this.response = response;
+            this.body = body;
             this.source = body.source();
+        }
+
+        private void closeQuietly() {
+            try {
+                if (body != null) {
+                    body.close();
+                }
+            } catch (Exception ignored) {
+            }
+            try {
+                if (response != null) {
+                    response.close();
+                }
+            } catch (Exception ignored) {
+            }
         }
 
         @Override
         public boolean tryAdvance(Consumer<? super String> action) {
+            Objects.requireNonNull(action, "action must not be null");
             if (finished) {
                 return false;
             }
             try {
-                String line = source.readUtf8Line();
-                if (line == null) {
-                    finished = true;
-                    return false;
+                String line;
+                while ((line = source.readUtf8Line()) != null) {
+                    String trimmed = line.trim();
+                    if (trimmed.isEmpty()) {
+                        continue;
+                    }
+                    if (isDoneLine(trimmed)) {
+                        finished = true;
+                        closeQuietly();
+                        return false;
+                    }
+                    String token = extractDelta(trimmed);
+                    if (token != null) {
+                        action.accept(token);
+                        return true;
+                    }
                 }
-                String trimmed = line.trim();
-                if (trimmed.isEmpty()) {
-                    return tryAdvance(action);
-                }
-                if (isDoneLine(trimmed)) {
-                    finished = true;
-                    return false;
-                }
-                String token = extractDelta(trimmed);
-                if (token != null) {
-                    action.accept(token);
-                }
-                return !finished;
+                finished = true;
+                closeQuietly();
+                return false;
             } catch (IOException e) {
                 finished = true;
+                closeQuietly();
+                if (e instanceof java.io.InterruptedIOException) {
+                    Thread.currentThread().interrupt();
+                }
                 throw new IllegalStateException("Failed reading OpenAI stream", e);
             }
         }

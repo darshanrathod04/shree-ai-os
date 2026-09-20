@@ -50,7 +50,14 @@ public final class DefaultToolService implements ToolService {
                 validator, "ToolValidator must not be null");
         this.processingEngine = Objects.requireNonNull(
                 processingEngine, "ToolProcessingEngine must not be null");
-        this.resultStore = new ConcurrentHashMap<>();
+        this.resultStore = java.util.Collections.synchronizedMap(
+                new java.util.LinkedHashMap<String, ToolResult>(MAX_STORED_RESULTS, 0.75f, false) {
+                    @Override
+                    protected boolean removeEldestEntry(Map.Entry<String, ToolResult> eldest) {
+                        return size() > MAX_STORED_RESULTS;
+                    }
+                }
+        );
     }
 
     /**
@@ -60,6 +67,8 @@ public final class DefaultToolService implements ToolService {
         this(new ToolValidator(),
                 new com.shreeai.os.platform.kernels.tool.engine.DefaultToolProcessingEngine());
     }
+
+    private static final int MAX_STORED_RESULTS = 1000;
 
     @Override
     public ToolResult executeTool(ToolRequest request) {

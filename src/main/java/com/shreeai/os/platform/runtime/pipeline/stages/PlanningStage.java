@@ -627,19 +627,23 @@ public final class PlanningStage implements ExecutionStage {
 
         } catch (Exception e) {
 
-            publishPlanningEvent(
-                    context,
-                    context.getExecutionRequest() != null
-                            ? context.getExecutionRequest().getRequestId()
-                            : "unknown",
-                    "FAILED",
-                    0
-            );
+            if (context != null) {
+                publishPlanningEvent(
+                        context,
+                        context.getExecutionRequest() != null
+                                ? context.getExecutionRequest().getRequestId()
+                                : "unknown",
+                        "FAILED",
+                        0
+                );
+            }
 
-            state.markFailure(
-                    "Planning failed: "
-                            + safeMessage(e)
-            );
+            if (state != null) {
+                state.markFailure(
+                        "Planning failed: "
+                                + safeMessage(e)
+                );
+            }
 
             return PipelineResult.builder()
                     .success(false)

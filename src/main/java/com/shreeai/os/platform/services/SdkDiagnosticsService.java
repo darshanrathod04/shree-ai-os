@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <b>SdkDiagnosticsService</b>
@@ -40,7 +41,7 @@ public class SdkDiagnosticsService {
     private volatile String model = "default";
     private volatile Kernel activeKernel = Kernel.KNOWLEDGE;
     private volatile long latencyMs = 0L;
-    private volatile int knowledgeHits = 0;
+    private final AtomicInteger knowledgeHits = new AtomicInteger(0);
     private volatile boolean memoryUsed = true;
     private volatile RoutingSource routingSource = RoutingSource.RUNTIME;
 
@@ -50,7 +51,7 @@ public class SdkDiagnosticsService {
     public SdkDiagnosticsService model(String v) { this.model = v; return this; }
     public SdkDiagnosticsService activeKernel(Kernel v) { this.activeKernel = v; return this; }
     public SdkDiagnosticsService latencyMs(long v) { this.latencyMs = v; return this; }
-    public SdkDiagnosticsService knowledgeHits(int v) { this.knowledgeHits = v; return this; }
+    public SdkDiagnosticsService knowledgeHits(int v) { this.knowledgeHits.set(v); return this; }
     public SdkDiagnosticsService memoryUsed(boolean v) { this.memoryUsed = v; return this; }
     public SdkDiagnosticsService routingSource(RoutingSource v) { this.routingSource = v; return this; }
 
@@ -58,7 +59,7 @@ public class SdkDiagnosticsService {
     public String model() { return model; }
     public Kernel activeKernel() { return activeKernel; }
     public long latencyMs() { return latencyMs; }
-    public int knowledgeHits() { return knowledgeHits; }
+    public int knowledgeHits() { return knowledgeHits.get(); }
     public boolean memoryUsed() { return memoryUsed; }
     public RoutingSource routingSource() { return routingSource; }
 
@@ -72,7 +73,7 @@ public class SdkDiagnosticsService {
         m.put("kernel", activeKernel.name() + " Kernel");
         m.put("latencyMs", latencyMs);
         m.put("latencyDisplay", latencyMs + " ms");
-        m.put("knowledgeHits", knowledgeHits);
+        m.put("knowledgeHits", knowledgeHits.get());
         m.put("memoryUsed", memoryUsed);
         m.put("routingSource", routingSource.name());
         return m;
@@ -93,7 +94,7 @@ public class SdkDiagnosticsService {
      * Records a knowledge hit.
      */
     public void recordKnowledgeHit() {
-        knowledgeHits++;
+        knowledgeHits.incrementAndGet();
     }
 
     /**
@@ -110,7 +111,7 @@ public class SdkDiagnosticsService {
      */
     public void reset() {
         this.latencyMs = 0L;
-        this.knowledgeHits = 0;
+        this.knowledgeHits.set(0);
         this.memoryUsed = true;
     }
 

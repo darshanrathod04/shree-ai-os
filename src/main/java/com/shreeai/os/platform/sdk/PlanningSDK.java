@@ -5,6 +5,7 @@ import com.shreeai.os.platform.kernels.planning.api.PlanningTypes;
 import com.shreeai.os.platform.kernels.planning.model.PlanningConstraints;
 import com.shreeai.os.platform.kernels.planning.model.ValidationCriteria;
 import com.shreeai.os.platform.runtime.api.Runtime;
+import com.shreeai.os.platform.sdk.exceptions.ValidationException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -36,7 +37,7 @@ public final class PlanningSDK {
     private final Runtime runtime;
 
     PlanningSDK(ShreeClient client) {
-        this(client, client != null ? client.runtime() : null);
+        this(Objects.requireNonNull(client, "client cannot be null"), client.runtime());
     }
 
     PlanningSDK(ShreeClient client, Runtime runtime) {
@@ -52,6 +53,15 @@ public final class PlanningSDK {
             String objective,
             String scope
     ) {
+        if (objectiveId == null || objectiveId.isBlank()) {
+            throw new ValidationException("objectiveId must not be null or blank");
+        }
+        if (objective == null || objective.isBlank()) {
+            throw new ValidationException("objective must not be null or blank");
+        }
+        if (scope == null || scope.isBlank()) {
+            throw new ValidationException("scope must not be null or blank");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("PLANNING_CREATE")
@@ -73,6 +83,12 @@ public final class PlanningSDK {
             String planId,
             String refinement
     ) {
+        if (planId == null || planId.isBlank()) {
+            throw new ValidationException("planId must not be null or blank");
+        }
+        if (refinement == null || refinement.isBlank()) {
+            throw new ValidationException("refinement must not be null or blank");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("PLANNING_REFINE")
@@ -90,6 +106,9 @@ public final class PlanningSDK {
      * Validate a plan.
      */
     public SDKResponse validatePlan(String planId) {
+        if (planId == null || planId.isBlank()) {
+            throw new ValidationException("planId must not be null or blank");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("PLANNING_VALIDATE")

@@ -104,14 +104,22 @@ public final class DefaultMultiHopReasoningEngine implements MultiHopReasoningEn
             String chunkId = te.evidence().chunkId();
             Set<String> found = evidenceConceptNames.getOrDefault(chunkId, Set.of());
             for (String conceptName : found) {
+                if (conceptName == null) {
+                    continue;
+                }
                 GraphConcept gc = conceptsByLowerName.get(conceptName.toLowerCase());
+                if (gc == null) {
+                    continue;
+                }
                 String conceptNodeId = sha256("CONCEPT|" + gc.name());
                 if (nodes.stream().noneMatch(n -> n.nodeId().equals(conceptNodeId))) {
+                    Set<String> chunkIds = evidenceChunkIdsByConcept.get(gc.name());
+                    List<String> chunkIdList = chunkIds == null ? List.of() : List.copyOf(chunkIds);
                     nodes.add(new ReasoningNode(
                             conceptNodeId,
                             gc.name(),
                             ReasoningNodeType.CONCEPT,
-                            List.copyOf(evidenceChunkIdsByConcept.get(gc.name()))));
+                            chunkIdList));
                 }
                 String evidenceNodeId = evidenceNodeIdByChunkId.get(chunkId);
                 if (evidenceNodeId != null) {
@@ -149,6 +157,9 @@ public final class DefaultMultiHopReasoningEngine implements MultiHopReasoningEn
             visited.add(seedId);
             Queue<Object[]> queue = new LinkedList<>();
             String seedName = nameByConceptId.get(seedId);
+            if (seedName == null) {
+                continue;
+            }
             queue.add(new Object[]{seedId, 0, new ArrayList<>(List.of(seedName))});
 
             while (!queue.isEmpty()) {
@@ -165,6 +176,9 @@ public final class DefaultMultiHopReasoningEngine implements MultiHopReasoningEn
                     }
                     visited.add(neighborId);
                     String neighborName = nameByConceptId.get(neighborId);
+                    if (neighborName == null) {
+                        continue;
+                    }
                     List<String> newPath = new ArrayList<>(path);
                     newPath.add(neighborName);
                     if (newPath.size() >= 2) {
@@ -241,6 +255,9 @@ public final class DefaultMultiHopReasoningEngine implements MultiHopReasoningEn
      * Matching is case-insensitive and word-bounded.
      */
     private Set<String> findConceptsInText(String text, Map<String, GraphConcept> conceptsByLowerName) {
+        if (text == null || text.isBlank()) {
+            return Set.of();
+        }
         Set<String> found = new LinkedHashSet<>();
         String lower = text.toLowerCase();
         for (Map.Entry<String, GraphConcept> entry : conceptsByLowerName.entrySet()) {

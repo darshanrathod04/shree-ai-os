@@ -104,11 +104,24 @@ public final class GeminiProvider implements LlmProvider {
         int attempts = 0;
         while (true) {
             attempts++;
-            Response response;
-            try {
-                response = client.newCall(httpRequest).execute();
+            int statusCode;
+            String rawResponse = null;
+            String errorBody = "no body";
+            try (Response response = client.newCall(httpRequest).execute()) {
+                statusCode = response.code();
+                if (response.isSuccessful()) {
+                    rawResponse = readFullResponseBody(response);
+                } else {
+                    try {
+                        errorBody = readFullResponseBody(response);
+                    } catch (IOException ignored) {}
+                }
             } catch (IOException e) {
                 System.err.println(">>> GEMINI NETWORK ERROR (attempt " + attempts + "): " + e.getMessage());
+                if (e instanceof java.io.InterruptedIOException || Thread.currentThread().isInterrupted()) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("Gemini request interrupted or timed out: " + e.getMessage(), e);
+                }
                 if (attempts <= maxRetries) {
                     sleepBackoff(retryBackoffMs);
                     continue;
@@ -116,24 +129,10 @@ public final class GeminiProvider implements LlmProvider {
                 throw new IllegalStateException("Gemini request failed: " + e.getMessage(), e);
             }
 
-            int statusCode = response.code();
-            if (response.isSuccessful()) {
-                try {
-                    String rawResponse = readFullResponseBody(response);
-                    response.close();
-                    String extracted = extractTextFromPayload(rawResponse);
-                    return extracted != null ? Stream.of(extracted) : Stream.empty();
-                } catch (IOException e) {
-                    response.close();
-                    throw new IllegalStateException("Failed reading Gemini response: " + e.getMessage(), e);
-                }
+            if (rawResponse != null) {
+                String extracted = extractTextFromPayload(rawResponse);
+                return extracted != null ? Stream.of(extracted) : Stream.empty();
             }
-
-            String errorBody = "no body";
-            try {
-                errorBody = readFullResponseBody(response);
-            } catch (IOException ignored) {}
-            response.close();
 
             // Lightweight retry for HTTP 503 (Model High Demand / Unavailable) or HTTP 429 (Rate Limit)
             if ((statusCode == 503 || statusCode == 429) && attempts <= maxRetries) {

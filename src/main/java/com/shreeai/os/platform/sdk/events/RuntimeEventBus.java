@@ -22,6 +22,9 @@ public final class RuntimeEventBus {
             EventType type,
             RuntimeEventListener listener
     ) {
+        if (type == null || listener == null) {
+            return;
+        }
         listeners
                 .computeIfAbsent(type, t -> new CopyOnWriteArrayList<>())
                 .add(listener);
@@ -34,6 +37,9 @@ public final class RuntimeEventBus {
             EventType type,
             RuntimeEventListener listener
     ) {
+        if (type == null || listener == null) {
+            return;
+        }
         List<RuntimeEventListener> list = listeners.get(type);
 
         if (list != null) {
@@ -45,6 +51,9 @@ public final class RuntimeEventBus {
      * Publish an event.
      */
     public void publish(RuntimeEvent event) {
+        if (event == null || event.type() == null) {
+            return;
+        }
 
         List<RuntimeEventListener> list =
                 listeners.get(event.type());
@@ -54,7 +63,11 @@ public final class RuntimeEventBus {
         }
 
         for (RuntimeEventListener listener : list) {
-            listener.onEvent(event);
+            try {
+                listener.onEvent(event);
+            } catch (Throwable ignored) {
+                // Isolate listener failures so one subscriber does not starve others or abort caller
+            }
         }
     }
 

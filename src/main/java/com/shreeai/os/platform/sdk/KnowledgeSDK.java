@@ -41,6 +41,9 @@ public final class KnowledgeSDK {
      * @return SDKResponse with the knowledge query result
      */
     public SDKResponse query(String question) {
+        if (question == null || question.isBlank()) {
+            throw new ValidationException("question must not be null or blank");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message(question)   // Sprint-17.3: was literal "KNOWLEDGE_QUERY"
@@ -60,6 +63,9 @@ public final class KnowledgeSDK {
      * @return SDKResponse with the entity data
      */
     public SDKResponse retrieve(String entityId) {
+        if (entityId == null || entityId.isBlank()) {
+            throw new ValidationException("entityId must not be null or blank");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("Retrieve knowledge: " + entityId)   // Sprint-17.3: real context
@@ -79,6 +85,9 @@ public final class KnowledgeSDK {
      * @return SDKResponse with the matching knowledge nodes
      */
     public SDKResponse search(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            throw new ValidationException("keyword must not be null or blank");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("Search knowledge: " + keyword)   // Sprint-17.3: real context

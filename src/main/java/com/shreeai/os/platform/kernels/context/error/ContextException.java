@@ -33,7 +33,10 @@ import java.util.Objects;
  * @see ContextError
  */
 public class ContextException extends RuntimeException {
-    private final ContextError error;
+
+    private static final long serialVersionUID = 1L;
+
+    private final transient ContextError error;
 
     /**
      * Creates a new ContextException with the specified error.

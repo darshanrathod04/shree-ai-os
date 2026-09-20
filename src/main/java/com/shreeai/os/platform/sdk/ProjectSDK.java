@@ -12,6 +12,7 @@ import com.shreeai.os.platform.kernels.project.model.ProjectEndpoint;
 import com.shreeai.os.platform.kernels.project.model.ProjectEntity;
 import com.shreeai.os.platform.kernels.project.model.ProjectImpact;
 import com.shreeai.os.platform.kernels.project.model.ProjectSummary;
+import com.shreeai.os.platform.sdk.exceptions.ValidationException;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -76,8 +77,12 @@ public final class ProjectSDK {
      * @since Sprint-16
      */
     public DeveloperResult build(String projectPath, String instruction) {
-        Objects.requireNonNull(projectPath, "projectPath must not be null");
-        Objects.requireNonNull(instruction, "instruction must not be null");
+        if (projectPath == null || projectPath.isBlank()) {
+            throw new ValidationException("projectPath must not be null or blank");
+        }
+        if (instruction == null || instruction.isBlank()) {
+            throw new ValidationException("instruction must not be null or blank");
+        }
         DeveloperRequest request = new DeveloperRequest(projectPath, instruction, Map.of());
         return workflowEngine().execute(request);
     }
@@ -92,9 +97,15 @@ public final class ProjectSDK {
      * @since Sprint-16
      */
     public DeveloperResult build(String projectPath, String instruction, Map<String, Object> metadata) {
-        Objects.requireNonNull(projectPath, "projectPath must not be null");
-        Objects.requireNonNull(instruction, "instruction must not be null");
-        Objects.requireNonNull(metadata, "metadata must not be null");
+        if (projectPath == null || projectPath.isBlank()) {
+            throw new ValidationException("projectPath must not be null or blank");
+        }
+        if (instruction == null || instruction.isBlank()) {
+            throw new ValidationException("instruction must not be null or blank");
+        }
+        if (metadata == null) {
+            throw new ValidationException("metadata must not be null");
+        }
         DeveloperRequest request = new DeveloperRequest(projectPath, instruction, metadata);
         return workflowEngine().execute(request);
     }
@@ -146,7 +157,9 @@ public final class ProjectSDK {
      * @throws java.io.IOException if the project cannot be read
      */
     public ProjectSummary analyze(String projectPath) throws java.io.IOException {
-        Objects.requireNonNull(projectPath, "projectPath must not be null");
+        if (projectPath == null || projectPath.isBlank()) {
+            throw new ValidationException("projectPath must not be null or blank");
+        }
         return analyze(Path.of(projectPath));
     }
 
@@ -157,7 +170,9 @@ public final class ProjectSDK {
      * @return ProjectSummary
      */
     public ProjectSummary analyze(Path projectPath) throws java.io.IOException {
-        Objects.requireNonNull(projectPath, "projectPath must not be null");
+        if (projectPath == null) {
+            throw new ValidationException("projectPath must not be null");
+        }
         return engine.analyze(projectPath);
     }
 
@@ -170,7 +185,9 @@ public final class ProjectSDK {
      * @return ProjectClass or null if not found / no project analyzed
      */
     public ProjectClass findClass(String simpleName) {
-        Objects.requireNonNull(simpleName, "simpleName must not be null");
+        if (simpleName == null || simpleName.isBlank()) {
+            throw new ValidationException("simpleName must not be null or blank");
+        }
         return engine.findClass(simpleName);
     }
 
@@ -181,7 +198,9 @@ public final class ProjectSDK {
      * @return ProjectEndpoint or null if not found
      */
     public ProjectEndpoint findController(String path) {
-        Objects.requireNonNull(path, "path must not be null");
+        if (path == null || path.isBlank()) {
+            throw new ValidationException("path must not be null or blank");
+        }
         return engine.findController(path);
     }
 
@@ -192,7 +211,9 @@ public final class ProjectSDK {
      * @return ProjectEntity or null if not found
      */
     public ProjectEntity findEntity(String simpleName) {
-        Objects.requireNonNull(simpleName, "simpleName must not be null");
+        if (simpleName == null || simpleName.isBlank()) {
+            throw new ValidationException("simpleName must not be null or blank");
+        }
         return engine.findEntity(simpleName);
     }
 
@@ -225,7 +246,9 @@ public final class ProjectSDK {
      * @return ProjectImpact describing the change impact
      */
     public ProjectImpact impact(String simpleName) {
-        Objects.requireNonNull(simpleName, "simpleName must not be null");
+        if (simpleName == null || simpleName.isBlank()) {
+            throw new ValidationException("simpleName must not be null or blank");
+        }
         return engine.impact(simpleName);
     }
 
@@ -261,8 +284,12 @@ public final class ProjectSDK {
      * @since Sprint-17
      */
     public DeveloperExecutionResult apply(String projectPath, String instruction) {
-        Objects.requireNonNull(projectPath, "projectPath must not be null");
-        Objects.requireNonNull(instruction, "instruction must not be null");
+        if (projectPath == null || projectPath.isBlank()) {
+            throw new ValidationException("projectPath must not be null or blank");
+        }
+        if (instruction == null || instruction.isBlank()) {
+            throw new ValidationException("instruction must not be null or blank");
+        }
         return patchEngine().execute(projectPath, instruction);
     }
 

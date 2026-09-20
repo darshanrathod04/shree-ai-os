@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
  */
 public final class InMemoryReflectionRepository implements ReflectionRepository {
 
+    private static final int MAX_GLOBAL_RETENTION = 1000;
+    private static final int MAX_TENANT_RETENTION = 1000;
+
     private final ConcurrentHashMap<String, CopyOnWriteArrayList<ReflectionHistory>> tenantStore =
             new ConcurrentHashMap<>();
 
@@ -35,12 +38,19 @@ public final class InMemoryReflectionRepository implements ReflectionRepository 
     public ReflectionHistory save(ReflectionHistory history) {
         Objects.requireNonNull(history, "history must not be null");
 
-        tenantStore.computeIfAbsent(
+        CopyOnWriteArrayList<ReflectionHistory> tenantList = tenantStore.computeIfAbsent(
                 history.tenantId(),
                 k -> new CopyOnWriteArrayList<>()
-        ).add(history);
+        );
+        tenantList.add(history);
+        while (tenantList.size() > MAX_TENANT_RETENTION) {
+            tenantList.remove(0);
+        }
 
         globalTimeline.add(history);
+        while (globalTimeline.size() > MAX_GLOBAL_RETENTION) {
+            globalTimeline.remove(0);
+        }
 
         return history;
     }

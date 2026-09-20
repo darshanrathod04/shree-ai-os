@@ -28,7 +28,9 @@ public final class InMemoryKnowledgeGraphStore implements KnowledgeGraphStore {
 
     @Override
     public void saveNode(KnowledgeNode node) {
-        Objects.requireNonNull(node, "node must not be null");
+        if (node == null) {
+            throw new StorageRuntimeException("node must not be null");
+        }
         nodes.put(node.getId().value(), node);
     }
 
@@ -46,12 +48,20 @@ public final class InMemoryKnowledgeGraphStore implements KnowledgeGraphStore {
     @Override
     public boolean removeNode(String nodeId) {
         validate(nodeId, "nodeId");
-        return nodes.remove(nodeId) != null;
+        boolean removed = nodes.remove(nodeId) != null;
+        if (removed) {
+            relationships.values().removeIf(r ->
+                    r.getSourceNodeId().value().equals(nodeId)
+                            || r.getTargetNodeId().value().equals(nodeId));
+        }
+        return removed;
     }
 
     @Override
     public void saveRelationship(KnowledgeRelationship relationship) {
-        Objects.requireNonNull(relationship, "relationship must not be null");
+        if (relationship == null) {
+            throw new StorageRuntimeException("relationship must not be null");
+        }
         relationships.put(relationship.getId().value(), relationship);
     }
 

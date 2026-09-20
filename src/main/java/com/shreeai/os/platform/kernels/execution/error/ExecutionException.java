@@ -38,7 +38,9 @@ import java.util.Objects;
  */
 public class ExecutionException extends RuntimeException {
 
-    private final ExecutionError error;
+    private static final long serialVersionUID = 1L;
+
+    private final transient ExecutionError error;
 
     /**
      * Constructs an {@code ExecutionException} with the specified error.

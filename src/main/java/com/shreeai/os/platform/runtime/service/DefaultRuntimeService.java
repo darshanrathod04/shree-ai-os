@@ -129,12 +129,12 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     private final RuntimeConfiguration configuration;
     private final RuntimeContract contract;
     private final List<ExecutionStage> stages;
-    private RuntimeLifecycle lifecycle;
-    private com.shreeai.os.platform.runtime.pipeline.ExecutionPipeline pipeline;
+    private volatile RuntimeLifecycle lifecycle;
+    private volatile com.shreeai.os.platform.runtime.pipeline.ExecutionPipeline pipeline;
     private final KernelFactory kernelFactory;
     private final RuntimeEventBus eventBus;
     private final ResponseSynthesisService responseSynthesisService;
-    private RuntimeIntentRouter intentRouter;
+    private volatile RuntimeIntentRouter intentRouter;
     /** Interchangeable LLM provider chain (GPT / Gemini / Ollama / in-memory). */
     private volatile LlmRouter llmRouter = buildDefaultLlmRouter();
     /** Approval gate backing autonomous retries and escalations. */
@@ -243,7 +243,7 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                     case DENY -> PermissionDecision.DENY;
                 };
             } catch (IllegalArgumentException | NullPointerException e) {
-                return PermissionDecision.ALLOW;
+                return PermissionDecision.DENY;
             }
         };
     }
@@ -264,13 +264,13 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     // ─── Sprint-12: Multi-Kernel Orchestration ────────────────────────────────
 
     /** Stores the MemoryService for orchestrator access (initialized in initializeStages). */
-    private com.shreeai.os.platform.kernels.memory.service.DefaultMemoryService memoryServiceField;
+    private volatile com.shreeai.os.platform.kernels.memory.service.DefaultMemoryService memoryServiceField;
 
     /** Stores the KnowledgeSearchService for orchestrator access. */
-    private com.shreeai.os.platform.kernels.knowledge.api.KnowledgeSearchService knowledgeSearchServiceField;
+    private volatile com.shreeai.os.platform.kernels.knowledge.api.KnowledgeSearchService knowledgeSearchServiceField;
 
     /** Stores the PlanningService for orchestrator access. */
-    private com.shreeai.os.platform.kernels.planning.api.PlanningService planningServiceField;
+    private volatile com.shreeai.os.platform.kernels.planning.api.PlanningService planningServiceField;
 
     /** Stores the IdentityService for SDK-facing identity operations. */
     private volatile IdentityService identityServiceField;

@@ -30,8 +30,8 @@ public final class InMemoryVectorSearchEngine implements VectorSearchEngine {
 
     @Override
     public List<VectorSearchResult> search(double[] queryEmbedding, int topK) {
-        if (queryEmbedding == null) {
-            throw new VectorRuntimeException("queryEmbedding must not be null");
+        if (queryEmbedding == null || queryEmbedding.length == 0) {
+            throw new VectorRuntimeException("queryEmbedding must not be null or empty");
         }
         if (topK <= 0) {
             throw new VectorRuntimeException("topK must be positive");

@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -231,21 +232,21 @@ public final class DefaultMemoryService implements
         }
 
         MemoryId id = request.memoryId();
-        Memory existing = memories.get(id);
-        if (existing == null) {
+        AtomicReference<Memory> updatedRef = new AtomicReference<>();
+        memories.computeIfPresent(id, (k, existing) -> {
+            MemoryContent newContent = request.content() != null ? request.content() : existing.content();
+            MemoryMetadata newMetadata = request.metadata() != null ? request.metadata() : existing.metadata();
+            Instant now = request.updatedAt();
+            Memory updated = new Memory(id, newContent, newMetadata, existing.createdAt(), now);
+            versionLedger.snapshot(existing);
+            updatedRef.set(updated);
+            return updated;
+        });
+
+        if (updatedRef.get() == null) {
             return MemoryResult.failure("Memory not found: " + id.value());
         }
-
-        // Merge existing with updates
-        MemoryContent newContent = request.content() != null ? request.content() : existing.content();
-        MemoryMetadata newMetadata = request.metadata() != null ? request.metadata() : existing.metadata();
-        Instant now = request.updatedAt();
-
-        Memory updated = new Memory(id, newContent, newMetadata, existing.createdAt(), now);
-        // EO-V1.4 Memory Lifecycle — retain the superseded version before overwrite
-        versionLedger.snapshot(existing);
-        memories.put(id, updated);
-        return MemoryResult.success(updated);
+        return MemoryResult.success(updatedRef.get());
     }
 
     @Override
@@ -264,62 +265,68 @@ public final class DefaultMemoryService implements
     public MemoryResult archiveMemory(MemoryId id) {
         Objects.requireNonNull(id, "id must not be null");
 
-        Memory existing = memories.get(id);
-        if (existing == null) {
+        AtomicReference<Memory> archivedRef = new AtomicReference<>();
+        memories.computeIfPresent(id, (k, existing) -> {
+            MemoryMetadata archivedMetadata = new MemoryMetadata(
+                    existing.metadata().memoryId(),
+                    existing.metadata().type(),
+                    MemoryStatus.ARCHIVED,
+                    existing.metadata().visibility(),
+                    existing.metadata().owner(),
+                    existing.metadata().tags(),
+                    existing.metadata().importance(),
+                    existing.metadata().confidence(),
+                    existing.metadata().source(),
+                    existing.metadata().createdAt(),
+                    Instant.now(),
+                    existing.metadata().accessedAt(),
+                    existing.metadata().accessCount()
+            );
+
+            Memory archived = new Memory(id, existing.content(), archivedMetadata, existing.createdAt(), Instant.now());
+            versionLedger.snapshot(existing);
+            archivedRef.set(archived);
+            return archived;
+        });
+
+        if (archivedRef.get() == null) {
             return MemoryResult.failure("Memory not found: " + id.value());
         }
-
-        MemoryMetadata archivedMetadata = new MemoryMetadata(
-                existing.metadata().memoryId(),
-                existing.metadata().type(),
-                MemoryStatus.ARCHIVED,
-                existing.metadata().visibility(),
-                existing.metadata().owner(),
-                existing.metadata().tags(),
-                existing.metadata().importance(),
-                existing.metadata().confidence(),
-                existing.metadata().source(),
-                existing.metadata().createdAt(),
-                Instant.now(),
-                existing.metadata().accessedAt(),
-                existing.metadata().accessCount()
-        );
-
-        Memory archived = new Memory(id, existing.content(), archivedMetadata, existing.createdAt(), Instant.now());
-        versionLedger.snapshot(existing);
-        memories.put(id, archived);
-        return MemoryResult.success(archived);
+        return MemoryResult.success(archivedRef.get());
     }
 
     @Override
     public MemoryResult restoreMemory(MemoryId id) {
         Objects.requireNonNull(id, "id must not be null");
 
-        Memory existing = memories.get(id);
-        if (existing == null) {
+        AtomicReference<Memory> restoredRef = new AtomicReference<>();
+        memories.computeIfPresent(id, (k, existing) -> {
+            MemoryMetadata restoredMetadata = new MemoryMetadata(
+                    existing.metadata().memoryId(),
+                    existing.metadata().type(),
+                    MemoryStatus.ACTIVE,
+                    existing.metadata().visibility(),
+                    existing.metadata().owner(),
+                    existing.metadata().tags(),
+                    existing.metadata().importance(),
+                    existing.metadata().confidence(),
+                    existing.metadata().source(),
+                    existing.metadata().createdAt(),
+                    Instant.now(),
+                    existing.metadata().accessedAt(),
+                    existing.metadata().accessCount()
+            );
+
+            Memory restored = new Memory(id, existing.content(), restoredMetadata, existing.createdAt(), Instant.now());
+            versionLedger.snapshot(existing);
+            restoredRef.set(restored);
+            return restored;
+        });
+
+        if (restoredRef.get() == null) {
             return MemoryResult.failure("Memory not found: " + id.value());
         }
-
-        MemoryMetadata restoredMetadata = new MemoryMetadata(
-                existing.metadata().memoryId(),
-                existing.metadata().type(),
-                MemoryStatus.ACTIVE,
-                existing.metadata().visibility(),
-                existing.metadata().owner(),
-                existing.metadata().tags(),
-                existing.metadata().importance(),
-                existing.metadata().confidence(),
-                existing.metadata().source(),
-                existing.metadata().createdAt(),
-                Instant.now(),
-                existing.metadata().accessedAt(),
-                existing.metadata().accessCount()
-        );
-
-        Memory restored = new Memory(id, existing.content(), restoredMetadata, existing.createdAt(), Instant.now());
-        versionLedger.snapshot(existing);
-        memories.put(id, restored);
-        return MemoryResult.success(restored);
+        return MemoryResult.success(restoredRef.get());
     }
 
     // -----------------------------------------------------------------------
@@ -519,13 +526,19 @@ public final class DefaultMemoryService implements
     @Override
     public List<Memory> search(String query) {
         Objects.requireNonNull(query, "query must not be null");
+        if (query.isBlank()) {
+            return List.of();
+        }
 
         // Sprint-9: Normalize query (strip interrogative prefixes such as
         // "who is", "what is", "tell me about", "explain") so natural-language
         // queries like "who is darshan" can retrieve memories whose title or
         // content is just "darshan".
         String normalized = QueryNormalizer.normalize(query);
-        final String needle = normalized.isEmpty() ? query.toLowerCase() : normalized;
+        final String needle = normalized.isBlank() ? query.trim().toLowerCase() : normalized;
+        if (needle.isBlank()) {
+            return List.of();
+        }
 
         // Prepare search via engine
         MemorySearchRequest searchRequest = new MemorySearchRequest(needle, null, null, null);
@@ -535,11 +548,11 @@ public final class DefaultMemoryService implements
         // and title metadata so title-based retrieval works.
         return memories.values().stream()
                 .filter(m -> {
-                    String text = m.content().text() == null ? "" : m.content().text().toLowerCase();
+                    String text = m.content() != null && m.content().text() != null ? m.content().text().toLowerCase() : "";
                     if (text.contains(needle)) {
                         return true;
                     }
-                    String title = m.metadata().source() == null ? "" : m.metadata().source().toLowerCase();
+                    String title = m.metadata() != null && m.metadata().source() != null ? m.metadata().source().toLowerCase() : "";
                     if (title.contains(needle)) {
                         return true;
                     }
@@ -598,14 +611,23 @@ public final class DefaultMemoryService implements
     @Override
     public List<Memory> searchBySimilarity(String text) {
         Objects.requireNonNull(text, "text must not be null");
+        if (text.isBlank()) {
+            return List.of();
+        }
 
         // Prepare search via engine
         MemorySearchRequest searchRequest = new MemorySearchRequest(text, null, null, null);
         MemoryProcessingResult result = processingEngine.prepareSearch(searchRequest);
 
         // Execute search (service responsibility) - simplified similarity
+        String needle = text.toLowerCase();
         return memories.values().stream()
-                .filter(m -> m.content().text().toLowerCase().contains(text.toLowerCase()))
+                .filter(m -> {
+                    String memText = m.content() != null && m.content().text() != null
+                            ? m.content().text().toLowerCase()
+                            : "";
+                    return memText.contains(needle);
+                })
                 .collect(Collectors.toUnmodifiableList());
     }
 

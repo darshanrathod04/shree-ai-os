@@ -25,7 +25,9 @@ package com.shreeai.os.platform.core.health.error;
  */
 public class HealthException extends RuntimeException {
 
-    private final HealthError error;
+    private static final long serialVersionUID = 1L;
+
+    private final transient HealthError error;
 
     /**
      * Constructs a new {@code HealthException} with the given error.
@@ -63,6 +65,6 @@ public class HealthException extends RuntimeException {
      */
     @Override
     public String getMessage() {
-        return error.message();
+        return error != null ? error.message() : super.getMessage();
     }
 }

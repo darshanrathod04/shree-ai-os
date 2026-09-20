@@ -24,7 +24,9 @@ import java.time.Instant;
  */
 public class RegistryException extends RuntimeException {
 
-    private final RegistryError error;
+    private static final long serialVersionUID = 1L;
+
+    private final transient RegistryError error;
 
     /**
      * Constructs a new {@code RegistryException} with the given error.
@@ -74,7 +76,7 @@ public class RegistryException extends RuntimeException {
      */
     @Override
     public String getMessage() {
-        return error.message();
+        return error != null ? error.message() : super.getMessage();
     }
 
     /**

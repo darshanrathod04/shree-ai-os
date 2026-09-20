@@ -40,6 +40,9 @@ public final class HtmlDocumentParser implements DocumentParser {
 
     @Override
     public List<ParsedSection> parse(String content) {
+        if (content == null || content.isBlank()) {
+            return List.of();
+        }
         String cleaned = stripIgnored(content);
         List<ParsedSection> sections = new ArrayList<>();
         String currentSection = "";

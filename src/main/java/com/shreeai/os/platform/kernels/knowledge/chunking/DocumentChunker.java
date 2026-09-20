@@ -43,15 +43,19 @@ public final class DocumentChunker {
             return chunks;
         }
 
-        // Split text into semantic sentences
-        List<String> sentences = extractSentences(cleaned);
-
+        // Stream semantic sentences directly to avoid multi-MB duplicate sentence lists
+        Matcher matcher = SENTENCE_PATTERN.matcher(cleaned);
         StringBuilder currentChunk = new StringBuilder();
         int chunkIndex = 0;
         int currentStartPos = 0;
+        boolean matchedAny = false;
 
-        for (int i = 0; i < sentences.size(); i++) {
-            String sentence = sentences.get(i);
+        while (matcher.find()) {
+            String sentence = matcher.group().strip();
+            if (sentence.isBlank()) {
+                continue;
+            }
+            matchedAny = true;
 
             if (currentChunk.length() + sentence.length() > targetChunkSizeChars && currentChunk.length() > 0) {
                 String chunkText = currentChunk.toString().strip();
@@ -68,6 +72,11 @@ public final class DocumentChunker {
             }
 
             currentChunk.append(sentence).append(" ");
+        }
+
+        if (!matchedAny) {
+            chunks.add(new TextChunk(0, cleaned, 0, cleaned.length()));
+            return chunks;
         }
 
         if (!currentChunk.toString().isBlank()) {

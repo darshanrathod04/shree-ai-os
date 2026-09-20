@@ -67,6 +67,18 @@ public final class ShreeClient {
     }
 
     /**
+     * Sends a chat message with caller metadata.
+     */
+    public SDKResponse chat(String message, Map<String, Object> metadata) {
+        return chat(
+                SDKRequest.builder()
+                        .message(message)
+                        .metadata(metadata != null ? metadata : Map.of())
+                        .build()
+        );
+    }
+
+    /**
      * Sends a structured SDK request.
      */
     public SDKResponse chat(SDKRequest request) {
@@ -153,6 +165,13 @@ public final class ShreeClient {
     }
 
     /**
+     * Asynchronous chat execution with caller metadata.
+     */
+    public CompletableFuture<SDKResponse> chatAsync(String message, Map<String, Object> metadata) {
+        return CompletableFuture.supplyAsync(() -> chat(message, metadata));
+    }
+
+    /**
      * Asynchronous structured request execution.
      */
     public CompletableFuture<SDKResponse> chatAsync(SDKRequest request) {
@@ -178,6 +197,9 @@ public final class ShreeClient {
     ) {
 
         Objects.requireNonNull(listener, "StreamingListener must not be null");
+        if (message == null || message.isBlank()) {
+            throw new ValidationException("message must not be null or blank");
+        }
 
         CompletableFuture.runAsync(() -> {
 
