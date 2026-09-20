@@ -31,7 +31,9 @@ import java.util.Objects;
  */
 public class ChiefException extends RuntimeException {
 
-    private final ChiefError error;
+    private static final long serialVersionUID = 1L;
+
+    private final transient ChiefError error;
 
     /**
      * Constructs a {@code ChiefException} with the specified error.

@@ -61,7 +61,7 @@ public interface VectorSearchEngine {
         if (textQuery == null || textQuery.isBlank()) {
             return search(queryEmbedding, topK);
         }
-        throw new UnsupportedOperationException(
+        throw new VectorRuntimeException(
                 "Hybrid search is not supported by this VectorSearchEngine implementation");
     }
 }

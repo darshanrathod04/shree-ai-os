@@ -3,6 +3,7 @@ package com.shreeai.os.platform.kernels.cognitive.engine;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -55,7 +56,7 @@ public final class DefaultReflectionEngine {
         boolean retryAdvised = verdict == ReflectionVerdict.FAILURE;
 
         String summary = "Execution " + input.requestId() + " completed with verdict "
-                + verdict + " (score " + String.format("%.2f", score) + ")";
+                + verdict + " (score " + String.format(Locale.ROOT, "%.2f", score) + ")";
 
         return new ReflectionAnalysis(
                 verdict,
@@ -110,7 +111,7 @@ public final class DefaultReflectionEngine {
 
         if (input.confidence() < 0.5) {
             lessons.add("Conclusion confidence was low ("
-                    + String.format("%.2f", clamp(input.confidence()))
+                    + String.format(Locale.ROOT, "%.2f", clamp(input.confidence()))
                     + "); gather more evidence before acting on this result.");
         }
 

@@ -5,6 +5,7 @@ import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionAnalysis;
 import com.shreeai.os.platform.kernels.cognitive.engine.ReflectionInput;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -96,7 +97,7 @@ public final class ReflectionKernelHandler implements KernelHandler {
     private String buildReflectionOutput(ReflectionAnalysis analysis) {
         StringBuilder sb = new StringBuilder();
         sb.append("Reflection Verdict: ").append(analysis.verdict().name());
-        sb.append(" (Score: ").append(String.format("%.2f", analysis.score())).append(")");
+        sb.append(" (Score: ").append(String.format(Locale.ROOT, "%.2f", analysis.score())).append(")");
         if (!analysis.lessons().isEmpty()) {
             sb.append(" | Lessons: ").append(String.join("; ", analysis.lessons()));
         }

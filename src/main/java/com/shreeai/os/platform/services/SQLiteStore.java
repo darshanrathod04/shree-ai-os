@@ -36,6 +36,13 @@ public class SQLiteStore implements PersistenceStore {
             initSchema(assignedConn);
             this.conn = assignedConn;
         } catch (Exception e) {
+            if (assignedConn != null) {
+                try {
+                    assignedConn.close();
+                } catch (SQLException ignored) {
+                    // Suppress secondary cleanup failure
+                }
+            }
             this.conn = null;
             this.healthy = false;
             throw new RuntimeException("Failed to initialize SQLite store: " + e.getMessage(), e);

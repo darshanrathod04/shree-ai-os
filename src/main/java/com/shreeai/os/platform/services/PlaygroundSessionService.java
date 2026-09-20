@@ -130,8 +130,16 @@ public class PlaygroundSessionService {
         public String id() { return id; }
         public Instant createdAt() { return createdAt; }
         public Instant lastActivity() { return lastActivity; }
-        public List<MessageTurn> history() { return List.copyOf(history); }
-        public int turnCount() { return history.size(); }
+        public List<MessageTurn> history() {
+            synchronized (history) {
+                return List.copyOf(history);
+            }
+        }
+        public int turnCount() {
+            synchronized (history) {
+                return history.size();
+            }
+        }
 
         void addTurn(MessageTurn turn) {
             history.add(turn);

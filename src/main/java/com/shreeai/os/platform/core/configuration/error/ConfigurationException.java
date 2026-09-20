@@ -25,7 +25,9 @@ package com.shreeai.os.platform.core.configuration.error;
  */
 public class ConfigurationException extends RuntimeException {
 
-    private final ConfigurationError error;
+    private static final long serialVersionUID = 1L;
+
+    private final transient ConfigurationError error;
 
     /**
      * Constructs a new {@code ConfigurationException} with the given error.
@@ -63,6 +65,6 @@ public class ConfigurationException extends RuntimeException {
      */
     @Override
     public String getMessage() {
-        return error.message();
+        return error != null ? error.message() : super.getMessage();
     }
 }

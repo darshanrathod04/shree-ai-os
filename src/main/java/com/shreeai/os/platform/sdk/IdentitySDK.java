@@ -2,6 +2,7 @@ package com.shreeai.os.platform.sdk;
 
 import com.shreeai.os.platform.kernels.identity.model.IdentityContext;
 import com.shreeai.os.platform.runtime.api.Runtime;
+import com.shreeai.os.platform.sdk.exceptions.ValidationException;
 
 import java.util.Map;
 import java.util.Objects;
@@ -22,7 +23,7 @@ public final class IdentitySDK {
     private final Runtime runtime;
 
     IdentitySDK(ShreeClient client) {
-        this(client, client != null ? client.runtime() : null);
+        this(Objects.requireNonNull(client, "client cannot be null"), client.runtime());
     }
 
     IdentitySDK(ShreeClient client, Runtime runtime) {
@@ -51,7 +52,7 @@ public final class IdentitySDK {
             String workspaceId
     ) {
         if (identityId == null || identityId.isBlank()) {
-            throw new IllegalArgumentException("identityId must not be null or blank");
+            throw new ValidationException("identityId must not be null or blank");
         }
 
         if (runtime != null) {
@@ -106,6 +107,15 @@ public final class IdentitySDK {
             String identityType,
             Map<String, Object> profile
     ) {
+        if (identityId == null || identityId.isBlank()) {
+            throw new ValidationException("identityId must not be null or blank");
+        }
+        if (identityType == null || identityType.isBlank()) {
+            throw new ValidationException("identityType must not be null or blank");
+        }
+        if (profile == null) {
+            throw new ValidationException("profile must not be null");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("IDENTITY_CREATE")
@@ -127,6 +137,9 @@ public final class IdentitySDK {
      * @return SDKResponse with identity data
      */
     public SDKResponse getIdentity(String identityId) {
+        if (identityId == null || identityId.isBlank()) {
+            throw new ValidationException("identityId must not be null or blank");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("IDENTITY_GET")
@@ -150,6 +163,12 @@ public final class IdentitySDK {
             String identityId,
             Map<String, Object> updates
     ) {
+        if (identityId == null || identityId.isBlank()) {
+            throw new ValidationException("identityId must not be null or blank");
+        }
+        if (updates == null) {
+            throw new ValidationException("updates must not be null");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("IDENTITY_UPDATE")

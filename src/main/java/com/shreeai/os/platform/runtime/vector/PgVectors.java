@@ -59,8 +59,12 @@ public final class PgVectors {
         }
         String[] parts = trimmed.split(",");
         double[] vector = new double[parts.length];
-        for (int i = 0; i < parts.length; i++) {
-            vector[i] = Double.parseDouble(parts[i].trim());
+        try {
+            for (int i = 0; i < parts.length; i++) {
+                vector[i] = Double.parseDouble(parts[i].trim());
+            }
+        } catch (NumberFormatException e) {
+            throw new VectorRuntimeException("Failed to parse vector literal component: " + e.getMessage(), e);
         }
         return vector;
     }

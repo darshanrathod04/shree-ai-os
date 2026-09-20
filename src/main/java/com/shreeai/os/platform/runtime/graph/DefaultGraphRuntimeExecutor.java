@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -128,8 +129,10 @@ public final class DefaultGraphRuntimeExecutor implements GraphRuntimeExecutor {
 
         // 1. Find executable nodes (those with a registered NodeExecutor).
         Map<CapabilityType, ExecutionNode> nodeByCapability = new EnumMap<>(CapabilityType.class);
+        Map<String, ExecutionNode> nodeById = new HashMap<>();
         for (ExecutionNode node : graph.nodes()) {
             nodeByCapability.put(node.capability(), node);
+            nodeById.put(node.nodeId(), node);
         }
 
         List<ExecutionNode> executable = new ArrayList<>();
@@ -141,7 +144,7 @@ public final class DefaultGraphRuntimeExecutor implements GraphRuntimeExecutor {
         executable.sort(Comparator.comparing(ExecutionNode::nodeId));
 
         // 2. Deterministic topological order over the executable sub-graph.
-        List<ExecutionNode> ordered = topologicalOrder(executable, nodeByCapability);
+        List<ExecutionNode> ordered = topologicalOrder(executable, nodeByCapability, nodeById);
 
         // 3. Execute in order with interceptors.
         Map<String, Object> executionContext = new LinkedHashMap<>();
@@ -162,7 +165,7 @@ public final class DefaultGraphRuntimeExecutor implements GraphRuntimeExecutor {
             }
 
             // Dependencies must have completed.
-            String unmet = unmetDependency(node, resultsByCapability);
+            String unmet = unmetDependency(node, resultsByCapability, nodeById);
             if (unmet != null) {
                 ExecutionNodeResult skipped = ExecutionNodeResult.skipped(
                         node.nodeId(), node.capability(), unmet);
@@ -280,14 +283,35 @@ public final class DefaultGraphRuntimeExecutor implements GraphRuntimeExecutor {
     }
 
     /**
+     * Resolves a dependency string (nodeId or CapabilityType name) to its CapabilityType safely.
+     */
+    private CapabilityType resolveCapability(String depNodeId, Map<String, ExecutionNode> nodeById) {
+        if (depNodeId == null) {
+            return null;
+        }
+        if (nodeById != null && nodeById.containsKey(depNodeId)) {
+            return nodeById.get(depNodeId).capability();
+        }
+        try {
+            return CapabilityType.valueOf(depNodeId);
+        } catch (IllegalArgumentException | NullPointerException ignored) {
+            return null;
+        }
+    }
+
+    /**
      * Returns a reason string when a dependency has not completed, or null
      * when every dependency completed successfully.
      */
     private String unmetDependency(
             ExecutionNode node,
-            Map<CapabilityType, ExecutionNodeResult> resultsByCapability) {
+            Map<CapabilityType, ExecutionNodeResult> resultsByCapability,
+            Map<String, ExecutionNode> nodeById) {
         for (String depNodeId : node.dependencies()) {
-            CapabilityType depCap = CapabilityType.valueOf(depNodeId);
+            CapabilityType depCap = resolveCapability(depNodeId, nodeById);
+            if (depCap == null) {
+                return "skipped: dependency " + depNodeId + " could not be resolved";
+            }
             ExecutionNodeResult dependencyResult = resultsByCapability.get(depCap);
             if (dependencyResult == null) {
                 return "skipped: dependency " + depCap + " was not executed";
@@ -305,7 +329,8 @@ public final class DefaultGraphRuntimeExecutor implements GraphRuntimeExecutor {
      */
     private List<ExecutionNode> topologicalOrder(
             List<ExecutionNode> nodes,
-            Map<CapabilityType, ExecutionNode> nodeByCapability) {
+            Map<CapabilityType, ExecutionNode> nodeByCapability,
+            Map<String, ExecutionNode> nodeById) {
         Map<CapabilityType, Integer> inDegree = new EnumMap<>(CapabilityType.class);
         Map<CapabilityType, Set<CapabilityType>> dependents = new EnumMap<>(CapabilityType.class);
 
@@ -314,8 +339,9 @@ public final class DefaultGraphRuntimeExecutor implements GraphRuntimeExecutor {
         }
         for (ExecutionNode node : nodes) {
             for (String depNodeId : node.dependencies()) {
-                CapabilityType dependency = CapabilityType.valueOf(depNodeId);
-                if (nodeByCapability.containsKey(dependency)
+                CapabilityType dependency = resolveCapability(depNodeId, nodeById);
+                if (dependency != null
+                        && nodeByCapability.containsKey(dependency)
                         && !dependency.equals(node.capability())) {
                     inDegree.merge(node.capability(), 1, Integer::sum);
                     dependents.computeIfAbsent(dependency, k -> new LinkedHashSet<>())

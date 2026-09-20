@@ -61,7 +61,13 @@ public final class KnowledgeIngestionEventConsumer implements RuntimeEventListen
             return;
         }
 
-        Map<String, Object> completionMetadata = process(event);
+        Map<String, Object> completionMetadata;
+        try {
+            completionMetadata = process(event);
+        } catch (Throwable t) {
+            completionMetadata = failure(t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
+        }
+
         eventBus.publish(new RuntimeEvent(
                 EventType.KNOWLEDGE_INGEST_COMPLETED,
                 event.requestId(),
@@ -72,10 +78,18 @@ public final class KnowledgeIngestionEventConsumer implements RuntimeEventListen
 
     private Map<String, Object> process(RuntimeEvent event) {
         Map<String, Object> requestMetadata = event.metadata();
+        if (requestMetadata == null) {
+            return failure("Event metadata must not be null");
+        }
         String title = string(requestMetadata.get("title"));
         String content = string(requestMetadata.get("content"));
 
-        KnowledgeIngestionService service = ingestionService.get();
+        KnowledgeIngestionService service;
+        try {
+            service = ingestionService.get();
+        } catch (Exception e) {
+            return failure("Runtime ingestion service failed to initialize: " + e.getMessage());
+        }
         if (service == null) {
             return failure("Runtime ingestion service is not initialized");
         }

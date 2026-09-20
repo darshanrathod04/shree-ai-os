@@ -1,5 +1,7 @@
 package com.shreeai.os.platform.sdk;
 
+import com.shreeai.os.platform.sdk.exceptions.ValidationException;
+
 import java.util.Map;
 import java.util.Objects;
 
@@ -21,6 +23,9 @@ public final class MemorySDK {
      * Searches semantic memory.
      */
     public SDKResponse search(String query) {
+        if (query == null || query.isBlank()) {
+            throw new ValidationException("query must not be null or blank");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("MEMORY_SEARCH")
@@ -40,6 +45,12 @@ public final class MemorySDK {
             String title,
             String content
     ) {
+        if (title == null || title.isBlank()) {
+            throw new ValidationException("title must not be null or blank");
+        }
+        if (content == null || content.isBlank()) {
+            throw new ValidationException("content must not be null or blank");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("MEMORY_STORE")
@@ -57,6 +68,9 @@ public final class MemorySDK {
      * Recalls memories using a semantic query.
      */
     public SDKResponse recall(String query) {
+        if (query == null || query.isBlank()) {
+            throw new ValidationException("query must not be null or blank");
+        }
 
         SDKRequest request = SDKRequest.builder()
                 .message("MEMORY_RECALL")

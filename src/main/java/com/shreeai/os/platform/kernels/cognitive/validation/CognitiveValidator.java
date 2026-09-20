@@ -307,14 +307,14 @@ public final class CognitiveValidator {
             }
         }
 
-        metadata.put("validatedModels", new HashMap<String, Object>() {{
-            put("cognitiveState", state != null);
-            put("reasoningRequest", request != null);
-            put("decisionContext", context != null);
-            put("reflectionScope", scope != null);
-            put("evaluationCriteria", criteria != null);
-            put("hypothesis", hypothesis != null);
-        }});
+        Map<String, Object> validatedModels = new HashMap<>();
+        validatedModels.put("cognitiveState", state != null);
+        validatedModels.put("reasoningRequest", request != null);
+        validatedModels.put("decisionContext", context != null);
+        validatedModels.put("reflectionScope", scope != null);
+        validatedModels.put("evaluationCriteria", criteria != null);
+        validatedModels.put("hypothesis", hypothesis != null);
+        metadata.put("validatedModels", validatedModels);
 
         return new CognitiveValidationResult(
                 allViolations.isEmpty(),

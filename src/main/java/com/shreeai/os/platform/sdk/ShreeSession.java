@@ -12,7 +12,7 @@ public final class ShreeSession {
     private final String sessionId;
     private final ShreeClient client;
 
-    private final Map<String, Object> metadata = new HashMap<>();
+    private final Map<String, Object> metadata = new java.util.concurrent.ConcurrentHashMap<>();
 
     ShreeSession(String sessionId, ShreeClient client) {
         this.sessionId = Objects.requireNonNull(sessionId);
@@ -31,7 +31,12 @@ public final class ShreeSession {
     }
 
     public ShreeSession metadata(String key, Object value) {
-        metadata.put(key, value);
+        Objects.requireNonNull(key, "key must not be null");
+        if (value == null) {
+            metadata.remove(key);
+        } else {
+            metadata.put(key, value);
+        }
         return this;
     }
 

@@ -231,10 +231,12 @@ public final class InferenceStage implements ExecutionStage {
 
         } catch (Exception e) {
 
-            state.markFailure(
-                    "Inference failed: "
-                            + safeMessage(e)
-            );
+            if (state != null) {
+                state.markFailure(
+                        "Inference failed: "
+                                + safeMessage(e)
+                );
+            }
 
             return PipelineResult.builder()
                     .success(false)

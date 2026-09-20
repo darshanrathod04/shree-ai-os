@@ -14,13 +14,43 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class InMemoryCacheClient implements CacheClient {
 
+    public static final int DEFAULT_MAX_CAPACITY = 10_000;
+
     private final ConcurrentHashMap<String, TimedValue> store = new ConcurrentHashMap<>();
+    private final int maxCapacity;
+
+    public InMemoryCacheClient() {
+        this(DEFAULT_MAX_CAPACITY);
+    }
+
+    public InMemoryCacheClient(int maxCapacity) {
+        this.maxCapacity = Math.max(1, maxCapacity);
+    }
 
     @Override
     public void put(String key, String value, long ttlSeconds) {
-        long expiry = ttlSeconds > 0
-                ? System.currentTimeMillis() + (ttlSeconds * 1000)
-                : Long.MAX_VALUE;
+        if (store.size() >= maxCapacity) {
+            // Purge expired entries to relieve memory pressure
+            store.entrySet().removeIf(e -> e.getValue().isExpired());
+            if (store.size() >= maxCapacity) {
+                // Evict the entry with the earliest expiry
+                String oldestKey = null;
+                long earliestExpiry = Long.MAX_VALUE;
+                for (var entry : store.entrySet()) {
+                    if (entry.getValue().expiryMillis() < earliestExpiry) {
+                        earliestExpiry = entry.getValue().expiryMillis();
+                        oldestKey = entry.getKey();
+                    }
+                }
+                if (oldestKey != null) {
+                    store.remove(oldestKey);
+                }
+            }
+        }
+        long now = System.currentTimeMillis();
+        long expiry = (ttlSeconds <= 0 || ttlSeconds > (Long.MAX_VALUE - now) / 1000L)
+                ? Long.MAX_VALUE
+                : now + (ttlSeconds * 1000L);
         store.put(key, new TimedValue(value, expiry));
     }
 

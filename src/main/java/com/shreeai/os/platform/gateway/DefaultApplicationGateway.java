@@ -146,7 +146,7 @@ public class DefaultApplicationGateway implements ApplicationGateway {
             }
 
             ExecutionRequest executionRequest = ExecutionRequest.builder()
-                    .requestId(context.normalizedSessionId())
+                    .requestId(context.gatewayRequestId())
                     .requestType("CHAT")
                     .payload(sdkRequest.message())
                     .context(sdkRequest.context() != null ? sdkRequest.context() : "")

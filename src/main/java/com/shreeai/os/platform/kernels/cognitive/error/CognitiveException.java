@@ -41,7 +41,9 @@ import java.util.Objects;
  */
 public class CognitiveException extends RuntimeException {
 
-    private final CognitiveError error;
+    private static final long serialVersionUID = 1L;
+
+    private final transient CognitiveError error;
 
     /**
      * Creates a new CognitiveException with the specified error.
@@ -101,7 +103,7 @@ public class CognitiveException extends RuntimeException {
      */
     @Override
     public String getMessage() {
-        return error.message();
+        return error != null ? error.message() : super.getMessage();
     }
 
     /**

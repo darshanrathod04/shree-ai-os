@@ -1,5 +1,7 @@
 package com.shreeai.os.platform.sdk;
 
+import com.shreeai.os.platform.sdk.exceptions.ValidationException;
+
 import java.util.Map;
 import java.util.Objects;
 
@@ -19,7 +21,7 @@ public final class ReflectionSDK {
     private final com.shreeai.os.platform.runtime.api.Runtime runtime;
 
     ReflectionSDK(ShreeClient client) {
-        this(client, client != null ? client.runtime() : null);
+        this(Objects.requireNonNull(client, "client cannot be null"), client.runtime());
     }
 
     ReflectionSDK(ShreeClient client, com.shreeai.os.platform.runtime.api.Runtime runtime) {
@@ -41,7 +43,7 @@ public final class ReflectionSDK {
      */
     public SDKResponse reflect(String executionId) {
         if (executionId == null || executionId.isBlank()) {
-            throw new IllegalArgumentException("executionId must not be null or blank");
+            throw new ValidationException("executionId must not be null or blank");
         }
 
         if (runtime != null) {
@@ -102,7 +104,10 @@ public final class ReflectionSDK {
      */
     public SDKResponse getHistory(String tenantId, int limit) {
         if (tenantId == null || tenantId.isBlank()) {
-            throw new IllegalArgumentException("tenantId must not be null or blank");
+            throw new ValidationException("tenantId must not be null or blank");
+        }
+        if (limit < 1) {
+            throw new ValidationException("limit must be >= 1");
         }
 
         if (runtime != null) {
@@ -159,7 +164,10 @@ public final class ReflectionSDK {
      */
     public SDKResponse getAnalytics(String tenantId, int window) {
         if (tenantId == null || tenantId.isBlank()) {
-            throw new IllegalArgumentException("tenantId must not be null or blank");
+            throw new ValidationException("tenantId must not be null or blank");
+        }
+        if (window < 1) {
+            throw new ValidationException("window must be >= 1");
         }
 
         if (runtime != null) {
@@ -210,10 +218,10 @@ public final class ReflectionSDK {
      */
     public ReflectionStatistics statistics(String tenantId, int window) {
         if (tenantId == null || tenantId.isBlank()) {
-            throw new IllegalArgumentException("tenantId must not be null or blank");
+            throw new ValidationException("tenantId must not be null or blank");
         }
         if (window < 1) {
-            throw new IllegalArgumentException("window must be ≥ 1");
+            throw new ValidationException("window must be >= 1");
         }
         if (runtime == null) {
             return null;

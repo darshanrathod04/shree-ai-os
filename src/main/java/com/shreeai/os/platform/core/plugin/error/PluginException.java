@@ -25,7 +25,9 @@ package com.shreeai.os.platform.core.plugin.error;
  */
 public class PluginException extends RuntimeException {
 
-    private final PluginError error;
+    private static final long serialVersionUID = 1L;
+
+    private final transient PluginError error;
 
     /**
      * Constructs a new {@code PluginException} with the given error.
@@ -63,6 +65,6 @@ public class PluginException extends RuntimeException {
      */
     @Override
     public String getMessage() {
-        return error.message();
+        return error != null ? error.message() : super.getMessage();
     }
 }

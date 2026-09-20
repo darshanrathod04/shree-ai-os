@@ -39,6 +39,8 @@ public final class MemoryVersionLedger {
 
     private final Map<MemoryId, List<Memory>> history = new ConcurrentHashMap<>();
 
+    public static final int DEFAULT_MAX_HISTORY_PER_KEY = 50;
+
     /**
      * Records {@code memory} as a superseded version of its id.
      *
@@ -46,8 +48,13 @@ public final class MemoryVersionLedger {
      */
     public void snapshot(Memory memory) {
         Objects.requireNonNull(memory, "memory must not be null");
-        history.computeIfAbsent(memory.id(), id -> Collections.synchronizedList(new ArrayList<>()))
-                .add(memory);
+        List<Memory> versions = history.computeIfAbsent(memory.id(), id -> Collections.synchronizedList(new ArrayList<>()));
+        synchronized (versions) {
+            versions.add(memory);
+            while (versions.size() > DEFAULT_MAX_HISTORY_PER_KEY) {
+                versions.remove(0);
+            }
+        }
     }
 
     /**
@@ -71,7 +78,12 @@ public final class MemoryVersionLedger {
     public List<Memory> history(MemoryId id) {
         Objects.requireNonNull(id, "id must not be null");
         List<Memory> versions = history.get(id);
-        return versions == null ? List.of() : List.copyOf(versions);
+        if (versions == null) {
+            return List.of();
+        }
+        synchronized (versions) {
+            return List.copyOf(versions);
+        }
     }
 
     /**
