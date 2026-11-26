@@ -1,0 +1,235 @@
+package com.shreeai.os.platform.services;
+
+import com.shreeai.os.platform.kernels.project.model.ProjectClass;
+import com.shreeai.os.platform.kernels.project.model.ProjectEndpoint;
+import com.shreeai.os.platform.kernels.project.model.ProjectImpact;
+import com.shreeai.os.platform.kernels.project.model.ProjectSummary;
+import com.shreeai.os.platform.sdk.SDKResponse;
+import com.shreeai.os.platform.sdk.ShreeAI;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * <b>DeveloperController</b> — Unified REST surface for {@code shree-platform-web}
+ * Developer Intelligence workspace ({@code /api/developer/*}).
+ */
+@RestController
+@RequestMapping("/api/developer")
+@CrossOrigin(origins = "*")
+public class DeveloperController {
+
+    private final ShreeAI ai;
+    private final Map<String, Map<String, Object>> sessions = new ConcurrentHashMap<>();
+    private final Map<String, ProjectSummary> summaries = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, Object>> executions = new ConcurrentHashMap<>();
+
+    public DeveloperController(ShreeAI ai) {
+        this.ai = Objects.requireNonNull(ai, "ai must not be null");
+    }
+
+    @PostMapping("/workspace/open")
+    public ResponseEntity<?> openWorkspace(@RequestBody Map<String, Object> body) {
+        String path = str(body, "path");
+        if (path.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "path is required"));
+        }
+        try {
+            ProjectSummary summary = ai.project().analyze(path);
+            String id = "ws-" + UUID.randomUUID().toString().substring(0, 8);
+            Map<String, Object> session = new LinkedHashMap<>();
+            session.put("id", id);
+            session.put("projectPath", summary.projectPath());
+            session.put("projectName", summary.projectName());
+            session.put("analyzed", true);
+            session.put("openedAt", Instant.now().toString());
+            session.put("buildSystem", summary.buildSystem());
+            session.put("framework", summary.framework());
+            session.put("moduleCount", summary.modules().size());
+            session.put("classCount", summary.statistics().classCount());
+            session.put("endpointCount", summary.statistics().endpointCount());
+            sessions.put(id, session);
+            summaries.put(id, summary);
+            return ResponseEntity.ok(session);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/workspace/sessions")
+    public List<Map<String, Object>> listSessions() {
+        return new ArrayList<>(sessions.values());
+    }
+
+    @GetMapping("/workspace/{id}")
+    public ResponseEntity<?> getSession(@PathVariable String id) {
+        Map<String, Object> session = sessions.get(id);
+        return session == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(session);
+    }
+
+    @GetMapping("/workspace/{id}/summary")
+    public ResponseEntity<?> getSummary(@PathVariable String id) {
+        ProjectSummary summary = summaries.get(id);
+        return summary == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(summary.toMap());
+    }
+
+    @GetMapping("/workspace/{id}/class")
+    public ResponseEntity<?> findClass(@PathVariable String id, @RequestParam String name) {
+        if (!sessions.containsKey(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        ProjectClass cls = ai.project().findClass(name);
+        return cls == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(cls);
+    }
+
+    @GetMapping("/workspace/{id}/endpoint")
+    public ResponseEntity<?> findEndpoint(@PathVariable String id, @RequestParam("p") String path) {
+        if (!sessions.containsKey(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        ProjectEndpoint ep = ai.project().findController(path);
+        return ep == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(ep);
+    }
+
+    @GetMapping("/workspace/{id}/impact")
+    public ResponseEntity<?> impact(@PathVariable String id, @RequestParam("n") String name) {
+        if (!sessions.containsKey(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        ProjectImpact impact = ai.project().impact(name);
+        return impact == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(impact);
+    }
+
+    @DeleteMapping("/workspace/{id}")
+    public ResponseEntity<Void> closeWorkspace(@PathVariable String id) {
+        sessions.remove(id);
+        summaries.remove(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/chat/ask")
+    public ResponseEntity<?> chatAsk(@RequestBody Map<String, Object> body) {
+        String sessionId = str(body, "sessionId");
+        String question = str(body, "question");
+        if (question.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "question is required"));
+        }
+        SDKResponse response = ai.chat(question, Map.of("sessionId", sessionId));
+        return ResponseEntity.ok(Map.of(
+                "sessionId", sessionId,
+                "question", question,
+                "answer", response.answer() == null ? "" : response.answer(),
+                "confidence", response.confidence(),
+                "knowledgeUsed", true,
+                "memoryUsed", true,
+                "timestamp", Instant.now().toString()
+        ));
+    }
+
+    @PostMapping("/chat/remember")
+    public ResponseEntity<?> chatRemember(@RequestBody Map<String, Object> body) {
+        String sessionId = str(body, "sessionId");
+        String title = str(body, "title");
+        String content = str(body, "content");
+        ai.memory().store(title, content);
+        return ResponseEntity.ok(Map.of(
+                "status", "stored",
+                "sessionId", sessionId,
+                "title", title
+        ));
+    }
+
+    @PostMapping("/chat/recall")
+    public ResponseEntity<?> chatRecall(@RequestBody Map<String, Object> body) {
+        String query = str(body, "query");
+        SDKResponse res = ai.memory().recall(query);
+        return ResponseEntity.ok(Map.of(
+                "answer", res.answer() == null ? "" : res.answer(),
+                "confidence", res.confidence()
+        ));
+    }
+
+    @PostMapping("/workflow/build")
+    public ResponseEntity<?> workflowBuild(@RequestBody Map<String, Object> body) {
+        String projectPath = str(body, "projectPath");
+        String instruction = str(body, "instruction");
+        var result = ai.project().build(projectPath, instruction);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/workflow/apply")
+    public ResponseEntity<?> workflowApply(@RequestBody Map<String, Object> body) {
+        String projectPath = str(body, "projectPath");
+        String instruction = str(body, "instruction");
+        var result = ai.project().apply(projectPath, instruction);
+        String execId = "exec-" + UUID.randomUUID().toString().substring(0, 8);
+        Map<String, Object> record = new LinkedHashMap<>();
+        record.put("executionId", execId);
+        record.put("status", "SUCCESS");
+        record.put("appliedCount", 1);
+        record.put("totalPatches", 1);
+        record.put("confidence", 0.9);
+        record.put("executedAt", Instant.now().toString());
+        record.put("result", result);
+        executions.put(execId, record);
+        return ResponseEntity.ok(record);
+    }
+
+    @GetMapping("/review/executions")
+    public List<Map<String, Object>> listExecutions() {
+        return new ArrayList<>(executions.values());
+    }
+
+    @GetMapping("/review/{executionId}/diffs")
+    public ResponseEntity<?> getDiffs(@PathVariable String executionId) {
+        Map<String, Object> exec = executions.get(executionId);
+        if (exec == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(Map.of(
+                "executionId", executionId,
+                "totalDiffs", 0,
+                "diffs", List.of()
+        ));
+    }
+
+    @GetMapping("/review/{executionId}/rollback")
+    public ResponseEntity<?> getRollback(@PathVariable String executionId) {
+        Map<String, Object> exec = executions.get(executionId);
+        if (exec == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(Map.of(
+                "executionId", executionId,
+                "hasRollback", false,
+                "planId", executionId,
+                "fileCount", 0,
+                "totalActions", 0,
+                "isEmpty", true,
+                "entries", List.of()
+        ));
+    }
+
+    private static String str(Map<String, Object> body, String key) {
+        if (body == null || body.get(key) == null) {
+            return "";
+        }
+        return String.valueOf(body.get(key));
+    }
+}

@@ -212,6 +212,10 @@ public class ByokSettingsService {
                 if (rawKey == null || rawKey.isBlank()) yield null;
                 yield new com.shreeai.os.platform.llm.gemini.GeminiProvider(rawKey);
             }
+            case ANTHROPIC -> {
+                if (rawKey == null || rawKey.isBlank()) yield null;
+                yield new com.shreeai.os.platform.llm.anthropic.AnthropicProvider(rawKey);
+            }
             case OLLAMA -> {
                 String url = (endpoint != null && !endpoint.isBlank())
                         ? endpoint

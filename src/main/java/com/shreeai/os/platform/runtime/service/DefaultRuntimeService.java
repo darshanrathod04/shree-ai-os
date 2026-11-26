@@ -350,6 +350,11 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             registry.put("openai", new OpenAiProvider(openAiKey));
         }
 
+        String anthropicKey = firstNonBlank(System.getProperty("shree.llm.anthropic.api-key"), System.getenv("ANTHROPIC_API_KEY"));
+        if (anthropicKey != null) {
+            registry.put("anthropic", new com.shreeai.os.platform.llm.anthropic.AnthropicProvider(anthropicKey));
+        }
+
         String geminiKey = firstNonBlank(
                 System.getProperty("shree.llm.gemini.api-key"),
                 firstNonBlank(
