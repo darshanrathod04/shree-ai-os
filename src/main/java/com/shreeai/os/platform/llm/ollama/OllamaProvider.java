@@ -50,9 +50,9 @@ public final class OllamaProvider implements LlmProvider {
     private static OkHttpClient createDefaultClient() {
         return new OkHttpClient.Builder()
                 .connectTimeout(Duration.ofSeconds(10))
-                .readTimeout(Duration.ofSeconds(60))
+                .readTimeout(Duration.ofSeconds(120))
                 .writeTimeout(Duration.ofSeconds(30))
-                .callTimeout(Duration.ofSeconds(60))
+                .callTimeout(Duration.ofSeconds(180))
                 .build();
     }
 
@@ -89,7 +89,8 @@ public final class OllamaProvider implements LlmProvider {
         try {
             response = client.newCall(httpRequest).execute();
         } catch (IOException e) {
-            if (e instanceof java.io.InterruptedIOException) {
+            if (e instanceof java.io.InterruptedIOException
+                    && !(e instanceof java.net.SocketTimeoutException)) {
                 Thread.currentThread().interrupt();
             }
             throw new IllegalStateException("Ollama request failed: " + e.getMessage(), e);
@@ -143,7 +144,7 @@ public final class OllamaProvider implements LlmProvider {
             }
 
             Map<String, Object> root = new LinkedHashMap<>();
-            root.put("model", request.model());
+            root.put("model", resolveModel(request.model()));
             root.put("prompt", request.prompt());
             root.put("stream", Boolean.TRUE);
             if (!options.isEmpty()) {
@@ -153,6 +154,26 @@ public final class OllamaProvider implements LlmProvider {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to serialise Ollama request body", e);
         }
+    }
+
+    static String resolveModel(String model) {
+        if (model == null
+                || model.isBlank()
+                || "default".equalsIgnoreCase(model.trim())
+                || model.trim().startsWith("shree-")
+                || model.trim().startsWith("gemini")
+                || model.trim().startsWith("gpt-")) {
+            String prop = System.getProperty("shree.llm.ollama.model");
+            if (prop != null && !prop.isBlank()) {
+                return prop.trim();
+            }
+            String env = System.getenv("SHREE_LLM_OLLAMA_MODEL");
+            if (env != null && !env.isBlank()) {
+                return env.trim();
+            }
+            return "llama3.2:1b";
+        }
+        return model.trim();
     }
 
     /**

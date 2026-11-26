@@ -472,6 +472,9 @@ public final class NaturalResponseAgent {
         List<String> citations = report.citations();
         int citationCursor = 1;
         for (EvidenceItem item : bundle.items()) {
+            if (isInternalDiagnosticNoise(item)) {
+                continue;
+            }
             ctx.append("[").append(citationCursor).append("] ")
                     .append(item.sourceType() != null ? item.sourceType().name() : "UNKNOWN")
                     .append(" — ").append(safe(item.title())).append("\n");
@@ -512,6 +515,16 @@ public final class NaturalResponseAgent {
             }
         }
         return ctx.toString();
+    }
+
+    private static boolean isInternalDiagnosticNoise(EvidenceItem item) {
+        if (item == null) return true;
+        if (item.sourceType() == EvidenceItem.SourceType.REFLECTION) {
+            return true;
+        }
+        String content = safe(item.content()).trim();
+        return content.contains("Reflection lessons for execution ")
+                || content.contains("Execution ID: null");
     }
 
     private static String safe(String s) {

@@ -41,7 +41,8 @@ public final class InMemoryLlmProvider implements LlmProvider {
     public Stream<String> stream(LlmRequest request) {
         String prompt = request == null || request.prompt() == null ? "" : request.prompt();
         String model = request == null || request.model() == null ? "default" : request.model();
-        String content = model + " echoes: " + prompt;
+        String effectivePrompt = extractUserQueryIfWrapped(prompt);
+        String content = model + " echoes: " + effectivePrompt;
 
         // Deterministically split into token fragments while preserving the
         // exact original spacing. Splitting around spaces keeps spaces as their
@@ -64,6 +65,15 @@ public final class InMemoryLlmProvider implements LlmProvider {
             tokens.add(part);
         }
         return tokens;
+    }
+
+    private static String extractUserQueryIfWrapped(String prompt) {
+        int start = prompt.indexOf("<user_query>");
+        int end = prompt.indexOf("</user_query>");
+        if (start >= 0 && end > start) {
+            return prompt.substring(start + "<user_query>".length(), end).trim();
+        }
+        return prompt;
     }
 
     /**
