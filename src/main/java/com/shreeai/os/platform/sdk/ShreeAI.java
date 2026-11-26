@@ -28,7 +28,7 @@ import com.shreeai.os.platform.sdk.events.EventManager;
  * <p><b>Ownership:</b> SDK</p>
  * <p><b>Version:</b> 1.0.0-V1</p>
  */
-public final class ShreeAI {
+public final class ShreeAI implements AutoCloseable {
 
     private final ExecutionSDK execution;
     private final PlanningSDK planning;
@@ -60,9 +60,25 @@ public final class ShreeAI {
         // and DefaultRuntimeService (LLM router rebuilds on write).
         com.shreeai.os.platform.services.ByokSettingsService byok = new ByokSettingsService();
         this.settings = new SettingsSDK(byok);
+        configureInitialApiKey(byok, configuration.apiKey());
         this.diagnostics = new DiagnosticsSDK(new SdkDiagnosticsService());
-        // Wire BYOK → runtime so SettingsSDK.save() rebuilds the LLM router.
+        // Wire BYOK → runtime so SettingsSDK.save() and builder apiKey() rebuild the LLM router.
         this.client.syncByokSettings(byok);
+    }
+
+    private static void configureInitialApiKey(ByokSettingsService byok, String rawKey) {
+        if (rawKey == null || rawKey.isBlank()) {
+            return;
+        }
+        String trimmed = rawKey.trim();
+        if ("local".equalsIgnoreCase(trimmed) || trimmed.length() < 8) {
+            return;
+        }
+        com.shreeai.os.platform.services.ProviderType provider = trimmed.startsWith("sk-")
+                ? com.shreeai.os.platform.services.ProviderType.OPENAI
+                : com.shreeai.os.platform.services.ProviderType.GEMINI;
+        byok.save(new com.shreeai.os.platform.services.ProviderSettings(
+                provider, true, trimmed, "", trimmed));
     }
 
     /**
@@ -240,5 +256,16 @@ public final class ShreeAI {
 
     public EventManager events() {
         return client.events();
+    }
+
+    /**
+     * Stops the underlying runtime and releases resources.
+     */
+    @Override
+    public void close() {
+        Runtime runtime = client.runtime();
+        if (runtime != null) {
+            runtime.stop();
+        }
     }
 }

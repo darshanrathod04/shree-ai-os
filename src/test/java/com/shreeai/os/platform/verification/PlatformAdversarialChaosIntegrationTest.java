@@ -17,6 +17,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -62,11 +65,37 @@ public class PlatformAdversarialChaosIntegrationTest {
     private ShreeClient client;
     private ShreeAI ai;
 
+    private static String previousLlmChain;
+
+    @BeforeAll
+    static void forceDeterministicChainUnlessLive() {
+        previousLlmChain = System.getProperty("shree.llm.chain");
+        if (!Boolean.getBoolean("shree.test.live")) {
+            System.setProperty("shree.llm.chain", "in-memory");
+        }
+    }
+
+    @AfterAll
+    static void restoreLlmChain() {
+        if (previousLlmChain == null) {
+            System.clearProperty("shree.llm.chain");
+        } else {
+            System.setProperty("shree.llm.chain", previousLlmChain);
+        }
+    }
+
     @BeforeEach
     void setUp() {
         ai = ShreeAI.builder().apiKey("local").build();
         client = ai.client();
         assertNotNull(client, "ShreeClient must initialize cleanly");
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (ai != null) {
+            ai.close();
+        }
     }
 
     // =========================================================================

@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.1</version>
+        <version>4.0.2</version>
         <relativePath/>
     </parent>
 
@@ -27,12 +27,12 @@
         <dependency>
             <groupId>com.microsoft.onnxruntime</groupId>
             <artifactId>onnxruntime</artifactId>
-            <version>1.17.1</version>
+            <version>1.29.0</version>
         </dependency>
         <dependency>
             <groupId>ai.djl.huggingface</groupId>
             <artifactId>tokenizers</artifactId>
-            <version>0.28.0</version>
+            <version>0.36.0</version>
         </dependency>
 
         <!-- Spring Web MVC -->
@@ -51,7 +51,7 @@
         <dependency>
             <groupId>io.github.darshanrathod04</groupId>
             <artifactId>shree-ai-os</artifactId>
-            <version>1.0.6-developer-preview</version>
+            <version>1.0.7-developer-preview</version>
         </dependency>
 
         <!-- Lombok -->

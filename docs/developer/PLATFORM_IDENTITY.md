@@ -1,6 +1,6 @@
 # Platform Identity
 
-> **What Shree AI OS Is — Developer Preview v1.0.6**
+> **What Shree AI OS Is — Developer Preview v1.0.7**
 
 **Shree AI OS is a JVM-native cognitive operating system runtime with Bring-Your-Own-Key (BYOK) model routing.** It enables enterprise Java applications to embed a complete cognitive brain — orchestrating memory, hybrid vector retrieval, deterministic planning, structural reasoning, adaptive reflection, multi-tenant isolation, and safe code execution before any language model generates a response.
 
@@ -132,7 +132,7 @@ Add Shree AI OS to your Maven project:
 <dependency>
     <groupId>io.github.darshanrathod04</groupId>
     <artifactId>shree-ai-os</artifactId>
-    <version>1.0.6-developer-preview</version>
+    <version>1.0.7-developer-preview</version>
 </dependency>
 ```
 
@@ -163,5 +163,5 @@ To maintain architectural clarity:
 
 Platform: **Shree AI OS**  
 Document: **Platform Identity**  
-Version: **1.0.6-developer-preview**  
+Version: **1.0.7-developer-preview**  
 Author: **Darshan Rathod**

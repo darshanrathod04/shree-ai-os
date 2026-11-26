@@ -1,6 +1,6 @@
 # Cognitive Runtime Architecture
 
-> Technical Architecture Reference — Developer Preview v1.0.6
+> Technical Architecture Reference — Developer Preview v1.0.7
 
 This document details the internal architecture of Shree AI OS, including the hardened 11-stage cognitive execution pipeline, the hybrid RAG retrieval engine, the ONNX embedding pipeline, pgvector integration, K0.6 autonomous knowledge acquisition, and resilient multi-provider LLM routing.
 
@@ -11,7 +11,7 @@ This document details the internal architecture of Shree AI OS, including the ha
 [![Java 21](https://img.shields.io/badge/Java-21-blue.svg)](https://adoptium.net/)
 [![Spring Boot 3](https://img.shields.io/badge/Spring%20Boot-3-green.svg)](https://spring.io/projects/spring-boot)
 [![pgvector](https://img.shields.io/badge/pgvector-0.7-blue.svg)](https://github.com/pgvector/pgvector)
-[![Version](https://img.shields.io/badge/Version-1.0.6--developer--preview-orange.svg)](./pom.xml)
+[![Version](https://img.shields.io/badge/Version-1.0.7--developer--preview-orange.svg)](./pom.xml)
 [![Build Status](https://img.shields.io/badge/Tests-56%2F56%20Green-brightgreen.svg)](./WORKING_STATUS.md)
 
 ---
@@ -386,5 +386,5 @@ shree-ai-os/
 
 Platform: **Shree AI OS**  
 Document: **Cognitive Runtime Architecture**  
-Version: **1.0.6-developer-preview**  
+Version: **1.0.7-developer-preview**  
 Author: **Darshan Rathod**

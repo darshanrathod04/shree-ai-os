@@ -232,7 +232,9 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
                 CapabilityType capability = CapabilityType.valueOf(request.toolId());
                 ExecutionCapability execution = toExecutionCapability(capability);
                 if (execution == null) {
-                    return PermissionDecision.ALLOW;
+                    return isReadOnlyInternalCapability(capability)
+                            ? PermissionDecision.ALLOW
+                            : PermissionDecision.DENY;
                 }
                 // The runtime policy contract uses its own PermissionDecision
                 // (REQUIRE_APPROVAL); translate it to the canonical security
@@ -245,6 +247,17 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             } catch (IllegalArgumentException | NullPointerException e) {
                 return PermissionDecision.DENY;
             }
+        };
+    }
+
+    /**
+     * Read-only internal orchestration capabilities that carry no external side
+     * effects. High-risk unmapped capabilities (TOOLS, MODELS, AGENTS) fail closed.
+     */
+    private static boolean isReadOnlyInternalCapability(CapabilityType capability) {
+        return switch (capability) {
+            case IDENTITY, CONTEXT, REASONING, VALIDATION, SAFETY, OBSERVABILITY, ORCHESTRATION -> true;
+            default -> false;
         };
     }
 
@@ -776,18 +789,58 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
             throw new IllegalArgumentException("message must not be null");
         }
 
-        // Build a minimal LLM request for the LLM provider.
-        // The pipeline handles context, memory, knowledge etc. — the LLM router
-        // streams the final synthesized response.
-        LlmRequest llmRequest = LlmRequest.builder()
-                .model("shree-streaming")
-                .prompt(message)
-                .stream(true)
-                .build();
+        // Execute the cognitive pipeline up to evidence extraction so streaming
+        // receives the same Memory, Hybrid RAG Knowledge, and Guardrail context
+        // as synchronous chat().
+        LlmRequest llmRequest = buildGroundedStreamingRequest(message);
 
         // Delegate to the LLM router's first-available provider.
         // The router handles fail-over to the next provider automatically.
         return llmRouter.stream(llmRequest);
+    }
+
+    private LlmRequest buildGroundedStreamingRequest(String message) {
+        com.shreeai.os.platform.runtime.agents.NaturalResponseAgent agent =
+                new com.shreeai.os.platform.runtime.agents.NaturalResponseAgent(llmRouter);
+        ExecutionRequest execRequest = ExecutionRequest.builder()
+                .requestId("stream-" + java.util.UUID.randomUUID())
+                .requestType("CHAT_STREAM")
+                .payload(message)
+                .build();
+
+        try {
+            com.shreeai.os.platform.runtime.pipeline.ExecutionPipeline effectivePipeline = this.pipeline;
+            if (effectivePipeline != null) {
+                com.shreeai.os.platform.runtime.pipeline.PipelineContext pipelineContext =
+                        com.shreeai.os.platform.runtime.pipeline.PipelineContext.builder()
+                                .executionRequest(toV2ExecutionRequest(execRequest))
+                                .addAttribute("requestMetadata", Map.of())
+                                .addAttribute("runtimeEventBus", eventBus)
+                                .addAttribute("llmRouter", llmRouter)
+                                .addAttribute("approvalService", approvalService)
+                                .build();
+
+                PipelineResult pipelineResult = effectivePipeline.execute(pipelineContext);
+                if (pipelineResult != null && pipelineResult.getExecutionState() != null) {
+                    com.shreeai.os.platform.runtime.agents.EvidenceAgent evidenceAgent =
+                            new com.shreeai.os.platform.runtime.agents.EvidenceAgent();
+                    com.shreeai.os.platform.runtime.model.EvidenceBundle bundle =
+                            evidenceAgent.extractFromPipelineState(pipelineResult.getExecutionState());
+                    if (bundle != null && !bundle.isEmpty()) {
+                        com.shreeai.os.platform.runtime.agents.VerificationAgent verificationAgent =
+                                new com.shreeai.os.platform.runtime.agents.VerificationAgent();
+                        com.shreeai.os.platform.runtime.model.VerificationReport report =
+                                verificationAgent.verify(bundle);
+                        return agent.buildStreamingRequest(report, execRequest);
+                    }
+                }
+            }
+        } catch (RuntimeException e) {
+            System.err.println(">>> [SHREE RUNTIME] Grounded streaming context preparation failed ("
+                    + e.getMessage() + "); falling back to guardrailed general-assistance stream.");
+        }
+
+        return agent.buildStreamingRequest(null, execRequest);
     }
 
     /**

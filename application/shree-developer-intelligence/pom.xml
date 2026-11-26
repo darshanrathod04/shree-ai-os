@@ -25,7 +25,7 @@
 
     <properties>
         <java.version>21</java.version>
-        <shree.version>1.0.6-developer-preview</shree.version>
+        <shree.version>1.0.7-developer-preview</shree.version>
     </properties>
 
     <dependencies>
