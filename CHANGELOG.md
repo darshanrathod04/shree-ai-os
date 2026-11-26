@@ -6,6 +6,21 @@ This project follows **Semantic Versioning** for stable releases. Current releas
 
 ---
 
+## [1.1.0] - 2026-11-27
+
+Full-stack completion, security hardening, and competitor-parity release across Developer Intelligence, JVM Runtime & Router, Hybrid RAG, and Web Control Plane.
+
+### Added
+- **Unified Web & Developer REST Controllers**: Added `PlaygroundController` (`/api/playground/*` including `/stream` and `/chat/stream` SSE) and `DeveloperController` (`/api/developer/*` with real `PatchDiff`, `CompileReport`, `RollbackPlan`, and `POST /review/{id}/rollback/execute`).
+- **Apache PDFBox & Overlapping Chunker**: Implemented deterministic page-by-page PDF extraction in `PdfDocumentParser` (`pdfbox 3.0.4`) and `SlidingWindowChunker` (`180`-word windows, `35`-word overlap) in `DefaultDocumentIngestionEngine`.
+- **Hybrid RAG Reranking**: Added exact-phrase and bigram proximity reranking in `KnowledgeRankingService`, plus BFS graph traversal, entity relationship retrieval, concept search/extraction, and content classification in `DefaultKnowledgeService`.
+- **Runtime Resilience & Tool Calling**: Added `LlmRouter` per-provider circuit breaker and latency/token telemetry, `AnthropicProvider` (`ProviderType.ANTHROPIC`), and `ToolCallingAgent` with JSON auto-repair/retry and infinite-loop guard.
+- **Enterprise API & Tool Security**: Added `ShreeApiSecurityFilter` (constant-time API key auth, allowlist CORS, sliding-window rate limiter, security headers), `FileSystemTool` sandbox root, and `TerminalTool` chained destructive-command blocking + `30s` timeout.
+- **Chief & Execution Lifecycle**: Completed `DefaultChiefService` tracking/health (`ChiefMetrics`), `DefaultExecutionService` cancellation tracking, and `DiscoveryValidator` metadata validation.
+- **Verification**: 2,824 deterministic tests passing (`0` failures), live Ollama (`llama3.2:1b`) E2E passing, and live Next.js + Spring Boot SSE browser verification passing with zero console errors.
+
+---
+
 ## [1.0.7-developer-preview] - 2026-11-26
 
 Runtime wiring hardening, fail-closed capability closure, grounded streaming, and deterministic CI stabilization release.
