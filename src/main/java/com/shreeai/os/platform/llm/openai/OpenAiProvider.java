@@ -100,7 +100,8 @@ public final class OpenAiProvider implements LlmProvider {
         try {
             response = client.newCall(httpRequest).execute();
         } catch (IOException e) {
-            if (e instanceof java.io.InterruptedIOException) {
+            if (e instanceof java.io.InterruptedIOException
+                    && !(e instanceof java.net.SocketTimeoutException)) {
                 Thread.currentThread().interrupt();
             }
             throw new IllegalStateException("OpenAI request failed: " + e.getMessage(), e);
@@ -136,7 +137,7 @@ public final class OpenAiProvider implements LlmProvider {
     static String buildBody(LlmRequest request) {
         try {
             Map<String, Object> root = new LinkedHashMap<>();
-            root.put("model", request.model());
+            root.put("model", resolveModel(request.model()));
             root.put("stream", true);
 
             Map<String, Object> message = new LinkedHashMap<>();
@@ -154,7 +155,9 @@ public final class OpenAiProvider implements LlmProvider {
                 options.put("max_tokens", request.maxTokens());
             }
             for (Map.Entry<String, Object> entry : request.options().entrySet()) {
-                options.put(entry.getKey(), entry.getValue());
+                if (isAllowedOpenAiOption(entry.getKey())) {
+                    options.put(entry.getKey(), entry.getValue());
+                }
             }
             if (!options.isEmpty()) {
                 root.putAll(options);
@@ -164,6 +167,34 @@ public final class OpenAiProvider implements LlmProvider {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to serialise OpenAI request body", e);
         }
+    }
+
+    static String resolveModel(String model) {
+        if (model == null
+                || model.isBlank()
+                || "default".equalsIgnoreCase(model.trim())
+                || model.trim().startsWith("shree-")
+                || model.trim().startsWith("gemini")) {
+            String prop = System.getProperty("shree.llm.openai.model");
+            if (prop != null && !prop.isBlank()) {
+                return prop.trim();
+            }
+            String env = System.getenv("SHREE_LLM_OPENAI_MODEL");
+            if (env != null && !env.isBlank()) {
+                return env.trim();
+            }
+            return "gpt-4o-mini";
+        }
+        return model.trim();
+    }
+
+    private static boolean isAllowedOpenAiOption(String key) {
+        if (key == null) return false;
+        return switch (key) {
+            case "top_p", "n", "stop", "presence_penalty", "frequency_penalty",
+                    "seed", "user", "response_format", "reasoning_effort" -> true;
+            default -> false;
+        };
     }
 
     /**

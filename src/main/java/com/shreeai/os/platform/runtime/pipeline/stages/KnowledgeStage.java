@@ -215,6 +215,7 @@ public final class KnowledgeStage implements ExecutionStage {
                 }
 
                 if (!acquiredDocs.isEmpty()) {
+                    List<String> ingestionErrors = new ArrayList<>();
                     for (KnowledgeDocument doc : acquiredDocs) {
                         for (KnowledgeDocumentChunk chunk : doc.chunks()) {
                             String chunkHeading = chunk.metadata() != null && !chunk.metadata().section().isBlank()
@@ -236,8 +237,13 @@ public final class KnowledgeStage implements ExecutionStage {
                                         meta.put("chunkIndex", chunk.metadata().chunkIndex());
                                     }
                                     knowledgeIngestionService.ingest(chunkHeading, chunkContent, meta);
-                                } catch (Exception ignored) {
-                                    // Ingestion failure isolation
+                                } catch (Exception ingestionEx) {
+                                    String err = "Ingestion failed for chunk '" + chunkHeading + "': "
+                                            + (ingestionEx.getMessage() != null
+                                                    ? ingestionEx.getMessage()
+                                                    : ingestionEx.getClass().getSimpleName());
+                                    ingestionErrors.add(err);
+                                    state.addMessage(err);
                                 }
                             }
 
@@ -264,6 +270,9 @@ public final class KnowledgeStage implements ExecutionStage {
                             );
                             allKnowledge.add(node);
                         }
+                    }
+                    if (!ingestionErrors.isEmpty()) {
+                        state.addMetadata("knowledgeIngestionErrors", List.copyOf(ingestionErrors));
                     }
                 }
             }

@@ -6,6 +6,41 @@ This project follows **Semantic Versioning** for stable releases. Current releas
 
 ---
 
+## [1.1.0] - 2026-11-27
+
+Full-stack completion, security hardening, and competitor-parity release across Developer Intelligence, JVM Runtime & Router, Hybrid RAG, and Web Control Plane.
+
+### Added
+- **Unified Web & Developer REST Controllers**: Added `PlaygroundController` (`/api/playground/*` including `/stream` and `/chat/stream` SSE) and `DeveloperController` (`/api/developer/*` with real `PatchDiff`, `CompileReport`, `RollbackPlan`, and `POST /review/{id}/rollback/execute`).
+- **Apache PDFBox & Overlapping Chunker**: Implemented deterministic page-by-page PDF extraction in `PdfDocumentParser` (`pdfbox 3.0.4`) and `SlidingWindowChunker` (`180`-word windows, `35`-word overlap) in `DefaultDocumentIngestionEngine`.
+- **Hybrid RAG Reranking**: Added exact-phrase and bigram proximity reranking in `KnowledgeRankingService`, plus BFS graph traversal, entity relationship retrieval, concept search/extraction, and content classification in `DefaultKnowledgeService`.
+- **Runtime Resilience & Tool Calling**: Added `LlmRouter` per-provider circuit breaker and latency/token telemetry, `AnthropicProvider` (`ProviderType.ANTHROPIC`), and `ToolCallingAgent` with JSON auto-repair/retry and infinite-loop guard.
+- **Enterprise API & Tool Security**: Added `ShreeApiSecurityFilter` (constant-time API key auth, allowlist CORS, sliding-window rate limiter, security headers), `FileSystemTool` sandbox root, and `TerminalTool` chained destructive-command blocking + `30s` timeout.
+- **Chief & Execution Lifecycle**: Completed `DefaultChiefService` tracking/health (`ChiefMetrics`), `DefaultExecutionService` cancellation tracking, and `DiscoveryValidator` metadata validation.
+- **Verification**: 2,824 deterministic tests passing (`0` failures), live Ollama (`llama3.2:1b`) E2E passing, and live Next.js + Spring Boot SSE browser verification passing with zero console errors.
+
+---
+
+## [1.0.7-developer-preview] - 2026-11-26
+
+Runtime wiring hardening, fail-closed capability closure, grounded streaming, and deterministic CI stabilization release.
+
+### Added
+- **`ShreeAI` `AutoCloseable` Support**: Implemented `AutoCloseable.close()` on `ShreeAI` delegating cleanly to `runtime.stop()` so `try-with-resources` and `shree.close()` work out-of-the-box.
+- **ONNX Degradation Observability**: Added `isDegraded()` and `degradationReason()` on `OnnxEmbeddingProvider` and verified real 384-dim `all-MiniLM-L6-v2` semantic inference.
+- **GitHub Actions CI**: Added `.github/workflows/ci.yml` for automated JDK 21 test execution on push/PR.
+- **Runtime Wiring Verification Suites**: Added `RuntimeWiringStep2VerificationTest`, `RuntimeWiringStep2Part2VerificationTest`, and `RuntimeWiringStep2Part3VerificationTest` (2,807 total tests passing).
+
+### Fixed
+- **Builder `apiKey()` Wiring**: Wired `ShreeAI.builder().apiKey(...)` through `ByokSettingsService` into `DefaultRuntimeService.rebuildLlmRouter()` so programmatic API keys activate `OpenAI` / `Gemini` providers immediately without requiring env vars.
+- **Fail-Closed `graphPermissionManager()` Closure**: Closed fail-open gap on unmapped high-risk capabilities (`TOOLS`, `MODELS`, `AGENTS`) in `DefaultRuntimeService.graphPermissionManager()` so they strictly return `PermissionDecision.DENY`.
+- **Grounded Streaming (`chatStream` / `streamText`)**: Routed `DefaultRuntimeService.streamText()` through the cognitive pipeline, `EvidenceAgent`, `VerificationAgent`, and `NaturalResponseAgent.buildStreamingRequest(...)` so streaming enforces RAG grounding and prompt-injection guardrails.
+- **General Assistance Mode & Model Config**: Updated `NaturalResponseAgent` to serve direct general-assistance answers via configured LLM providers when KB evidence is empty (falling back to the deterministic template only when no live LLM is available), and to respect `shree.llm.model`.
+- **Knowledge Ingestion Error Surfacing**: Replaced silent exception swallowing in `KnowledgeStage` with explicit `knowledgeIngestionErrors` metadata and state messages.
+- **Sub-App Dependency Alignment & Surefire Speedup**: Aligned `application/shree-playground/pom.xml` (Spring Boot `4.0.2`, `onnxruntime 1.29.0`, `tokenizers 0.36.0`) and `shree-developer-intelligence/pom.xml` to `1.0.7-developer-preview`; configured deterministic `shree.llm.chain=in-memory` default in Surefire (~4.7x faster full test sweep).
+
+---
+
 ## [1.0.6-developer-preview] - 2026-09-20
 
 Hardened enterprise developer preview release featuring Phase 5 static analysis remediation, fail-closed authorization, robust multi-provider LLM failover with exponential backoff retries, and comprehensive adversarial verification.
@@ -91,6 +126,7 @@ Initial public developer preview of **Shree AI OS**, an in-process deterministic
 
 | Version | Status | Release Date | Notes |
 |---|---|---|---|
-| `1.0.6-developer-preview` | **Active** | 2026-09-20 | Production-ready developer preview with Phase 5 static remediation |
+| `1.0.7-developer-preview` | **Active** | 2026-11-26 | Runtime wiring hardening, grounded streaming, AutoCloseable SDK, deterministic CI |
+| `1.0.6-developer-preview` | Deprecated | 2026-09-20 | Superseded by 1.0.7 |
 | `1.0.5-developer-preview` | Deprecated | 2026-09-12 | Superseded by 1.0.6 |
 | `1.0.0-developer-preview` | Deprecated | 2026-09-05 | Initial preview release |

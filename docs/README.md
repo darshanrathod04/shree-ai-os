@@ -6,7 +6,7 @@
 [![Java](https://img.shields.io/badge/Java-21%2B-blue.svg)](https://openjdk.org/projects/jdk/21/)
 [![License](https://img.shields.io/badge/License-Proprietary%20Evaluation-orange.svg)](LICENSE)
 
-> **Developer Preview v1.0.5** • Java 21 • Spring Boot • Maven Central
+> **Developer Preview v1.0.6** • Java 21 • Spring Boot • Maven Central
 
 ---
 
@@ -83,14 +83,14 @@ Gemini • OpenAI • Ollama • In-Memory
 <dependency>
     <groupId>io.github.darshanrathod04</groupId>
     <artifactId>shree-ai-os</artifactId>
-    <version>1.0.5-developer-preview</version>
+    <version>1.0.6-developer-preview</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```gradle
-implementation("io.github.darshanrathod04:shree-ai-os:1.0.5-developer-preview")
+implementation("io.github.darshanrathod04:shree-ai-os:1.0.6-developer-preview")
 ```
 
 ---
@@ -279,4 +279,4 @@ Shree AI OS combines deterministic software engineering with modern language mod
 
 **Distribution:** Maven Central
 
-**Status:** Developer Preview v1.0.5
+**Status:** Developer Preview v1.0.6

@@ -42,6 +42,8 @@ public class SdkDiagnosticsService {
     private volatile Kernel activeKernel = Kernel.KNOWLEDGE;
     private volatile long latencyMs = 0L;
     private final AtomicInteger knowledgeHits = new AtomicInteger(0);
+    private final AtomicInteger totalRequests = new AtomicInteger(0);
+    private final java.util.concurrent.atomic.AtomicLong totalEstimatedTokens = new java.util.concurrent.atomic.AtomicLong(0L);
     private volatile boolean memoryUsed = true;
     private volatile RoutingSource routingSource = RoutingSource.RUNTIME;
 
@@ -76,7 +78,26 @@ public class SdkDiagnosticsService {
         m.put("knowledgeHits", knowledgeHits.get());
         m.put("memoryUsed", memoryUsed);
         m.put("routingSource", routingSource.name());
+        m.put("totalRequests", totalRequests.get());
+        m.put("totalEstimatedTokens", totalEstimatedTokens.get());
         return m;
+    }
+
+    /**
+     * Records an LLM invocation for diagnostics telemetry.
+     */
+    public void recordLlmCall(String providerName, String modelName, long callLatencyMs, long estimatedTokens) {
+        if (providerName != null && !providerName.isBlank()) {
+            this.provider = providerName;
+        }
+        if (modelName != null && !modelName.isBlank()) {
+            this.model = modelName;
+        }
+        this.latencyMs = Math.max(0L, callLatencyMs);
+        this.totalRequests.incrementAndGet();
+        if (estimatedTokens > 0L) {
+            this.totalEstimatedTokens.addAndGet(estimatedTokens);
+        }
     }
 
     /**

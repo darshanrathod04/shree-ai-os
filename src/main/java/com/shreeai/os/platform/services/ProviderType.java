@@ -16,6 +16,7 @@ import java.util.Objects;
 public enum ProviderType {
     OPENAI,
     GEMINI,
+    ANTHROPIC,
     OLLAMA;
 
     /**

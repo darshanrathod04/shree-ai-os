@@ -132,6 +132,8 @@ public final class DefaultDocumentIngestionEngine implements DocumentIngestionEn
         return new IngestionResult(document, chunks.size(), totalCharacters(chunks), processingTime);
     }
 
+    private static final SlidingWindowChunker CHUNKER = new SlidingWindowChunker();
+
     /** Builds the ordered, deterministically identified chunk list. */
     private static List<KnowledgeDocumentChunk> buildChunks(String documentId,
                                                             String title,
@@ -144,11 +146,12 @@ public final class DefaultDocumentIngestionEngine implements DocumentIngestionEn
             if (section.content().isBlank()) {
                 continue;
             }
-            String content = section.content();
-            String chunkId = chunkIdFor(documentId, chunks.size(), content);
-            ChunkMetadata metadata = new ChunkMetadata(
-                    title, section.section(), language, chunks.size(), sourceId);
-            chunks.add(new KnowledgeDocumentChunk(chunkId, content, metadata));
+            for (String windowContent : CHUNKER.chunk(section.content())) {
+                String chunkId = chunkIdFor(documentId, chunks.size(), windowContent);
+                ChunkMetadata metadata = new ChunkMetadata(
+                        title, section.section(), language, chunks.size(), sourceId);
+                chunks.add(new KnowledgeDocumentChunk(chunkId, windowContent, metadata));
+            }
         }
         return List.copyOf(chunks);
     }

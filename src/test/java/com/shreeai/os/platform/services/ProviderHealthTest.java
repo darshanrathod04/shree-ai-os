@@ -22,9 +22,10 @@ public class ProviderHealthTest {
     @Test
     void health_returnsAllProviderSnapshots() {
         List<Map<String, Object>> report = healthService.health();
-        assertEquals(3, report.size());
+        assertEquals(ProviderType.values().length, report.size());
         assertTrue(report.stream().anyMatch(m -> "OPENAI".equals(m.get("provider"))));
         assertTrue(report.stream().anyMatch(m -> "GEMINI".equals(m.get("provider"))));
+        assertTrue(report.stream().anyMatch(m -> "ANTHROPIC".equals(m.get("provider"))));
         assertTrue(report.stream().anyMatch(m -> "OLLAMA".equals(m.get("provider"))));
     }
 

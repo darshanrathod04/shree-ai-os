@@ -1,6 +1,6 @@
 # Quickstart Developer Guide — 5-Minute Tutorial
 
-> **Goal:** Get a production-grade Shree AI OS application running in under 5 minutes. Every code snippet below is verified against the `1.0.6-developer-preview` release.
+> **Goal:** Get a production-grade Shree AI OS application running in under 5 minutes. Every code snippet below is verified against the `1.0.7-developer-preview` release.
 
 ---
 
@@ -21,7 +21,7 @@ Add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>io.github.darshanrathod04</groupId>
     <artifactId>shree-ai-os</artifactId>
-    <version>1.0.6-developer-preview</version>
+    <version>1.0.7-developer-preview</version>
 </dependency>
 ```
 
@@ -244,5 +244,5 @@ public class ShreeConfiguration {
 
 Platform: **Shree AI OS**  
 Document: **Quickstart Developer Guide**  
-Version: **1.0.6-developer-preview**  
+Version: **1.0.7-developer-preview**  
 Author: **Darshan Rathod**

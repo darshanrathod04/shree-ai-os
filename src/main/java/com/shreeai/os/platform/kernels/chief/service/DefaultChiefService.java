@@ -1,12 +1,18 @@
 package com.shreeai.os.platform.kernels.chief.service;
 
+import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.shreeai.os.platform.kernels.chief.error.ChiefError;
 import com.shreeai.os.platform.kernels.chief.api.ChiefService;
 import com.shreeai.os.platform.kernels.chief.error.ChiefErrorCode;
 import com.shreeai.os.platform.kernels.chief.error.ChiefException;
 import com.shreeai.os.platform.kernels.chief.error.ChiefValidationException;
+import com.shreeai.os.platform.kernels.chief.model.ChiefId;
 import com.shreeai.os.platform.kernels.chief.model.ChiefRequest;
 import com.shreeai.os.platform.kernels.chief.model.ChiefResponse;
 import com.shreeai.os.platform.kernels.chief.model.ChiefMetrics;
@@ -48,6 +54,11 @@ public final class DefaultChiefService implements ChiefService {
 
     private final ChiefValidator validator;
     private final ChiefProcessingEngine processingEngine;
+    private final Map<String, ChiefResponse> orchestrationHistory = new ConcurrentHashMap<>();
+    private final Set<String> cancelledRequests = ConcurrentHashMap.newKeySet();
+    private final AtomicInteger activeOrchestrations = new AtomicInteger(0);
+    private final AtomicInteger completedOrchestrations = new AtomicInteger(0);
+    private final AtomicInteger failedOrchestrations = new AtomicInteger(0);
 
     /**
      * Constructs a {@code DefaultChiefService} with the specified dependencies.
@@ -82,74 +93,90 @@ public final class DefaultChiefService implements ChiefService {
             );
         }
 
-        // Delegate to processing engine
+        // Delegate to processing engine with lifecycle tracking
+        String requestId = request.chiefId().value();
+        activeOrchestrations.incrementAndGet();
         try {
-            return processingEngine.process(request);
+            ChiefResponse response = processingEngine.process(request);
+            orchestrationHistory.put(requestId, response);
+            completedOrchestrations.incrementAndGet();
+            return response;
         } catch (ChiefException e) {
+            failedOrchestrations.incrementAndGet();
             throw e;
         } catch (RuntimeException e) {
+            failedOrchestrations.incrementAndGet();
             throw new ChiefException(
                     new ChiefError(
                             ChiefErrorCode.ORCHESTRATION_ERROR,
                             "Unexpected orchestration error: " + e.getMessage(),
                             "DefaultChiefService",
                             "submitOrchestration",
-                            java.util.Map.of(),
-                            java.time.Instant.now()
+                            Map.of(),
+                            Instant.now()
                     ),
                     e
             );
+        } finally {
+            activeOrchestrations.decrementAndGet();
         }
     }
 
     @Override
     public ChiefResponse getOrchestrationStatus(String requestId) {
         Objects.requireNonNull(requestId, "RequestId must not be null");
-
-        // This is a placeholder implementation
-        // Actual implementation will be provided in future Engineering Orders
-        throw new ChiefException(
-                new ChiefError(
-                        ChiefErrorCode.ORCHESTRATION_ERROR,
-                        "getOrchestrationStatus not implemented",
-                        "DefaultChiefService",
-                        "getOrchestrationStatus",
-                        java.util.Map.of("requestId", requestId),
-                        java.time.Instant.now()
-                )
-        );
+        if (requestId.isBlank()) {
+            throw new ChiefValidationException(
+                    new ChiefError(
+                            ChiefErrorCode.VALIDATION_ERROR,
+                            "RequestId must not be blank",
+                            "DefaultChiefService",
+                            "getOrchestrationStatus",
+                            Map.of("requestId", requestId),
+                            Instant.now()
+                    )
+            );
+        }
+        ChiefResponse response = orchestrationHistory.get(requestId);
+        if (response == null) {
+            throw new ChiefException(
+                    new ChiefError(
+                            ChiefErrorCode.ORCHESTRATION_ERROR,
+                            "No orchestration found for requestId: " + requestId,
+                            "DefaultChiefService",
+                            "getOrchestrationStatus",
+                            Map.of("requestId", requestId, "cancelled", cancelledRequests.contains(requestId)),
+                            Instant.now()
+                    )
+            );
+        }
+        return response;
     }
 
     @Override
     public boolean cancelOrchestration(String requestId) {
         Objects.requireNonNull(requestId, "RequestId must not be null");
-
-        // This is a placeholder implementation
-        // Actual implementation will be provided in future Engineering Orders
-        throw new ChiefException(
-                new ChiefError(
-                        ChiefErrorCode.ORCHESTRATION_ERROR,
-                        "cancelOrchestration not implemented",
-                        "DefaultChiefService",
-                        "cancelOrchestration",
-                        java.util.Map.of("requestId", requestId),
-                        java.time.Instant.now()
-                )
-        );
+        if (requestId.isBlank()) {
+            return false;
+        }
+        boolean known = orchestrationHistory.containsKey(requestId);
+        cancelledRequests.add(requestId);
+        return known;
     }
 
     @Override
     public ChiefMetrics getChiefHealth() {
-        // This is a placeholder implementation
-        // Actual implementation will be provided in future Engineering Orders
-        throw new ChiefException(
-                new ChiefError(
-                        ChiefErrorCode.MONITORING_ERROR,
-                        "getChiefHealth not implemented",
-                        "DefaultChiefService",
-                        "getChiefHealth",
-                        java.util.Map.of(),
-                        java.time.Instant.now()
+        return new ChiefMetrics(
+                new ChiefId("chief-service"),
+                activeOrchestrations.get(),
+                completedOrchestrations.get(),
+                failedOrchestrations.get(),
+                0,
+                Instant.now(),
+                Map.of(
+                        "status", "HEALTHY",
+                        "trackedOrchestrations", orchestrationHistory.size(),
+                        "cancelledOrchestrations", cancelledRequests.size()
                 )
         );
     }

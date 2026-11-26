@@ -3,6 +3,8 @@ package com.shreeai.os.platform.kernels.execution.service;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.shreeai.os.platform.kernels.execution.api.ExecutionService;
 import com.shreeai.os.platform.kernels.execution.engine.ExecutionProcessingEngine;
@@ -61,6 +63,7 @@ public final class DefaultExecutionService implements ExecutionService {
 
     private final ExecutionValidator validator;
     private final ExecutionProcessingEngine processingEngine;
+    private final Set<String> cancelledExecutions = ConcurrentHashMap.newKeySet();
 
     /**
      * Constructs a {@code DefaultExecutionService} with the specified dependencies.
@@ -242,11 +245,17 @@ public final class DefaultExecutionService implements ExecutionService {
         if (executionId == null || executionId.trim().isEmpty()) {
             throw new IllegalArgumentException("cancelExecution executionId must not be null or empty");
         }
+        return cancelledExecutions.add(executionId.trim());
+    }
 
-        // Note: Cancellation is not part of the ExecutionProcessingEngine interface
-        // This will be implemented in EXEC-106 or handled by the Service layer
-        // For now, return false as a placeholder
-        return false;
+    /**
+     * Returns whether cancellation has been requested for the given execution identifier.
+     *
+     * @param executionId the execution identifier
+     * @return {@code true} if cancellation was requested
+     */
+    public boolean isCancelled(String executionId) {
+        return executionId != null && cancelledExecutions.contains(executionId.trim());
     }
 
     /**

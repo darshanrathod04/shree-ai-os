@@ -327,13 +327,37 @@ public class DefaultDocumentIngestionEngineTest {
     }
 
     @Test
-    @DisplayName("Test 18: PDF stub fails loudly instead of silently")
-    void testPdfStubRejectedLoudly() {
+    @DisplayName("Test 18: PDF parser extracts real PDF pages and rejects corrupt bytes")
+    void testPdfExtractionAndValidation() throws Exception {
         String pdfSourceId = registry.register(KnowledgeSourceType.PDF,
                 "Spec PDF", "docs/spec.pdf", null, Map.of()).sourceId();
-        UnsupportedOperationException ex = assertThrows(UnsupportedOperationException.class,
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> engine.ingest(pdfSourceId, "Spec PDF", ParserType.PDF, "raw pdf bytes"));
         assertTrue(ex.getMessage().contains("PDF"));
+
+        byte[] pdfBytes;
+        try (var doc = new org.apache.pdfbox.pdmodel.PDDocument();
+             var out = new java.io.ByteArrayOutputStream()) {
+            var page = new org.apache.pdfbox.pdmodel.PDPage();
+            doc.addPage(page);
+            try (var cs = new org.apache.pdfbox.pdmodel.PDPageContentStream(doc, page)) {
+                cs.beginText();
+                cs.setFont(new org.apache.pdfbox.pdmodel.font.PDType1Font(
+                        org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName.HELVETICA), 12);
+                cs.newLineAtOffset(50, 700);
+                cs.showText("Shree AI OS PDFBox Verification");
+                cs.endText();
+            }
+            doc.save(out);
+            pdfBytes = out.toByteArray();
+        }
+
+        String base64Pdf = java.util.Base64.getEncoder().encodeToString(pdfBytes);
+        IngestionResult result = engine.ingest(pdfSourceId, "Spec PDF", ParserType.PDF, base64Pdf);
+        assertEquals(1, result.totalChunks());
+        assertEquals("Page 1", result.document().chunks().get(0).metadata().section());
+        assertTrue(result.document().chunks().get(0).content().contains("Shree AI OS PDFBox Verification"));
     }
 
     @Test

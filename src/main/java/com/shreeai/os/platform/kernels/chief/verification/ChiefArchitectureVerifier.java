@@ -108,14 +108,16 @@ public final class ChiefArchitectureVerifier {
     }
 
     private static void verifyDependencyDirection(List<String> violations) {
-        // Verify that dependencies flow in the correct direction
-        // This is a structural check only
-        
-        // Engine should not depend on service
-        // Service should not depend on validation
-        // etc.
-        
-        // This is a placeholder implementation
-        // Actual dependency verification will be implemented in future Engineering Orders
+        String base = "com.shreeai.os.platform.kernels.chief";
+        try {
+            Class<?> engineClass = Class.forName(base + ".engine.ChiefProcessingEngine");
+            for (var field : engineClass.getDeclaredFields()) {
+                if (field.getType().getName().startsWith(base + ".service")) {
+                    violations.add("Engine must not depend on service layer: " + field.getType().getName());
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            violations.add("Missing ChiefProcessingEngine in engine package");
+        }
     }
 }

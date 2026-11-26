@@ -6,7 +6,8 @@ Shree AI OS is currently distributed as a **Developer Preview**. Security update
 
 | Version | Supported | Status |
 |---|---|---|
-| `1.0.6-developer-preview` | ✅ Yes | **Active (Current Release)** |
+| `1.0.7-developer-preview` | ✅ Yes | **Active (Current Release)** |
+| `1.0.6-developer-preview` | ❌ No | Deprecated |
 | `1.0.5-developer-preview` | ❌ No | Deprecated |
 | Earlier preview releases | ❌ No | Discontinued |
 

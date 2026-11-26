@@ -180,7 +180,22 @@ public final class DiscoveryValidator {
             throw new NullPointerException("CapabilityId must not be null");
         }
 
-        // Method stub - metadata validation logic depends on implementation
-        return ValidationResult.builder().build();
+        ValidationResult.Builder builder = ValidationResult.builder();
+        if (metadata == null) {
+            return builder.build();
+        }
+        if (metadata instanceof java.util.Map<?, ?> map) {
+            for (java.util.Map.Entry<?, ?> entry : map.entrySet()) {
+                if (entry.getKey() == null || entry.getKey().toString().isBlank()) {
+                    builder.addError("Capability metadata contains a null or blank key for " + capabilityId.value());
+                }
+                if (entry.getValue() == null) {
+                    builder.addError("Capability metadata contains a null value for key '" + entry.getKey() + "'");
+                }
+            }
+        } else if (metadata instanceof String text && text.isBlank()) {
+            builder.addError("Capability metadata string must not be blank for " + capabilityId.value());
+        }
+        return builder.build();
     }
 }

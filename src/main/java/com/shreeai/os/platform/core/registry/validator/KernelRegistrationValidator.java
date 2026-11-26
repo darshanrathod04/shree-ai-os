@@ -124,14 +124,8 @@ public final class KernelRegistrationValidator {
     }
 
     /**
-     * Validates that the given {@link KernelId} is not already registered.
-     *
-     * <p>This is a method stub for duplicate KernelId detection. The actual
-     * lookup mechanism depends on the registry implementation and is not
-     * implemented in this validation layer.</p>
-     *
-     * <p>When the registry implementation is available, callers should pass
-     * the set of currently registered kernel identifiers to this method.</p>
+     * Validates that the given {@link KernelId} is not already registered
+     * within {@code registeredIds}.
      *
      * @param kernelId       the kernel identifier to check for duplicates (must not be null)
      * @param registeredIds  the collection of currently registered kernel identifiers

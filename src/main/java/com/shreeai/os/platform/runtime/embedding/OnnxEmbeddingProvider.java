@@ -44,6 +44,7 @@ public class OnnxEmbeddingProvider implements EmbeddingProvider {
     // Set once ONNX is known to be unavailable; later embeds degrade without
     // retrying the (already failed) native library load.
     private volatile boolean degraded;
+    private volatile String degradationReason;
 
     public OnnxEmbeddingProvider() {
         // Intentionally empty. OrtEnvironment must never be initialized during
@@ -118,7 +119,25 @@ public class OnnxEmbeddingProvider implements EmbeddingProvider {
 
     private void markDegraded(String message, Throwable cause) {
         degraded = true;
+        String detail = cause != null && cause.getMessage() != null ? ": " + cause.getMessage() : "";
+        degradationReason = message + detail;
         LOG.log(Level.WARNING, message, cause);
+    }
+
+    /**
+     * Returns {@code true} if ONNX runtime or model loading failed and this
+     * provider fell back to deterministic hash-based vectors.
+     */
+    public boolean isDegraded() {
+        return degraded;
+    }
+
+    /**
+     * Returns the reason for degradation when {@link #isDegraded()} is {@code true},
+     * or {@code null} when ONNX is healthy/not yet degraded.
+     */
+    public String degradationReason() {
+        return degradationReason;
     }
 
     /**
