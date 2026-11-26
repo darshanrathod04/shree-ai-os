@@ -616,9 +616,48 @@ public final class DefaultKnowledgeService implements
     @Override
     public Object[] traverseGraph(String startEntityId, String[] relationshipTypes) {
         Objects.requireNonNull(relationshipTypes, "relationshipTypes must not be null");
-        parseKnowledgeId(startEntityId);
-        // TODO: Implement graph traversal
-        return new Object[0];
+        KnowledgeId startId = parseKnowledgeId(startEntityId);
+        KnowledgeGraph graph = graphRef.get();
+
+        java.util.Set<String> allowedTypes = java.util.Arrays.stream(relationshipTypes)
+                .filter(Objects::nonNull)
+                .map(s -> s.trim().toUpperCase(java.util.Locale.ROOT))
+                .filter(s -> !s.isEmpty())
+                .collect(java.util.stream.Collectors.toSet());
+
+        Map<KnowledgeId, KnowledgeNode> nodesById = new LinkedHashMap<>();
+        for (KnowledgeNode node : graph.getNodes()) {
+            nodesById.put(node.getId(), node);
+        }
+
+        java.util.Set<KnowledgeId> visited = new java.util.LinkedHashSet<>();
+        java.util.Queue<KnowledgeId> queue = new java.util.ArrayDeque<>();
+        visited.add(startId);
+        queue.add(startId);
+
+        List<KnowledgeNode> traversed = new ArrayList<>();
+        while (!queue.isEmpty()) {
+            KnowledgeId current = queue.poll();
+            for (KnowledgeRelationship rel : graph.getRelationships()) {
+                if (!rel.getSourceNodeId().equals(current)) {
+                    continue;
+                }
+                if (!allowedTypes.isEmpty()
+                        && !allowedTypes.contains(rel.getType().name().toUpperCase(java.util.Locale.ROOT))
+                        && !allowedTypes.contains(rel.getLabel().trim().toUpperCase(java.util.Locale.ROOT))) {
+                    continue;
+                }
+                KnowledgeId targetId = rel.getTargetNodeId();
+                if (visited.add(targetId)) {
+                    queue.add(targetId);
+                    KnowledgeNode targetNode = nodesById.get(targetId);
+                    if (targetNode != null) {
+                        traversed.add(targetNode);
+                    }
+                }
+            }
+        }
+        return traversed.toArray();
     }
 
     /**
@@ -630,9 +669,10 @@ public final class DefaultKnowledgeService implements
      */
     @Override
     public Object[] getEntityRelationships(String entityId) {
-        parseKnowledgeId(entityId);
-        // TODO: Implement relationship retrieval
-        return new Object[0];
+        KnowledgeId id = parseKnowledgeId(entityId);
+        return graphRef.get().getRelationships().stream()
+                .filter(rel -> rel.getSourceNodeId().equals(id) || rel.getTargetNodeId().equals(id))
+                .toArray();
     }
 
     // ========================================================================
@@ -694,8 +734,21 @@ public final class DefaultKnowledgeService implements
         if (concept == null || concept.isBlank()) {
             throw createValidationException("concept must not be null or blank");
         }
-        // TODO: Implement concept search
-        return List.of();
+        String normalized = QueryNormalizer.normalize(concept);
+        String lower = normalized.toLowerCase(java.util.Locale.ROOT);
+        KnowledgeGraph graph = graphRef.get();
+
+        List<KnowledgeNode> directMatches = graph.getNodes().stream()
+                .filter(node -> node.getLabel().toLowerCase(java.util.Locale.ROOT).contains(lower)
+                        || node.getDescription().toLowerCase(java.util.Locale.ROOT).contains(lower)
+                        || String.valueOf(node.getMetadata().getOrDefault("concepts", ""))
+                                .toLowerCase(java.util.Locale.ROOT).contains(lower))
+                .toList();
+
+        if (!directMatches.isEmpty()) {
+            return List.copyOf(directMatches);
+        }
+        return List.copyOf(searchEngine.semanticSearch(graph, normalized));
     }
 
     /**
@@ -776,8 +829,24 @@ public final class DefaultKnowledgeService implements
         if (content == null || content.isBlank()) {
             throw createValidationException("content must not be null or blank");
         }
-        // TODO: Implement concept extraction
-        return new Object[0];
+        java.util.Set<String> concepts = new java.util.LinkedHashSet<>();
+        java.util.regex.Matcher phraseMatcher = java.util.regex.Pattern
+                .compile("\\b([A-Z][A-Za-z0-9_-]{2,}(?:\\s+[A-Z][A-Za-z0-9_-]{2,}){0,2})\\b")
+                .matcher(content);
+        while (phraseMatcher.find()) {
+            String candidate = phraseMatcher.group(1).trim();
+            if (!isCommonStopword(candidate)) {
+                concepts.add(candidate);
+            }
+        }
+        if (concepts.isEmpty()) {
+            for (String token : content.split("[^A-Za-z0-9_-]+")) {
+                if (token.length() >= 4 && !isCommonStopword(token)) {
+                    concepts.add(token);
+                }
+            }
+        }
+        return concepts.toArray(new String[0]);
     }
 
     /**
@@ -792,8 +861,26 @@ public final class DefaultKnowledgeService implements
         if (content == null || content.isBlank()) {
             throw createValidationException("content must not be null or blank");
         }
-        // TODO: Implement structured knowledge generation
-        return new Object[0];
+        Object[] concepts = extractConcepts(content);
+        Object[] relationships = extractRelationships(content);
+        String[] categories = classifyContent(content);
+
+        List<Map<String, Object>> structured = new ArrayList<>();
+        String[] paragraphs = content.split("\\R\\s*\\R");
+        for (int i = 0; i < paragraphs.length; i++) {
+            String para = paragraphs[i].trim();
+            if (para.isEmpty()) {
+                continue;
+            }
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("sectionIndex", i);
+            entry.put("text", para);
+            entry.put("concepts", List.of(concepts));
+            entry.put("relationships", List.of(relationships));
+            entry.put("categories", List.of(categories));
+            structured.add(Map.copyOf(entry));
+        }
+        return structured.toArray();
     }
 
     /**
@@ -808,8 +895,23 @@ public final class DefaultKnowledgeService implements
         if (content == null || content.isBlank()) {
             throw createValidationException("content must not be null or blank");
         }
-        // TODO: Implement relationship extraction
-        return new Object[0];
+        List<Map<String, String>> extracted = new ArrayList<>();
+        java.util.regex.Pattern relPattern = java.util.regex.Pattern.compile(
+                "\\b([A-Za-z0-9_-]+(?:\\s+[A-Za-z0-9_-]+)?)\\s+"
+                        + "(uses|combines|implements|extends|depends on|connects to|contains|produces|validates)\\s+"
+                        + "([A-Za-z0-9_-]+(?:\\s+[A-Za-z0-9_-]+)?)\\b",
+                java.util.regex.Pattern.CASE_INSENSITIVE);
+        for (String sentence : content.split("[.!?\\r\\n]+")) {
+            java.util.regex.Matcher m = relPattern.matcher(sentence.trim());
+            while (m.find()) {
+                extracted.add(Map.of(
+                        "source", m.group(1).trim(),
+                        "relationship", m.group(2).trim().toLowerCase(java.util.Locale.ROOT),
+                        "target", m.group(3).trim()
+                ));
+            }
+        }
+        return extracted.toArray();
     }
 
     /**
@@ -824,8 +926,43 @@ public final class DefaultKnowledgeService implements
         if (content == null || content.isBlank()) {
             throw createValidationException("content must not be null or blank");
         }
-        // TODO: Implement content classification
-        return new String[0];
+        String lower = content.toLowerCase(java.util.Locale.ROOT);
+        java.util.Set<String> categories = new java.util.LinkedHashSet<>();
+        if (containsAny(lower, "security", "auth", "permission", "token", "encrypt", "fail-closed")) {
+            categories.add("security");
+        }
+        if (containsAny(lower, "vector", "embedding", "rag", "graph", "knowledge", "pgvector", "neo4j")) {
+            categories.add("knowledge-rag");
+        }
+        if (containsAny(lower, "kernel", "runtime", "orchestrator", "pipeline", "architecture")) {
+            categories.add("architecture");
+        }
+        if (containsAny(lower, "database", "sql", "postgres", "sqlite", "redis", "storage")) {
+            categories.add("storage");
+        }
+        if (containsAny(lower, "plan", "workflow", "task", "agent", "execution")) {
+            categories.add("orchestration");
+        }
+        if (categories.isEmpty()) {
+            categories.add("general");
+        }
+        return categories.toArray(new String[0]);
+    }
+
+    private static boolean isCommonStopword(String token) {
+        return switch (token.toLowerCase(java.util.Locale.ROOT)) {
+            case "the", "and", "for", "with", "that", "this", "from", "into", "using", "when", "where" -> true;
+            default -> false;
+        };
+    }
+
+    private static boolean containsAny(String text, String... terms) {
+        for (String term : terms) {
+            if (text.contains(term)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ========================================================================

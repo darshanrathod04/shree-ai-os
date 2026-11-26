@@ -111,6 +111,13 @@
             <version>5.28.15</version>
         </dependency>
 
+        <!-- Apache PDFBox (deterministic PDF text extraction for K2 ingestion) -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.4</version>
+        </dependency>
+
 
         <!-- Lombok (optional but useful) -->
         <dependency>
