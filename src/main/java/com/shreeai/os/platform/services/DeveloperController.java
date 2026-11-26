@@ -1,5 +1,8 @@
 package com.shreeai.os.platform.services;
 
+import com.shreeai.os.platform.kernels.developer.patch.model.DeveloperExecutionResult;
+import com.shreeai.os.platform.kernels.developer.patch.model.PatchDiff;
+import com.shreeai.os.platform.kernels.developer.patch.model.RollbackPlan;
 import com.shreeai.os.platform.kernels.project.model.ProjectClass;
 import com.shreeai.os.platform.kernels.project.model.ProjectEndpoint;
 import com.shreeai.os.platform.kernels.project.model.ProjectImpact;
@@ -40,6 +43,7 @@ public class DeveloperController {
     private final ShreeAI ai;
     private final Map<String, Map<String, Object>> sessions = new ConcurrentHashMap<>();
     private final Map<String, ProjectSummary> summaries = new ConcurrentHashMap<>();
+    private final Map<String, DeveloperExecutionResult> executionResults = new ConcurrentHashMap<>();
     private final Map<String, Map<String, Object>> executions = new ConcurrentHashMap<>();
 
     public DeveloperController(ShreeAI ai) {
@@ -173,28 +177,62 @@ public class DeveloperController {
 
     @PostMapping("/workflow/build")
     public ResponseEntity<?> workflowBuild(@RequestBody Map<String, Object> body) {
-        String projectPath = str(body, "projectPath");
+        String rawPath = str(body, "projectPath");
         String instruction = str(body, "instruction");
-        var result = ai.project().build(projectPath, instruction);
-        return ResponseEntity.ok(result);
+        if (rawPath.isBlank() || instruction.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "projectPath and instruction are required"));
+        }
+        try {
+            Path validatedPath = resolveValidatedWorkspacePath(rawPath);
+            var result = ai.project().build(validatedPath.toString(), instruction);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/workflow/apply")
     public ResponseEntity<?> workflowApply(@RequestBody Map<String, Object> body) {
-        String projectPath = str(body, "projectPath");
+        String rawPath = str(body, "projectPath");
         String instruction = str(body, "instruction");
-        var result = ai.project().apply(projectPath, instruction);
-        String execId = "exec-" + UUID.randomUUID().toString().substring(0, 8);
+        if (rawPath.isBlank() || instruction.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "projectPath and instruction are required"));
+        }
+        try {
+            Path validatedPath = resolveValidatedWorkspacePath(rawPath);
+            DeveloperExecutionResult result = ai.project().apply(validatedPath.toString(), instruction);
+            return ResponseEntity.ok(recordExecution(result));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Records a {@link DeveloperExecutionResult} and maps it to the REST payload
+     * expected by {@code shree-platform-web}.
+     */
+    public Map<String, Object> recordExecution(DeveloperExecutionResult result) {
+        String execId = result.executionId();
+        executionResults.put(execId, result);
+
+        List<Map<String, Object>> diffs = mapDiffs(result.appliedDiffs());
+        Map<String, Object> rollback = mapRollback(execId, result.rollbackPlan());
+        Map<String, Object> compile = mapCompile(result.compileReport());
+
         Map<String, Object> record = new LinkedHashMap<>();
         record.put("executionId", execId);
-        record.put("status", "SUCCESS");
-        record.put("appliedCount", 1);
-        record.put("totalPatches", 1);
-        record.put("confidence", 0.9);
-        record.put("executedAt", Instant.now().toString());
-        record.put("result", result);
+        record.put("status", result.status().name());
+        record.put("isSuccess", result.isSuccess());
+        record.put("confidence", result.confidence());
+        record.put("appliedCount", result.appliedCount());
+        record.put("totalPatches", result.appliedDiffs().size());
+        record.put("riskLevel", result.appliedDiffs().isEmpty() ? "NONE" : "LOW");
+        record.put("executedAt", result.executedAt().toString());
+        record.put("compile", compile);
+        record.put("rollback", rollback);
+        record.put("diffs", diffs);
         executions.put(execId, record);
-        return ResponseEntity.ok(record);
+        return record;
     }
 
     @GetMapping("/review/executions")
@@ -204,32 +242,152 @@ public class DeveloperController {
 
     @GetMapping("/review/{executionId}/diffs")
     public ResponseEntity<?> getDiffs(@PathVariable String executionId) {
-        Map<String, Object> exec = executions.get(executionId);
-        if (exec == null) {
+        DeveloperExecutionResult result = executionResults.get(executionId);
+        if (result == null) {
             return ResponseEntity.notFound().build();
         }
+        List<Map<String, Object>> diffs = mapDiffs(result.appliedDiffs());
         return ResponseEntity.ok(Map.of(
                 "executionId", executionId,
-                "totalDiffs", 0,
-                "diffs", List.of()
+                "totalDiffs", diffs.size(),
+                "diffs", diffs
         ));
+    }
+
+    @GetMapping("/review/{executionId}/diff/{filePath}")
+    public ResponseEntity<?> getDiff(@PathVariable String executionId, @PathVariable String filePath) {
+        DeveloperExecutionResult result = executionResults.get(executionId);
+        if (result == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return mapDiffs(result.appliedDiffs()).stream()
+                .filter(d -> filePath.equals(d.get("filePath")) || String.valueOf(d.get("filePath")).endsWith(filePath))
+                .findFirst()
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/review/{executionId}/rollback")
     public ResponseEntity<?> getRollback(@PathVariable String executionId) {
-        Map<String, Object> exec = executions.get(executionId);
-        if (exec == null) {
+        DeveloperExecutionResult result = executionResults.get(executionId);
+        if (result == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(Map.of(
+        return ResponseEntity.ok(mapRollback(executionId, result.rollbackPlan()));
+    }
+
+    @PostMapping("/review/{executionId}/rollback/execute")
+    public ResponseEntity<?> executeRollback(@PathVariable String executionId) {
+        DeveloperExecutionResult result = executionResults.get(executionId);
+        if (result == null || result.rollbackPlan() == null || result.rollbackPlan().isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        int restored = 0;
+        List<String> restoredFiles = new ArrayList<>();
+        try {
+            for (RollbackPlan.RollbackEntry entry : result.rollbackPlan().entries()) {
+                Path target = Path.of(entry.filePath()).toAbsolutePath().normalize();
+                boolean removeFile = entry.actions().stream()
+                        .anyMatch(a -> a.type() == RollbackPlan.UndoType.REMOVE_FILE);
+                if (removeFile) {
+                    if (Files.deleteIfExists(target)) {
+                        restored++;
+                        restoredFiles.add(entry.filePath());
+                    }
+                } else {
+                    if (target.getParent() != null) {
+                        Files.createDirectories(target.getParent());
+                    }
+                    Files.writeString(target, entry.originalContent());
+                    restored++;
+                    restoredFiles.add(entry.filePath());
+                }
+            }
+            return ResponseEntity.ok(Map.of(
+                    "executionId", executionId,
+                    "status", "ROLLED_BACK",
+                    "restoredCount", restored,
+                    "restoredFiles", restoredFiles
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    private static List<Map<String, Object>> mapDiffs(List<PatchDiff> diffs) {
+        List<Map<String, Object>> mapped = new ArrayList<>();
+        for (PatchDiff d : diffs) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("filePath", d.filePath());
+            item.put("status", d.status().name());
+            item.put("isSuccess", d.isSuccess());
+            item.put("linesChanged", d.linesChanged());
+            item.put("message", d.message());
+            item.put("appliedAt", d.appliedAt().toString());
+            item.put("before", d.before());
+            item.put("after", d.after());
+            mapped.add(item);
+        }
+        return mapped;
+    }
+
+    private static Map<String, Object> mapRollback(String executionId, RollbackPlan plan) {
+        if (plan == null) {
+            return Map.of(
+                    "executionId", executionId,
+                    "hasRollback", false,
+                    "planId", executionId,
+                    "fileCount", 0,
+                    "totalActions", 0,
+                    "isEmpty", true,
+                    "entries", List.of()
+            );
+        }
+        List<Map<String, Object>> entries = new ArrayList<>();
+        for (RollbackPlan.RollbackEntry entry : plan.entries()) {
+            List<Map<String, Object>> actions = new ArrayList<>();
+            for (RollbackPlan.UndoAction action : entry.actions()) {
+                actions.add(Map.of(
+                        "type", action.type().name(),
+                        "description", action.description(),
+                        "target", action.target()
+                ));
+            }
+            entries.add(Map.of(
+                    "filePath", entry.filePath(),
+                    "originalContent", entry.originalContent(),
+                    "actionCount", actions.size(),
+                    "actions", actions
+            ));
+        }
+        return Map.of(
                 "executionId", executionId,
-                "hasRollback", false,
-                "planId", executionId,
-                "fileCount", 0,
-                "totalActions", 0,
-                "isEmpty", true,
-                "entries", List.of()
-        ));
+                "hasRollback", !plan.isEmpty(),
+                "planId", plan.planId(),
+                "fileCount", plan.fileCount(),
+                "totalActions", plan.totalActions(),
+                "isEmpty", plan.isEmpty(),
+                "entries", entries
+        );
+    }
+
+    private static Map<String, Object> mapCompile(DeveloperExecutionResult.CompileReport report) {
+        if (report == null) {
+            return Map.of(
+                    "status", "SKIPPED",
+                    "filesCompiled", 0,
+                    "errors", 0,
+                    "warnings", 0,
+                    "diagnostics", List.of()
+            );
+        }
+        return Map.of(
+                "status", report.status().name(),
+                "filesCompiled", report.filesCompiled(),
+                "errors", report.errors(),
+                "warnings", report.warnings(),
+                "diagnostics", report.diagnostics()
+        );
     }
 
     private static Path resolveValidatedWorkspacePath(String rawPath) {
