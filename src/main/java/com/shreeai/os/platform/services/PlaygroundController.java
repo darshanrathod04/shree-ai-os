@@ -2,12 +2,15 @@ package com.shreeai.os.platform.services;
 
 import com.shreeai.os.platform.sdk.SDKResponse;
 import com.shreeai.os.platform.sdk.ShreeAI;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -31,6 +34,22 @@ public class PlaygroundController {
 
     public PlaygroundController(ShreeAI ai) {
         this.ai = Objects.requireNonNull(ai, "ai must not be null");
+    }
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamEvents() {
+        SseEmitter emitter = new SseEmitter(0L);
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("connected")
+                    .data(Map.of(
+                            "status", "connected",
+                            "timestamp", Instant.now().toString()
+                    )));
+        } catch (Exception e) {
+            emitter.completeWithError(e);
+        }
+        return emitter;
     }
 
     @PostMapping("/chat")
