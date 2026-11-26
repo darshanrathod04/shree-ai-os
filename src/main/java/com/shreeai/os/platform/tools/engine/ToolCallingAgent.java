@@ -81,6 +81,18 @@ public final class ToolCallingAgent {
             }
 
             Optional<ToolCall> parsedCall = tryParseToolCall(rawOutput);
+            if (parsedCall.isEmpty() && looksLikeMalformedToolJson(rawOutput)) {
+                String repairPrompt = transcript + "\nAssistant output had malformed JSON: " + rawOutput
+                        + "\nRespond ONLY with valid JSON: {\"tool\": \"<toolId>\", \"arguments\": {...}} or {\"final\": \"<answer>\"}.";
+                try (Stream<String> retryTokens = llmProvider.stream(LlmRequest.builder()
+                        .model(model)
+                        .prompt(repairPrompt)
+                        .stream(false)
+                        .build())) {
+                    rawOutput = retryTokens.collect(Collectors.joining()).trim();
+                }
+                parsedCall = tryParseToolCall(rawOutput);
+            }
             if (parsedCall.isEmpty()) {
                 String finalAnswer = extractFinalAnswer(rawOutput);
                 return new Result(finalAnswer, List.copyOf(steps), true, step);
@@ -128,7 +140,7 @@ public final class ToolCallingAgent {
     }
 
     private static Optional<ToolCall> tryParseToolCall(String rawOutput) {
-        String json = stripCodeFences(rawOutput);
+        String json = extractJsonObject(stripCodeFences(rawOutput));
         if (!json.startsWith("{")) {
             return Optional.empty();
         }
@@ -145,6 +157,20 @@ public final class ToolCallingAgent {
             return Optional.empty();
         }
         return Optional.empty();
+    }
+
+    private static boolean looksLikeMalformedToolJson(String rawOutput) {
+        String s = stripCodeFences(rawOutput);
+        return (s.contains("\"tool\"") || s.contains("'tool'")) && s.contains("{");
+    }
+
+    private static String extractJsonObject(String text) {
+        int start = text.indexOf('{');
+        int end = text.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            return text.substring(start, end + 1).trim();
+        }
+        return text;
     }
 
     private static String extractFinalAnswer(String rawOutput) {
