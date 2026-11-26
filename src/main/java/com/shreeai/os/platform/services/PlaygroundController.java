@@ -2,9 +2,9 @@ package com.shreeai.os.platform.services;
 
 import com.shreeai.os.platform.sdk.SDKResponse;
 import com.shreeai.os.platform.sdk.ShreeAI;
+import com.shreeai.os.platform.sdk.streaming.StreamingListener;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,8 +27,9 @@ import java.util.Objects;
  */
 @RestController
 @RequestMapping("/api/playground")
-@CrossOrigin(origins = "*")
 public class PlaygroundController {
+
+    private static final int MAX_INPUT_CHARS = 100_000;
 
     private final ShreeAI ai;
 
@@ -54,7 +55,60 @@ public class PlaygroundController {
 
     @PostMapping("/chat")
     public ResponseEntity<?> chat(@RequestBody Map<String, Object> body) {
-        return handle(() -> ai.chat(str(body, "message")));
+        String message = str(body, "message");
+        if (message.length() > MAX_INPUT_CHARS) {
+            return ResponseEntity.badRequest().body(Map.of("error", "message exceeds maximum length"));
+        }
+        return handle(() -> ai.chat(message));
+    }
+
+    @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter chatStream(@RequestBody Map<String, Object> body) {
+        String message = str(body, "message");
+        SseEmitter emitter = new SseEmitter(120_000L);
+        if (message.isBlank() || message.length() > MAX_INPUT_CHARS) {
+            try {
+                emitter.send(SseEmitter.event().name("error").data(Map.of("error", "Valid message required")));
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+            return emitter;
+        }
+        ai.chatStream(message, new StreamingListener() {
+            @Override
+            public void onStart() {
+                sendQuietly(emitter, "start", Map.of("status", "streaming"));
+            }
+
+            @Override
+            public void onToken(String token) {
+                sendQuietly(emitter, "token", Map.of("token", token));
+            }
+
+            @Override
+            public void onComplete(String completeResponse) {
+                sendQuietly(emitter, "complete", Map.of(
+                        "answer", completeResponse == null ? "" : completeResponse
+                ));
+                emitter.complete();
+            }
+
+            @Override
+            public void onError(Throwable error) {
+                sendQuietly(emitter, "error", Map.of("error", error.getMessage() == null ? "Stream error" : error.getMessage()));
+                emitter.completeWithError(error);
+            }
+        });
+        return emitter;
+    }
+
+    private static void sendQuietly(SseEmitter emitter, String eventName, Object data) {
+        try {
+            emitter.send(SseEmitter.event().name(eventName).data(data));
+        } catch (Exception ignored) {
+            // Client disconnected
+        }
     }
 
     @PostMapping("/identity/get")

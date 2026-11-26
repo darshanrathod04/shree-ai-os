@@ -67,6 +67,7 @@ public final class ToolCallingAgent {
         transcript.append(buildSystemPrompt()).append("\n\nUser Goal: ").append(userGoal).append("\n");
 
         List<ToolStep> steps = new ArrayList<>();
+        ToolCall previousCall = null;
         for (int step = 1; step <= maxSteps; step++) {
             LlmRequest request = LlmRequest.builder()
                     .model(model)
@@ -86,6 +87,15 @@ public final class ToolCallingAgent {
             }
 
             ToolCall call = parsedCall.get();
+            if (call.equals(previousCall)) {
+                return new Result(
+                        "Aborted repeated identical tool call to '" + call.toolId() + "' to prevent infinite loop.",
+                        List.copyOf(steps),
+                        false,
+                        step
+                );
+            }
+            previousCall = call;
             ToolResponse response = toolExecutor.execute(new ToolRequest(call.toolId(), call.arguments()));
             steps.add(new ToolStep(step, call.toolId(), call.arguments(), response));
 

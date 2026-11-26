@@ -7,7 +7,6 @@ import com.shreeai.os.platform.kernels.project.model.ProjectSummary;
 import com.shreeai.os.platform.sdk.SDKResponse;
 import com.shreeai.os.platform.sdk.ShreeAI;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -32,8 +33,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @RestController
 @RequestMapping("/api/developer")
-@CrossOrigin(origins = "*")
 public class DeveloperController {
+
+    private static final int MAX_INPUT_CHARS = 100_000;
 
     private final ShreeAI ai;
     private final Map<String, Map<String, Object>> sessions = new ConcurrentHashMap<>();
@@ -46,12 +48,13 @@ public class DeveloperController {
 
     @PostMapping("/workspace/open")
     public ResponseEntity<?> openWorkspace(@RequestBody Map<String, Object> body) {
-        String path = str(body, "path");
-        if (path.isBlank()) {
+        String rawPath = str(body, "path");
+        if (rawPath.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "path is required"));
         }
         try {
-            ProjectSummary summary = ai.project().analyze(path);
+            Path validatedPath = resolveValidatedWorkspacePath(rawPath);
+            ProjectSummary summary = ai.project().analyze(validatedPath);
             String id = "ws-" + UUID.randomUUID().toString().substring(0, 8);
             Map<String, Object> session = new LinkedHashMap<>();
             session.put("id", id);
@@ -129,6 +132,9 @@ public class DeveloperController {
         String question = str(body, "question");
         if (question.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "question is required"));
+        }
+        if (question.length() > MAX_INPUT_CHARS) {
+            return ResponseEntity.badRequest().body(Map.of("error", "question exceeds maximum length"));
         }
         SDKResponse response = ai.chat(question, Map.of("sessionId", sessionId));
         return ResponseEntity.ok(Map.of(
@@ -224,6 +230,25 @@ public class DeveloperController {
                 "isEmpty", true,
                 "entries", List.of()
         ));
+    }
+
+    private static Path resolveValidatedWorkspacePath(String rawPath) {
+        if (rawPath.indexOf('\0') >= 0) {
+            throw new IllegalArgumentException("Invalid path");
+        }
+        Path resolved = Path.of(rawPath).toAbsolutePath().normalize();
+        String allowedRootProp = System.getProperty("shree.workspace.allowed-root",
+                System.getenv("SHREE_WORKSPACE_ALLOWED_ROOT"));
+        if (allowedRootProp != null && !allowedRootProp.isBlank()) {
+            Path allowedRoot = Path.of(allowedRootProp).toAbsolutePath().normalize();
+            if (!resolved.startsWith(allowedRoot)) {
+                throw new SecurityException("Workspace path escapes configured allowed root");
+            }
+        }
+        if (!Files.exists(resolved) || !Files.isDirectory(resolved)) {
+            throw new IllegalArgumentException("Workspace path must be an existing directory: " + resolved);
+        }
+        return resolved;
     }
 
     private static String str(Map<String, Object> body, String key) {

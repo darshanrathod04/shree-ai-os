@@ -19,6 +19,20 @@ import java.util.Map;
  */
 public final class FileSystemTool implements Tool {
 
+    private static final long MAX_READ_BYTES = 2L * 1024 * 1024;
+    private final Path sandboxRoot;
+
+    public FileSystemTool() {
+        String rootProp = System.getProperty("shree.tools.fs.root", System.getenv("SHREE_TOOLS_FS_ROOT"));
+        this.sandboxRoot = (rootProp != null && !rootProp.isBlank())
+                ? Path.of(rootProp).toAbsolutePath().normalize()
+                : null;
+    }
+
+    public FileSystemTool(Path sandboxRoot) {
+        this.sandboxRoot = sandboxRoot == null ? null : sandboxRoot.toAbsolutePath().normalize();
+    }
+
     @Override
     public String id() {
         return "filesystem";
@@ -45,9 +59,13 @@ public final class FileSystemTool implements Tool {
                 request.arguments().getOrDefault("path", "")
         );
 
+        if (file.isBlank() || file.indexOf('\0') >= 0) {
+            return ToolResponse.failure("Invalid or empty file path");
+        }
+
         try {
 
-            Path path = Path.of(file);
+            Path path = resolveSafePath(file);
 
             return switch (operation) {
 
@@ -56,10 +74,15 @@ public final class FileSystemTool implements Tool {
                         Map.of("exists", Files.exists(path))
                 );
 
-                case "read" -> ToolResponse.success(
-                        "File read successfully",
-                        Map.of("content", Files.readString(path))
-                );
+                case "read" -> {
+                    if (Files.exists(path) && Files.size(path) > MAX_READ_BYTES) {
+                        yield ToolResponse.failure("File exceeds maximum read size (2 MB)");
+                    }
+                    yield ToolResponse.success(
+                            "File read successfully",
+                            Map.of("content", Files.readString(path))
+                    );
+                }
 
                 case "write" -> {
 
@@ -84,10 +107,26 @@ public final class FileSystemTool implements Tool {
                 );
             };
 
+        } catch (SecurityException e) {
+
+            return ToolResponse.failure("Security violation: " + e.getMessage());
+
         } catch (IOException e) {
 
             return ToolResponse.failure(e.getMessage());
 
         }
+    }
+
+    private Path resolveSafePath(String rawPath) {
+        Path raw = Path.of(rawPath);
+        if (sandboxRoot != null) {
+            Path resolved = (raw.isAbsolute() ? raw : sandboxRoot.resolve(raw)).toAbsolutePath().normalize();
+            if (!resolved.startsWith(sandboxRoot)) {
+                throw new SecurityException("Path escapes sandbox root: " + rawPath);
+            }
+            return resolved;
+        }
+        return raw.normalize();
     }
 }

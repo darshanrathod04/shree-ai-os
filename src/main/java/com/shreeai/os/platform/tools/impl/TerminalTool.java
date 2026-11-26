@@ -8,26 +8,23 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * Constitutional Terminal Tool.
  *
  * Security Rules:
- * - Blocks destructive commands
+ * - Blocks destructive commands anywhere in command chain
+ * - Enforces execution timeout (30s)
  * - Captures stdout/stderr
  * - Returns immutable ToolResponse
  */
 public final class TerminalTool implements Tool {
 
-    private static final List<String> BLOCKED = List.of(
-            "rm",
-            "rmdir",
-            "del",
-            "format",
-            "shutdown",
-            "reboot",
-            "mkfs"
-    );
+    private static final long TIMEOUT_SECONDS = 30L;
+    private static final Pattern BLOCKED_PATTERN = Pattern.compile(
+            "(?i)(?:^|[\\s;&|`(])(rm|rmdir|del|format|shutdown|reboot|mkfs|remove-item|format-volume|dd)(?=$|[\\s;&|`)])");
 
     @Override
     public String id() {
@@ -55,12 +52,14 @@ public final class TerminalTool implements Tool {
             return ToolResponse.failure("Command cannot be empty");
         }
 
-        for (String blocked : BLOCKED) {
-            if (command.startsWith(blocked)) {
-                return ToolResponse.failure(
-                        "Blocked command: " + blocked
-                );
-            }
+        var blockedMatcher = BLOCKED_PATTERN.matcher(command);
+        if (blockedMatcher.find()) {
+            return ToolResponse.failure(
+                    "Blocked command: " + blockedMatcher.group(1).toLowerCase()
+            );
+        }
+        if (command.contains(":(){")) {
+            return ToolResponse.failure("Blocked command: fork-bomb pattern");
         }
 
         try {
@@ -87,10 +86,16 @@ public final class TerminalTool implements Tool {
             java.util.concurrent.CompletableFuture<String> stderrFuture =
                     java.util.concurrent.CompletableFuture.supplyAsync(() -> read(process.getErrorStream()));
 
+            boolean finished = process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                return ToolResponse.failure("Command timed out after " + TIMEOUT_SECONDS + " seconds");
+            }
+
             String stdout = stdoutFuture.join();
             String stderr = stderrFuture.join();
 
-            int exit = process.waitFor();
+            int exit = process.exitValue();
 
             return ToolResponse.success(
                     "Terminal execution completed",
