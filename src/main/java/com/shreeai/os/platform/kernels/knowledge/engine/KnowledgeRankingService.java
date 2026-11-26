@@ -211,6 +211,23 @@ public final class KnowledgeRankingService {
 
         double score = textRelevance;
 
+        // Phrase & Bigram Proximity Reranking Boost (0-10 points)
+        String labelLower = node.getLabel() == null ? "" : node.getLabel().toLowerCase(Locale.ROOT);
+        String descLower = node.getDescription() == null ? "" : node.getDescription().toLowerCase(Locale.ROOT);
+        String combined = labelLower + " " + descLower;
+        if (!queryLower.isEmpty() && combined.contains(queryLower)) {
+            score += 10.0;
+        } else if (queryWords.size() >= 2) {
+            int bigramHits = 0;
+            for (int i = 0; i < queryWords.size() - 1; i++) {
+                String bigram = queryWords.get(i) + " " + queryWords.get(i + 1);
+                if (combined.contains(bigram)) {
+                    bigramHits++;
+                }
+            }
+            score += Math.min(8.0, (bigramHits * 8.0) / (queryWords.size() - 1));
+        }
+
         // Confidence (0-20 points)
         Map<String, Object> metadata = node.getMetadata();
         if (metadata != null && metadata.containsKey("confidence")) {
