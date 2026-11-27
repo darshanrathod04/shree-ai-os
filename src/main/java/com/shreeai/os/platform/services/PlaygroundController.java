@@ -59,7 +59,13 @@ public class PlaygroundController {
         if (message.length() > MAX_INPUT_CHARS) {
             return ResponseEntity.badRequest().body(Map.of("error", "message exceeds maximum length"));
         }
-        return handle(() -> ai.chat(message));
+        var trace = ai.tracer().startTrace("playground.chat", "default");
+        long t0 = System.nanoTime();
+        ResponseEntity<?> response = handle(() -> ai.chat(message));
+        trace.addSpan("sdk-chat", "llm", (System.nanoTime() - t0) / 1_000_000L,
+                Map.of("status", response.getStatusCode().value()));
+        trace.finish(response.getStatusCode().is2xxSuccessful() ? "OK" : "ERROR");
+        return response;
     }
 
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -221,6 +227,13 @@ public class PlaygroundController {
         return ResponseEntity.ok(Map.of(
                 "providers", ai.agent().routerTelemetry(),
                 "registeredTools", ai.agent().registeredTools()
+        ));
+    }
+
+    @GetMapping("/traces")
+    public ResponseEntity<?> traces() {
+        return ResponseEntity.ok(Map.of(
+                "traces", ai.tracer().recent(50)
         ));
     }
 

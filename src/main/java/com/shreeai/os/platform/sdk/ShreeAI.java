@@ -3,6 +3,8 @@ package com.shreeai.os.platform.sdk;
 import com.shreeai.os.platform.sdk.events.RuntimeEventBus;
 import com.shreeai.os.platform.sdk.exceptions.ConfigurationException;
 import com.shreeai.os.platform.runtime.api.Runtime;
+import com.shreeai.os.platform.sdk.observability.GenAiTracer;
+import com.shreeai.os.platform.sdk.structured.StructuredOutputConverter;
 import com.shreeai.os.platform.sdk.streaming.StreamingListener;
 import com.shreeai.os.platform.services.ByokSettingsService;
 import com.shreeai.os.platform.services.SdkDiagnosticsService;
@@ -42,6 +44,7 @@ public final class ShreeAI implements AutoCloseable {
     private final SettingsSDK settings;
     private final DiagnosticsSDK diagnostics;
     private final AgentSDK agent;
+    private final GenAiTracer tracer = new GenAiTracer();
 
     ShreeAI(SDKConfiguration configuration, Runtime runtime) {
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
@@ -234,6 +237,39 @@ public final class ShreeAI implements AutoCloseable {
      */
     public AgentSDK agent() {
         return agent;
+    }
+
+    /**
+     * GenAI Span & Trace Recorder.
+     */
+    public GenAiTracer tracer() {
+        return tracer;
+    }
+
+    /**
+     * Type-safe structured output chat (Spring AI BeanOutputConverter / LangChain4j style).
+     */
+    public <T> T chat(String message, Class<T> responseType) {
+        var trace = tracer.startTrace("chat.structured", responseType.getSimpleName());
+        long t0 = System.nanoTime();
+        try {
+            T result = StructuredOutputConverter.convertWithRetry(
+                    message,
+                    responseType,
+                    prompt -> chat(prompt).answer()
+            );
+            trace.addSpan("structured-output-parse", "structured-output",
+                    (System.nanoTime() - t0) / 1_000_000L,
+                    Map.of("targetType", responseType.getName()));
+            trace.finish("OK");
+            return result;
+        } catch (RuntimeException e) {
+            trace.addSpan("structured-output-error", "structured-output",
+                    (System.nanoTime() - t0) / 1_000_000L,
+                    Map.of("error", String.valueOf(e.getMessage())));
+            trace.finish("ERROR");
+            throw e;
+        }
     }
 
     /**
