@@ -1,5 +1,6 @@
 package com.shreeai.os.platform.services;
 
+import com.shreeai.os.platform.kernels.knowledge.evaluation.RagEvaluator;
 import com.shreeai.os.platform.sdk.SDKResponse;
 import com.shreeai.os.platform.sdk.ShreeAI;
 import com.shreeai.os.platform.sdk.streaming.StreamingListener;
@@ -32,6 +33,7 @@ public class PlaygroundController {
     private static final int MAX_INPUT_CHARS = 100_000;
 
     private final ShreeAI ai;
+    private final RagEvaluator ragEvaluator = new RagEvaluator();
 
     public PlaygroundController(ShreeAI ai) {
         this.ai = Objects.requireNonNull(ai, "ai must not be null");
@@ -235,6 +237,20 @@ public class PlaygroundController {
         return ResponseEntity.ok(Map.of(
                 "traces", ai.tracer().recent(50)
         ));
+    }
+
+    @PostMapping("/rag/evaluate")
+    @SuppressWarnings("unchecked")
+    public ResponseEntity<?> evaluateRag(@RequestBody Map<String, Object> body) {
+        String query = str(body, "query");
+        String answer = str(body, "answer");
+        java.util.List<String> contexts = body.get("contexts") instanceof java.util.List<?> list
+                ? list.stream().map(String::valueOf).toList()
+                : java.util.List.of();
+        if (query.isBlank() || answer.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "query and answer are required"));
+        }
+        return ResponseEntity.ok(ragEvaluator.evaluate(query, contexts, answer));
     }
 
     private ResponseEntity<?> handle(java.util.function.Supplier<SDKResponse> action) {
