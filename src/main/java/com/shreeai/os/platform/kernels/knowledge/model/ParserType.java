@@ -16,7 +16,7 @@ package com.shreeai.os.platform.kernels.knowledge.model;
  */
 public enum ParserType {
 
-    /** Deterministic structural parsing of PDF documents (parser stub until PDFBox integration). */
+    /** Deterministic page-by-page PDF extraction via Apache PDFBox. */
     PDF,
 
     /** Heading-driven structural parsing of Markdown documents. */
@@ -29,5 +29,11 @@ public enum ParserType {
     HTML,
 
     /** Semantic tag-driven parsing of web page HTML. */
-    WEB
+    WEB,
+
+    /** Key/object-aware structural parsing of JSON payloads. */
+    JSON,
+
+    /** Symbol/block-aware parsing of source code (Java, TS, Python). */
+    CODE
 }

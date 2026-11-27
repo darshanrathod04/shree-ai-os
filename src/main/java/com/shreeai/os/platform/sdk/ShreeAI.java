@@ -41,6 +41,7 @@ public final class ShreeAI implements AutoCloseable {
     private final ShreeClient client;
     private final SettingsSDK settings;
     private final DiagnosticsSDK diagnostics;
+    private final AgentSDK agent;
 
     ShreeAI(SDKConfiguration configuration, Runtime runtime) {
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
@@ -64,6 +65,7 @@ public final class ShreeAI implements AutoCloseable {
         this.diagnostics = new DiagnosticsSDK(new SdkDiagnosticsService());
         // Wire BYOK → runtime so SettingsSDK.save() and builder apiKey() rebuild the LLM router.
         this.client.syncByokSettings(byok);
+        this.agent = new AgentSDK(client.runtime());
     }
 
     private static void configureInitialApiKey(ByokSettingsService byok, String rawKey) {
@@ -225,6 +227,13 @@ public final class ShreeAI implements AutoCloseable {
      */
     public DiagnosticsSDK diagnostics() {
         return diagnostics;
+    }
+
+    /**
+     * Autonomous Tool-Calling Agent SDK.
+     */
+    public AgentSDK agent() {
+        return agent;
     }
 
     /**

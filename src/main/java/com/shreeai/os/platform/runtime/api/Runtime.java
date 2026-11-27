@@ -328,4 +328,12 @@ public interface Runtime {
     default com.shreeai.os.platform.kernels.planning.api.PlanningService planningService() {
         return null;
     }
+
+    /**
+     * Returns the active {@link com.shreeai.os.platform.llm.router.LlmRouter}
+     * if this Runtime exposes one.
+     */
+    default java.util.Optional<com.shreeai.os.platform.llm.router.LlmRouter> llmRouter() {
+        return java.util.Optional.empty();
+    }
 }

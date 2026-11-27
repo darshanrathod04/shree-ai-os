@@ -1,7 +1,9 @@
 package com.shreeai.os.platform.kernels.knowledge.engine;
 
+import com.shreeai.os.platform.kernels.knowledge.engine.parser.CodeDocumentParser;
 import com.shreeai.os.platform.kernels.knowledge.engine.parser.DocumentParser;
 import com.shreeai.os.platform.kernels.knowledge.engine.parser.HtmlDocumentParser;
+import com.shreeai.os.platform.kernels.knowledge.engine.parser.JsonDocumentParser;
 import com.shreeai.os.platform.kernels.knowledge.engine.parser.MarkdownDocumentParser;
 import com.shreeai.os.platform.kernels.knowledge.engine.parser.ParsedSection;
 import com.shreeai.os.platform.kernels.knowledge.engine.parser.PdfDocumentParser;
@@ -91,6 +93,8 @@ public final class DefaultDocumentIngestionEngine implements DocumentIngestionEn
         map.put(ParserType.HTML, html);
         map.put(ParserType.WEB, html);
         map.put(ParserType.PDF, new PdfDocumentParser());
+        map.put(ParserType.JSON, new JsonDocumentParser());
+        map.put(ParserType.CODE, new CodeDocumentParser());
         this.parsers = Map.copyOf(map);
     }
 

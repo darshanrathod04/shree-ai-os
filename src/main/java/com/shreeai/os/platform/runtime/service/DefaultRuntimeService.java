@@ -789,6 +789,11 @@ public final class DefaultRuntimeService extends AbstractRuntimeService implemen
     }
 
     @Override
+    public java.util.Optional<LlmRouter> llmRouter() {
+        return java.util.Optional.ofNullable(llmRouter);
+    }
+
+    @Override
     public java.util.stream.Stream<String> streamText(String message) {
         if (message == null) {
             throw new IllegalArgumentException("message must not be null");

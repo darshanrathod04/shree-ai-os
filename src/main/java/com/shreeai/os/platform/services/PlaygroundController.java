@@ -205,6 +205,25 @@ public class PlaygroundController {
         return handle(() -> ai.reflection().getAnalytics(str(body, "tenantId"), window));
     }
 
+    @PostMapping("/agent")
+    public ResponseEntity<?> runAgent(@RequestBody Map<String, Object> body) {
+        String goal = str(body, "goal");
+        if (goal.isBlank() || goal.length() > MAX_INPUT_CHARS) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Valid goal is required"));
+        }
+        String model = str(body, "model");
+        int maxSteps = body.get("maxSteps") instanceof Number n ? n.intValue() : 5;
+        return handle(() -> ai.agent().run(model, goal, maxSteps));
+    }
+
+    @GetMapping("/telemetry")
+    public ResponseEntity<?> telemetry() {
+        return ResponseEntity.ok(Map.of(
+                "providers", ai.agent().routerTelemetry(),
+                "registeredTools", ai.agent().registeredTools()
+        ));
+    }
+
     private ResponseEntity<?> handle(java.util.function.Supplier<SDKResponse> action) {
         try {
             SDKResponse res = action.get();
