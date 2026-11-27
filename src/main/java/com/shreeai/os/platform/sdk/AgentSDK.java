@@ -11,6 +11,8 @@ import com.shreeai.os.platform.tools.impl.EchoTool;
 import com.shreeai.os.platform.tools.impl.FileSystemTool;
 import com.shreeai.os.platform.tools.impl.GitTool;
 import com.shreeai.os.platform.tools.impl.TerminalTool;
+import com.shreeai.os.platform.tools.mcp.McpClient;
+import com.shreeai.os.platform.tools.mcp.McpToolAdapter;
 import com.shreeai.os.platform.tools.registry.DefaultToolRegistry;
 
 import java.time.Instant;
@@ -47,6 +49,23 @@ public final class AgentSDK {
         Objects.requireNonNull(tool, "tool must not be null");
         toolRegistry.register(tool);
         return this;
+    }
+
+    /**
+     * Connects to an MCP server via {@link McpClient}, discovers all advertised
+     * tools, and registers them as {@link McpToolAdapter}s in the tool registry.
+     */
+    public List<String> registerMcpClient(McpClient client) throws java.io.IOException {
+        Objects.requireNonNull(client, "client must not be null");
+        client.initialize();
+        List<McpClient.McpToolDefinition> defs = client.listTools();
+        List<String> registeredIds = new java.util.ArrayList<>();
+        for (McpClient.McpToolDefinition def : defs) {
+            McpToolAdapter adapter = new McpToolAdapter(client, def);
+            toolRegistry.register(adapter);
+            registeredIds.add(adapter.id());
+        }
+        return List.copyOf(registeredIds);
     }
 
     public List<String> registeredTools() {
