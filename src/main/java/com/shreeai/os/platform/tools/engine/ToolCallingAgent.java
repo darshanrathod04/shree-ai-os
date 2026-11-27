@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,17 +59,75 @@ public final class ToolCallingAgent {
     }
 
     public Result run(String model, String userGoal) {
+        return runOrPause(model, userGoal, Set.of(), null).result();
+    }
+
+    /**
+     * Runs the agent loop and pauses with a saved {@link AgentCheckpointStore.AgentCheckpoint}
+     * whenever the LLM requests a tool in {@code approvalRequiredTools}.
+     */
+    public CheckpointResult runOrPause(
+            String model,
+            String userGoal,
+            Set<String> approvalRequiredTools,
+            AgentCheckpointStore checkpointStore) {
         Objects.requireNonNull(model, "model must not be null");
         if (userGoal == null || userGoal.isBlank()) {
             throw new IllegalArgumentException("userGoal must not be null or blank");
         }
-
         StringBuilder transcript = new StringBuilder();
         transcript.append(buildSystemPrompt()).append("\n\nUser Goal: ").append(userGoal).append("\n");
+        return continueLoop(model, transcript, new ArrayList<>(), 1, approvalRequiredTools, checkpointStore);
+    }
 
-        List<ToolStep> steps = new ArrayList<>();
+    /**
+     * Resumes a paused checkpoint after human-in-the-loop approval or rejection.
+     */
+    public CheckpointResult resume(
+            String checkpointId,
+            boolean approved,
+            AgentCheckpointStore checkpointStore) {
+        Objects.requireNonNull(checkpointId, "checkpointId must not be null");
+        Objects.requireNonNull(checkpointStore, "checkpointStore must not be null");
+
+        AgentCheckpointStore.AgentCheckpoint cp = checkpointStore.find(checkpointId)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown checkpoint: " + checkpointId));
+        if (cp.status() != AgentCheckpointStore.Status.PAUSED_APPROVAL) {
+            throw new IllegalStateException("Checkpoint is not paused for approval: " + cp.status());
+        }
+
+        List<ToolStep> steps = new ArrayList<>(cp.steps());
+        StringBuilder transcript = new StringBuilder(cp.transcript());
+
+        if (!approved) {
+            checkpointStore.updateStatus(checkpointId, AgentCheckpointStore.Status.REJECTED);
+            return new CheckpointResult(
+                    checkpointId,
+                    false,
+                    new Result("Execution rejected by human reviewer for tool '" + cp.pendingToolId() + "'.",
+                            List.copyOf(steps), false, cp.nextStep())
+            );
+        }
+
+        ToolResponse response = toolExecutor.execute(new ToolRequest(cp.pendingToolId(), cp.pendingArguments()));
+        steps.add(new ToolStep(cp.nextStep(), cp.pendingToolId(), cp.pendingArguments(), response));
+        appendObservation(transcript, cp.nextStep(), cp.pendingToolId(), cp.pendingArguments(), response);
+
+        CheckpointResult resumed = continueLoop(
+                cp.model(), transcript, steps, cp.nextStep() + 1, Set.of(), checkpointStore);
+        checkpointStore.updateStatus(checkpointId, AgentCheckpointStore.Status.COMPLETED);
+        return resumed;
+    }
+
+    private CheckpointResult continueLoop(
+            String model,
+            StringBuilder transcript,
+            List<ToolStep> steps,
+            int startStep,
+            Set<String> approvalRequiredTools,
+            AgentCheckpointStore checkpointStore) {
         ToolCall previousCall = null;
-        for (int step = 1; step <= maxSteps; step++) {
+        for (int step = startStep; step <= maxSteps; step++) {
             LlmRequest request = LlmRequest.builder()
                     .model(model)
                     .prompt(transcript.toString())
@@ -95,37 +154,53 @@ public final class ToolCallingAgent {
             }
             if (parsedCall.isEmpty()) {
                 String finalAnswer = extractFinalAnswer(rawOutput);
-                return new Result(finalAnswer, List.copyOf(steps), true, step);
+                return new CheckpointResult(null, false, new Result(finalAnswer, List.copyOf(steps), true, step));
             }
 
             ToolCall call = parsedCall.get();
             if (call.equals(previousCall)) {
-                return new Result(
+                return new CheckpointResult(null, false, new Result(
                         "Aborted repeated identical tool call to '" + call.toolId() + "' to prevent infinite loop.",
-                        List.copyOf(steps),
-                        false,
-                        step
-                );
+                        List.copyOf(steps), false, step));
             }
             previousCall = call;
+
+            if (checkpointStore != null && approvalRequiredTools != null
+                    && approvalRequiredTools.contains(call.toolId())) {
+                AgentCheckpointStore.AgentCheckpoint saved = checkpointStore.save(
+                        model, transcript.toString(), call.toolId(), call.arguments(),
+                        steps, step, maxSteps, AgentCheckpointStore.Status.PAUSED_APPROVAL);
+                return new CheckpointResult(
+                        saved.checkpointId(),
+                        true,
+                        new Result("Paused awaiting human approval for tool '" + call.toolId() + "'.",
+                                List.copyOf(steps), false, step)
+                );
+            }
+
             ToolResponse response = toolExecutor.execute(new ToolRequest(call.toolId(), call.arguments()));
             steps.add(new ToolStep(step, call.toolId(), call.arguments(), response));
-
-            transcript.append("\nStep ").append(step)
-                    .append(" Tool Call: ").append(call.toolId())
-                    .append(" args=").append(call.arguments())
-                    .append("\nObservation (success=").append(response.success())
-                    .append("): ").append(response.message())
-                    .append(" data=").append(response.data())
-                    .append("\nNext:");
+            appendObservation(transcript, step, call.toolId(), call.arguments(), response);
         }
 
-        return new Result(
+        return new CheckpointResult(null, false, new Result(
                 "Max tool-calling steps (" + maxSteps + ") reached without final answer.",
-                List.copyOf(steps),
-                false,
-                maxSteps
-        );
+                List.copyOf(steps), false, maxSteps));
+    }
+
+    private static void appendObservation(
+            StringBuilder transcript,
+            int step,
+            String toolId,
+            Map<String, Object> arguments,
+            ToolResponse response) {
+        transcript.append("\nStep ").append(step)
+                .append(" Tool Call: ").append(toolId)
+                .append(" args=").append(arguments)
+                .append("\nObservation (success=").append(response.success())
+                .append("): ").append(response.message())
+                .append(" data=").append(response.data())
+                .append("\nNext:");
     }
 
     private String buildSystemPrompt() {
@@ -205,4 +280,6 @@ public final class ToolCallingAgent {
     public record ToolStep(int step, String toolId, Map<String, Object> arguments, ToolResponse response) {}
 
     public record Result(String finalAnswer, List<ToolStep> steps, boolean completed, int iterationsUsed) {}
+
+    public record CheckpointResult(String checkpointId, boolean pausedForApproval, Result result) {}
 }
